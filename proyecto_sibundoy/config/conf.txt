@@ -1,0 +1,13 @@
+################################################
+Configuracion del proyecto Prueba
+################################################
+Por: Alejandro Coca-Castro
+Bogota; Septiembre 2020
+#######################
+
+#######################
+Rutas
+#######################
+path = /Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy
+
+##################################################
