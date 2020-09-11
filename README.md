@@ -1,24 +1,24 @@
 # soil-toolbox: Una herramienta para optimizar procesos de MDS de la Subdirección de Agrología
 
-Herramienta basada en tecnologias de la informacion para ejecutar y optimizar procesos para le mapeo digital de suelos (MDS)
+Herramienta (ver `src/SoilAnalysisTool.R`) basada en tecnología de la información para ejecutar y optimizar procesos para le mapeo digital de suelos (MDS).
 
 Si usted usa esta herramienta por favor citar:
 
-Se inclue una carpeta prueba dentro del repositorio para ejecutar las funciones de la herramienta.
+Se incluye una carpeta prueba (ver `proyecto_sibundoy`) dentro del repositorio para ejecutar y probar las funciones de la herramienta.
 
 ## Documentación
 Un manual paso a paso esta en preparación
 
 ## Agradecimientos
-El equipo de CIAF que realizo este desarrollo agradecer a la Subdirección de Agrología por su constante apoyo y validacion de la herramienta.
+El equipo de la Oficina CIAF agradece a la Subdirección de Agrología por su constante apoyo y validacion de la herramienta. Igualmente, los desarrollos construidos son basados en ejercicios aplicados al área de Sibundoy, Putumayo (Colombia) y distruidos mediante la cooperación del proyecto I+D+i entre la Subdirección de Agrologia y Oficina CIAF.
 
 ## Contribuciones
-Contribuciones pueden hacerse mediante peticiones en la pestana Pull del repositorio en Github. 
+Contribuciones pueden hacerse mediante peticiones en la pestaña Pull del repositorio en GitHub. 
 
 ## Trabajo futuro
 - Item 1
 
-## Results del mejor modelo para la zona prueba en diferentes variables
+## Resultados ejemplo del mejor modelo para la zona prueba en diferentes variables
 ### Orden del suelo
 
 ### Taxonomia 
