@@ -1,5 +1,7 @@
 #data
 *.csv
+proyecto_sibundoy/datos/salida
+proyecto_sibundoy/datos/salida/*
 
 #model
 *.pickle

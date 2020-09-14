@@ -3,7 +3,9 @@
 #                 bajo el enfoque de Mapeo Digital de Suelos (MDS);
 # proposito     : Automatizar procesos relacionados con MDS dentro de la Subdirección de Agrología;
 # autor(es)     : Conceptualizado por Alejandro Coca-Castro, CIAF/IGAC (PhD Geografia, experto en Geotecnologias); Equipo de trabajo Oficina CIAF/IGAC: Pedro Karin Serrato (Profesor, experto en Agrologia),
-#                 Victoria Camacho (Estadistica), Patricia Escudero (Estadistica), Andrés Rosso (PhD Ingenieria, experto en Machine Learning), Yesenia Vargas (MSc Geografia, experta en Proyectos)
+#                 Victoria Camacho (Estadistica), Patricia Escudero (Estadistica), Andrés Rosso (PhD Ingenieria, experto en Machine Learning), Yesenia Vargas (MSc Geografia, experta en Proyectos);
+#                 Equipo de trabajo Subdirección de Agrología/IGAC: Juan Camilo García, Ricardo Devia Cartagena, Joan Sebastián Gutiérrez Díaz
+#                 Supervisores: CIAF/IGAC, Carlos Franco y Diana Galindo - Subdirección de Agrología/IGAC, Janeth González Nivia y Napoleón Ordoñez
 # actualizacion : v1 Bogota, Colombia - Septiembre 2020;
 # observaciones : Detalles de los pasos mencionados pueden consultarse en el manual;
 #                 Los análisis deben correrse de manera separada;
