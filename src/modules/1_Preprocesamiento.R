@@ -45,7 +45,7 @@ Preprocesamiento <- function(filename, hoja, columna){
   # ------------------------------------------------------- #
   # Declarar directorios
   in.data <- paste0(project.folder,'/datos/entrada/0_basededatos')
-  out.data <- paste0(project.folder,'/datos/salida/0_basededatos/')
+  out.data <- paste0(project.folder,'/datos/salida/0_basededatos')
   dir.create(out.data, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo

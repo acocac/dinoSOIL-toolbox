@@ -66,6 +66,15 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]])
 #####PARTE 5a - Modelacion: Ejecutar algoritmos     ####
 ########################################################
 
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/5a_Modelos.R'))
+
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 OBSERVACIONES_20160603_VF.xls, pregunta 2 RESHAPE, pregunta 3 Obs
+args_p1 <- prompt.user.part1()
+
+#### ejecutar la funcion del modulo ###
+Entrenamiento()
 
 ########################################################
 #####PARTE 5b - Modelacion: Identificar mejor resultado#
