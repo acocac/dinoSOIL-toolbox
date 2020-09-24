@@ -25,3 +25,13 @@ prompt.user.part1 <- function()#get arguments from user
   newlist = list(a,b,c)
   return(newlist)
 }
+
+prompt.user.part2 <- function()#get arguments from user
+{
+  message(prompt="Indique el nombre del modelol:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  newlist = list(a)
+  return(newlist)
+}

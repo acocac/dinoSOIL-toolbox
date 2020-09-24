@@ -9,20 +9,15 @@
 # remarks 1     : detection grid must be in projected projection (i.e IGH or LAE);
 ###############################################################################
 
-LoadConfig = function(x)
+PredictGeoTIFF = function(COV, fit.model, out.data, modelo)
 { 
-conf.list <- lapply(strsplit(readLines(x, warn=FALSE)," "), as.character)
+  # Evaluar el modelo
+  xtab <- table(fit.model$pred[,1], fit.model$pred[,2])
+  con.mat <- confusionMatrix(xtab)
 
-#read target lines
-root.index <- grep("*path",conf.list)
-root.path = conf.list[[root.index]][[length(conf.list[[root.index]])]]
+  # Predecir en subarea
+  COVSub <- crop(COV, extent(COV, 1, 100, 1, 100))
+  pred <- predict(COVSub, fit.model, filename = paste0(out.data,'/',modelo,'_5m_PRED_orden_18092018_v2.tif'),
+                format = "GTiff", overwrite = T)
 
-#read models
-modelos.index <- grep("*modelos",conf.list)
-root.modelos = conf.list[[modelos.index]][[length(conf.list[[modelos.index]])]]
-
-newlist = list(root.path, root.modelos)
-return(newlist)
 }
-
-LoadConfig(conf.file)

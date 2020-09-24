@@ -67,19 +67,28 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]])
 ########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/5a_Modelos.R'))
+source(paste0(r.dir,'/modules/5a_ModEjecutar.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 OBSERVACIONES_20160603_VF.xls, pregunta 2 RESHAPE, pregunta 3 Obs
-args_p1 <- prompt.user.part1()
+#para el demo llenar pregunta 1 C45
+#args_p2 <- prompt.user.part2()
 
 #### ejecutar la funcion del modulo ###
-Entrenamiento()
+ModEntrenamiento()
 
 ########################################################
 #####PARTE 5b - Modelacion: Identificar mejor resultado#
 ########################################################
 
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/5b_ModMejor.R'))
+
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 C45
+#args_p2 <- prompt.user.part2()
+
+#### ejecutar la funcion del modulo ###
+ModMejorModelo()
 
 ########################################################
 #####PARTE 5c - Modelacion: Sensibilidad/Incertidumbre #

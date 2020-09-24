@@ -97,7 +97,7 @@ summary(base)
 View(base)
 class(base)
 #===========================================================================================
-#FUNCIONES DE PEDOTRANSFERENCIA PARA ESTIMACIÓN DE DENSIDAD APARENTE EN SIBUNDOY
+#FUNCIONES DE PEDOTRANSFERENCIA PARA ESTIMACIï¿½N DE DENSIDAD APARENTE EN SIBUNDOY
 #===========================================================================================
 
 base <- data.frame(read_excel("SIBUNDOY_VF.xlsx", sheet = "BASE_DEF"))
