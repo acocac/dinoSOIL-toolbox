@@ -38,15 +38,14 @@ ModUso <- function(){
   proyecto.directorio <- conf.args[[1]]
   modelos.proyecto <- conf.args[[2]]
   modelos.proyecto <- sort(unlist(strsplit(modelos.proyecto,';')))
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/rds')
-  datos.entrada <- paste0(proyecto.directorio,'/datos/entrada/1_covariables')
-  datos.salida <- paste0(proyecto.directorio,'/datos/salida/1_predicciones')
-  dir.create(datos.salida, recursive = T, mode = "0777", showWarnings = F)
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
+  datos.entrada <- paste0(proyecto.directorio,'/datos/entrada/1_covariables')
+  datos.salida <- paste0(proyecto.directorio,'/datos/salida/1_predicciones')
+  dir.create(datos.salida, recursive = T, mode = "0777", showWarnings = F)
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/rds')
   modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/tabular')
   dir.create(modelos.analisis.tabular, recursive = T, mode = "0777", showWarnings = F)

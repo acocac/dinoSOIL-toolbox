@@ -50,20 +50,29 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]])
 ########################################################
 ####PARTE 2 - Preprocesamiento de las covariables ######
 ########################################################
+##TODO
 
 
 ########################################################
 #####PARTE 3 - Analisis Exploratorio de los Datos ######
 ########################################################
+##TODO
 
 
 ########################################################
 #####PARTE 4 - Crear datos de entrenamiento     ########
 ########################################################
+##TODO
 
 
 ########################################################
-#####PARTE 5a - Modelacion: Ejecutar algoritmos     ####
+#####PARTE 5 - Modelacion Geoestadistica            ####
+########################################################
+##TODO (Patricia & Andres)
+
+
+########################################################
+#####PARTE 6a - Modelacion ML: Ejecutar algoritmos  ####
 ########################################################
 
 #### cargar modulo ###
@@ -76,9 +85,9 @@ source(paste0(r.dir,'/modules/5a_ModEjecutar.R'))
 #### ejecutar la funcion del modulo ###
 ModEntrenamiento()
 
-########################################################
-#####PARTE 5b - Modelacion: Identificar mejor resultado#
-########################################################
+###########################################################
+#####PARTE 6b - Modelacion ML: Identificar mejor modelo  ##
+###########################################################
 
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/5b_ModMejor.R'))
@@ -90,14 +99,15 @@ source(paste0(r.dir,'/modules/5b_ModMejor.R'))
 #### ejecutar la funcion del modulo ###
 ModMejorModelo()
 
-########################################################
-#####PARTE 5c - Modelacion: Sensibilidad/Incertidumbre #
-########################################################
 
+###########################################################
+#####PARTE 6c - Modelacion ML: Sensibilidad/Incertidumbre #
+###########################################################
+##TODO
 
-########################################################
-#####PARTE 5d - Modelacion: Uso del modelo          ####
-########################################################
+###########################################################
+#####PARTE 6d - Modelacion: Uso del modelo               ##
+###########################################################
 
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/5d_ModUso.R'))
@@ -108,3 +118,7 @@ source(paste0(r.dir,'/modules/5d_ModUso.R'))
 
 #### ejecutar la funcion del modulo ###
 ModUso()
+
+###########################################################
+#####                    FINAL                        #####
+###########################################################
