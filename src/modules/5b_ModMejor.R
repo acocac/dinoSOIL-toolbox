@@ -37,7 +37,7 @@ ModMejorModelo <- function(){
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
   modelos.proyecto <- conf.args[[2]]
-  modelos.proyecto = unlist(strsplit(modelos.proyecto,';'))
+  modelos.proyecto = sort(unlist(strsplit(modelos.proyecto,';')))
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
@@ -58,6 +58,7 @@ ModMejorModelo <- function(){
   #identificar modelos entrenados
   modelos.procesados = strsplit(list.files(modelos.entrada, recursive = T, full.names = F),"[.]")
   modelos.procesados = c(unique(sapply(modelos.procesados, "[", 1)))
+
   if (modelos.proyecto == modelos.procesados){
     cat('Los modelos listados en el archivo config.txt estan completos')
     ##### processing ####
@@ -74,11 +75,12 @@ ModMejorModelo <- function(){
     #export models best combination parameters and features
     write.csv(modelos.parametros,file = paste0(modelos.analisis.tabular,'/mejoresmodelos_parametros.csv'), row.names=T)
     ##### output messages ####
-    cat(paste('### RESULT 1 out of 4: The best models parameters and perfomance results were generated and store as tabular data in the model (tabular) folder! ###'),'\n')
+    cat(paste('### RESULTADO 1 de 3: The best models parameters and perfomance results were generated and store as tabular data in the model (tabular) folder! ###'),'\n')
     ##### end output messages ####
     C45.Models = objects(pattern="*C45")
+    C50.Models = objects(pattern="*C50")
     RF.Models = objects(pattern="*RandomForest")
-    DM.Models = c(C45.Models,RF.Models)
+    DM.Models = c(C45.Models,C50.Models,RF.Models)
 
     #create list for resampling
     resampling.list <- list()
@@ -97,7 +99,7 @@ ModMejorModelo <- function(){
   write.csv(modelos.comparacion,paste0(modelos.analisis.tabular,"/bestmodelsCV_boxplots.csv",sep=""), row.names=T)
 
   ##### output messages ####
-  cat(paste('### RESULT 2 out of 4: The best models statistics of perfomance results were generated and store as tabular data in the model (tabular) folder! ###','\n'))
+  cat(paste('### RESULTADO 2 de 3: The best models statistics of perfomance results were generated and store as tabular data in the model (tabular) folder! ###','\n'))
   ##### end output messages ####
 
   #boxplots charts
@@ -106,7 +108,7 @@ ModMejorModelo <- function(){
   dev.off()
 
   ##### output messages ####
-  cat(paste('### RESULT 3 out of 3: The boxplots to compare the best models according to perfomance variables were generated and store as chart in the models (figures) folder! ###'),'\n')
+  cat(paste('### RESULTADO 3 de 3: The boxplots to compare the best models according to perfomance variables were generated and store as chart in the models (figures) folder! ###'),'\n')
   ##### end output messages ####
 
   } else{

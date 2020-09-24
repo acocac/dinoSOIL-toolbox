@@ -98,3 +98,13 @@ ModMejorModelo()
 ########################################################
 #####PARTE 5d - Modelacion: Uso del modelo          ####
 ########################################################
+
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/5d_ModUso.R'))
+
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 C45
+#args_p2 <- prompt.user.part2()
+
+#### ejecutar la funcion del modulo ###
+ModUso()

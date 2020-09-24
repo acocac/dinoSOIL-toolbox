@@ -16,8 +16,9 @@ PredictGeoTIFF = function(COV, fit.model, out.data, modelo)
   con.mat <- confusionMatrix(xtab)
 
   # Predecir en subarea
-  COVSub <- crop(COV, extent(COV, 1, 100, 1, 100))
-  pred <- predict(COVSub, fit.model, filename = paste0(out.data,'/',modelo,'_5m_PRED_orden_18092018_v2.tif'),
+  #COVSub <- crop(COV, extent(COV, 1, 100, 1, 100))
+  #pred <- predict(COVSub, fit.model, filename = paste0(out.data,'/',modelo,'_5m_PRED_orden_18092018_v2.tif'),
+  #              format = "GTiff", overwrite = T)
+  pred <- predict(COV, fit.model, filename = paste0(out.data,'/',modelo,'_5m_PRED_orden_18092018_v2.tif'),
                 format = "GTiff", overwrite = T)
-
 }
