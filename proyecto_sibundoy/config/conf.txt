@@ -13,6 +13,6 @@ path = /Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/s
 #######################
 Aprendizaje de Maquinas
 #######################
-modelos = RandomForest;C45;C50;
+modelos = C45;SVM
 
 ##################################################

@@ -66,7 +66,7 @@ ModUso <- function(){
   modelos.resultado <- read.csv(file = paste0(modelos.analisis.tabular,'/mejoresmodelos_parametros.csv'))
   modelos.mejor <- modelos.resultado[modelos.resultado$Accuracy == max(modelos.resultado$Accuracy), 'modelo']
   ##### output messages ####
-  cat(paste0('### RESULTADO 1 de 1: El mejor modelo es',modelos.mejor,' y es usado para prediccion ###','\n'))
+  cat(paste0('### RESULTADO 1 de 1: El mejor modelo es ',modelos.mejor,' y es usado para prediccion ###','\n'))
   ##### end output messages ####
 
   get(load(paste0(modelos.entrada,'/',modelos.mejor,".rds",sep="")))

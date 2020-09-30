@@ -41,8 +41,14 @@ ModEntrenamiento <- function(){
   project.name <- sapply(strsplit(proyecto.directorio, '_'), tail, 1)
   proyecto.modelos <- conf.args[[2]]
   proyecto.modelos = unlist(strsplit(proyecto.modelos,';'))
-  modelos.lista <-c('RandomForest'='rf', 'C45'='J48', 'C50'='C5.0')
-  tuneLenght <-c('RandomForest'=30, 'C45'=5, 'C50'=5)
+
+  # Modelos disponibles y configuraciones
+  modelos.lista <-c('C45'='J48', 'C50'='C5.0', 'RandomForest'='rf', 'SVM'='svmLinear')
+  tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=30, 'SVM'=5)
+
+  # Determinar modelos objetivo segun listado en el archivo conf.txt y modelos disponibles
+  modelos.idx <- match(proyecto.modelos, names(modelos.lista))
+  modelos.objetivo <- modelos.lista[modelos.idx]
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
@@ -86,6 +92,8 @@ ModEntrenamiento <- function(){
   # ------------------------------------------------------- #
   # Crear formula
   fm <- as.formula(paste("orden~", paste0(names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)], collapse = "+")))
+  #print(paste0(names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)],collapse='-'))
+  #print('MODELAR: Orden con las covariables :',names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)])
 
   #Random grid search
   fitControl <- trainControl(method="repeatedcv", number = 3,
@@ -94,9 +102,8 @@ ModEntrenamiento <- function(){
                              verboseIter = FALSE)
 
   #execute the algorithms
-  for (modelo in names(modelos.lista)){
+  for (modelo in names(modelos.objetivo)){
     modelo.archivo <- paste0(modelos.salida, '/',modelo,'.rds')
-    print(modelo.archivo)
     if (!file.exists(modelo.archivo)){
       cat(paste0('El modelo ',modelo,' no existe, se requiere entrenarlo antes de su evaluacion', '\n'))
 

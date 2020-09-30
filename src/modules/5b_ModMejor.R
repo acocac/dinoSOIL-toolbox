@@ -80,7 +80,8 @@ ModMejorModelo <- function(){
     C45.Models = objects(pattern="*C45")
     C50.Models = objects(pattern="*C50")
     RF.Models = objects(pattern="*RandomForest")
-    DM.Models = c(C45.Models,C50.Models,RF.Models)
+    SVM.Models = objects(pattern="*SVM")
+    DM.Models = c(C45.Models,C50.Models,RF.Models,SVM.Models)
 
     #create list for resampling
     resampling.list <- list()

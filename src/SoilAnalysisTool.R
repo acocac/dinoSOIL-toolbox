@@ -58,6 +58,20 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]])
 ########################################################
 ##TODO
 
+########################################################
+#####PARTE 3b - Explotarorio RFE                  ######
+########################################################
+
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/3b_RFE.R'))
+
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 OBSERVACIONES_20160603_VF.xls, pregunta 2 RESHAPE, pregunta 3 Obs
+#args_p1 <- prompt.user.part1()
+
+#### ejecutar la funcion del modulo ###
+ExpRFE()
+
 
 ########################################################
 #####PARTE 4 - Crear datos de entrenamiento     ########
@@ -66,13 +80,7 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]])
 
 
 ########################################################
-#####PARTE 5 - Modelacion Geoestadistica            ####
-########################################################
-##TODO (Patricia & Andres)
-
-
-########################################################
-#####PARTE 6a - Modelacion ML: Ejecutar algoritmos  ####
+#####PARTE 5a - Modelacion ML: Ejecutar algoritmos  ####
 ########################################################
 
 #### cargar modulo ###
@@ -85,8 +93,9 @@ source(paste0(r.dir,'/modules/5a_ModEjecutar.R'))
 #### ejecutar la funcion del modulo ###
 ModEntrenamiento()
 
+
 ###########################################################
-#####PARTE 6b - Modelacion ML: Identificar mejor modelo  ##
+#####PARTE 5b - Modelacion ML: Identificar mejor modelo  ##
 ###########################################################
 
 #### cargar modulo ###
@@ -101,12 +110,13 @@ ModMejorModelo()
 
 
 ###########################################################
-#####PARTE 6c - Modelacion ML: Sensibilidad/Incertidumbre #
+#####PARTE 5c - Modelacion ML: Sensibilidad/Incertidumbre #
 ###########################################################
 ##TODO
 
+
 ###########################################################
-#####PARTE 6d - Modelacion: Uso del modelo               ##
+#####PARTE 5d - Modelacion: Uso del modelo               ##
 ###########################################################
 
 #### cargar modulo ###
