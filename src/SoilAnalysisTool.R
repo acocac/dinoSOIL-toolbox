@@ -22,11 +22,11 @@ rm(list = ls())
 # Definir espacio y archivo de configuracion de trabajo
 # ------------------------------------------------------- #
 ### Directorio de los codigos R  ### #copiar la ruta completa donde estan los codigos (carpeta src)
-r.dir = '/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/src'
+r.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/src'
 
 ### Directorio del proyecto ### #copiar la ruta completa donde se aloja el proyecto (carpeta proyecto)
 # Indicar la ruta al proyecto
-proyecto.dir = '/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy'
+proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy'
 # Cargar el archivo de configuracion
 conf.file = paste0(proyecto.dir,'/config/conf.txt')
 # Cargar funciones de interaccion con el usuario

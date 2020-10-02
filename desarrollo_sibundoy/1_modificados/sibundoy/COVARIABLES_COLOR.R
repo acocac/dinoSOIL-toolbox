@@ -1,88 +1,60 @@
 
-setwd("E:\\SIBUNDOY\\SIBUNDOY_covariables\\COV_5M")
-library(raster)
-library(rgdal)
-library(raster)
-library(caret)
-library(doMC)
-library(plyr)
-library(doParallel)
-library(dismo)
-library(readxl)
-library(aqp)
-library(raster)
-library(aqp)
-library(sp)
+setwd('/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/data/agrologia/Compilado\ Sibundoy/Modelos_sibundoy/MOD_5m')
 
+# Librerias
+pckg <- c('raster', 'rgdal', 'caret', 'doMC', 'plyr', 'doParallel', 'dismo',
+          'readxl', 'aqp', 'sp', 'gdalUtilities', 'munsellinterpol', 'automap',
+          'gstat', 'spdep', 'geoR', 'gstat', 'randomForest', 'nnet')
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
+}
+
+lapply(pckg,usePackage)
 
 ##PARA OBSERVACIONES
 #Cargando covariables disponibles
 dir()
-COV84 <- stack("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/COV_SIB_WGS84_CAJ_VF.tif")
-names(COV84) <- readRDS("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/NAMES_COV_SIB_WGS84_CAJ_VF.rds")
-names(COV84)
-#ADICIONANDO A LAS COVARIABLES DE GEOMORFOLOG�A Y EL MATERIAL PARENTAL
+COV84 <- stack('COV_SIB_WGS84_CAJ_VF.tif')
+names(COV84) <- readRDS('NAMES_COV_SIB_WGS84_CAJ_VF.rds')
 
+#ADICIONANDO A LAS COVARIABLES DE GEOMORFOLOG�A Y EL MATERIAL PARENTAL
 #####Covariable tipo de relieve#############
-start <- Sys.time()
-polyg_geom <- readOGR(dsn= "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/GEOMORF_MATPAR_SIB_WGS84.shp")
-summary(polyg_geom)
+polyg_geom <- readOGR(dsn= 'GEOMORF_MATPAR_SIB_WGS84.shp')
 polyg_geom_geog <- spTransform (polyg_geom, CRS=projection(COV84))
-polyg_geom_geog_rasterized <- rasterize(polyg_geom_geog, COV84, "T_RELIEVE")
-polyg_geom_geog_rasterized <- resample(polyg_geom_geog_rasterized,COV84,method="bilinear")
+polyg_geom_geog_rasterized <- gRasterize(polyg_geom_geog, COV84, 'T_RELIEVE')
+#polyg_geom_geog_rasterized <- resample(polyg_geom_geog_rasterized,COV84,method="bilinear") ##TODO - porque interpolar?
 names(polyg_geom_geog_rasterized) <- 'T_Relieve'
 COV84 <- stack(COV84, polyg_geom_geog_rasterized)
-names(COV84)
-COV84[[21]]
-
 
 #####Covariable forma del terreno#############
-
-polyg_geom <- readOGR(dsn= "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/GEOMORF_MATPAR_SIB_WGS84.shp")
-summary(polyg_geom)
+polyg_geom <- readOGR(dsn= 'GEOMORF_MATPAR_SIB_WGS84.shp')
 polyg_geom_geog <- spTransform (polyg_geom, CRS=projection(COV84))
-polyg_geom_geog_rasterized <- rasterize(polyg_geom_geog, COV84, "F_TERRENO")
-polyg_geom_geog_rasterized <- resample(polyg_geom_geog_rasterized,COV84,method="bilinear")
+polyg_geom_geog_rasterized <- gRasterize(polyg_geom_geog, COV84, 'F_TERRENO')
+#polyg_geom_geog_rasterized <- resample(polyg_geom_geog_rasterized,COV84,method="bilinear")
 names(polyg_geom_geog_rasterized) <- 'F_TERRENO'
 COV84 <- stack(COV84, polyg_geom_geog_rasterized)
-names(COV84)
-COV84[[22]]
-
 
 #####Covariable material parental#############
-
-polyg_geom <- readOGR(dsn= "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/GEOMORF_MATPAR_SIB_WGS84.shp")
-summary(polyg_geom)
+polyg_geom <- readOGR(dsn= 'GEOMORF_MATPAR_SIB_WGS84.shp')
 polyg_geom_geog <- spTransform (polyg_geom, CRS=projection(COV84))
-polyg_geom_geog_rasterized <- rasterize(polyg_geom_geog, COV84, "MATERIALES")
-polyg_geom_geog_rasterized <- resample(polyg_geom_geog_rasterized,COV84,method="bilinear")
+polyg_geom_geog_rasterized <- gRasterize(polyg_geom_geog, COV84, 'MATERIALES')
+#polyg_geom_geog_rasterized <- resample(polyg_geom_geog_rasterized,COV84,method="bilinear")
 names(polyg_geom_geog_rasterized) <- 'MAT_PARENTAL'
 COV84 <- stack(COV84, polyg_geom_geog_rasterized)
-names(COV84)
-COV84[[20]]
-print(Sys.time() - start)
-
-
-
 
 ###Trabajando con el color
-sites <- data.frame(read_excel("E:\\SIBUNDOY\\Compilado Sibundoy\\8 BASE DE DATOS OBSERVACIONES DE CAMPO\\OBSERVACIONES_20160603_VF.xls", sheet = "SITES", na = "NA"))
-names(sites)
-dim(sites)
-str(sites)
+sites <- data.frame(read_excel('/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy/datos/entrada/0_basededatos/OBSERVACIONES_20160603_VF.xls', sheet = 'SITES', na = 'NA'))
 sites$id <- factor(sites$id)
-profiles <- data.frame(read_excel("E:\\SIBUNDOY\\Compilado Sibundoy\\8 BASE DE DATOS OBSERVACIONES DE CAMPO\\OBSERVACIONES_20160603_VF.xls", sheet = "VERTICALIZADO", na = "NA"))
+profiles <- data.frame(read_excel('/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy/datos/entrada/0_basededatos/OBSERVACIONES_20160603_VF.xls', sheet = 'VERTICALIZADO', na = 'NA'))
 
-
-
-
-library(munsellinterpol)
 color <- data.frame(id_horz=profiles$id_horz,color_vf=profiles$col_vf)
 color <- na.omit(color)
 
 color_munsell <- as.character(color[,2])
 color <- cbind(color,MunsellToLuv(as.character(color[,2])))
-
 color$Luv <- color$L+color$u+color$v
 
 RI_1 <- function(color_munsell){
@@ -99,90 +71,73 @@ for(i in 1:length(color_munsell)){
   temp <- RI_1(color_munsell[i])
   fin <- rbind(fin,temp)
 }
-fin
+
 color_2 <- data.frame(id_horz=color[,1], red_ind=fin[,1])
-names(color_2)
 profiles <- join(profiles,color_2,"id_horz", type="left")
-head(profiles)
-names(profiles)
-summary(profiles)
-tail(profiles)
-
-
 
 profiles$soil_color <- with(profiles, munsell2rgb(hue, v,c))
 data.rgb <- with(profiles, munsell2rgb(hue, v, c, return_triplets=TRUE))
 profiles <- cbind(profiles,data.rgb)
+
+#usar funcion AQP
 depths(profiles) <- id ~ top + bottom
-class(profiles)
-profiles
-names(sites)
-names(profiles)
-summary(sites)
 site(profiles) <- sites
 coordinates(profiles) <- ~ Este + Norte
-str(profiles)
-profiles@sp@proj4string
 profiles@sp@proj4string <- CRS("+init=epsg:4326")
-profiles@sp@proj4string
 names(profiles)
-###Interpolando componentes del color RGB e �ndice de enrojecimiento
+
+###Interpolando componentes del color RGB e indice de enrojecimiento
 indx1 <- grep('_2$', profiles$id_horz)#Primer horizonte
+
+#dat <- data.frame(id=profiles$id[indx1],top=profiles$top[indx1], bottom=profiles$bottom[indx1],
+#                  x=coordinates(profiles)[,1],y=coordinates(profiles)[,2], col=profiles$col[indx1],
+#                  col_vf=profiles$col_vf[indx1],HUE=profiles$hue[indx1],V=profiles$v[indx1],
+#                  C=profiles$c[indx1],r=profiles$r[indx1],g=profiles$g[indx1],
+#                  b=profiles$b[indx1],SOIL_COLOR=profiles$soil_color[indx1],L=profiles$L[indx1])
+#                  u=profiles$u[indx1], v=profiles$v[indx1], Luv=profiles$Luv[indx1],red_ind=profiles$red_ind[indx1]) #TODO - Las variables L y Luv no existen
+
 dat <- data.frame(id=profiles$id[indx1],top=profiles$top[indx1], bottom=profiles$bottom[indx1],
                   x=coordinates(profiles)[,1],y=coordinates(profiles)[,2], col=profiles$col[indx1],
                   col_vf=profiles$col_vf[indx1],HUE=profiles$hue[indx1],V=profiles$v[indx1],
                   C=profiles$c[indx1],r=profiles$r[indx1],g=profiles$g[indx1],
-                  b=profiles$b[indx1],SOIL_COLOR=profiles$soil_color[indx1],L=profiles$L[indx1],u=profiles$u[indx1],
-                  v=profiles$v[indx1], Luv=profiles$Luv[indx1],red_ind=profiles$red_ind[indx1])
+                  b=profiles$b[indx1],SOIL_COLOR=profiles$soil_color[indx1],
+                  v=profiles$v[indx1], red_ind=profiles$red_ind[indx1])
 
-
-names(dat) 
-
+#remover filas sin datos
 dat <- dat[complete.cases(dat[,]),]
+
+#espacializar datos y reproyectar en proyeccion epsg:32618 para calculos de area
 dat_sp <- dat
 coordinates(dat_sp) <- ~ x+y
 proy <- CRS("+proj=longlat +datum=WGS84")
 dat_sp@proj4string <- proy
 dat_sp <- spTransform(dat_sp,CRS("+init=epsg:32618"))
-coordinates(dat_sp)
-class(dat_sp)
-dim(dat_sp)
-names(dat_sp)
 
+##Interpolacion 1: Kriging Ordinario##
+COV <- stack('COV_SIB_WGS84_CAJ_REACCIONES_VF.tif')
+names(COV) <- readRDS('NAMES_COV_SIB_WGS84_CAJ_REACCIONES_VF.rds')
 
-##INterpolacion Kriging Ordinario
-getwd()
-COV <- stack("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/COV_SIB_WGS84_CAJ_REACCIONES_VF.tif")
-names(COV) <- readRDS("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/NAMES_COV_SIB_WGS84_CAJ_REACCIONES_VF.rds")
-names(COV)
-plot(COV[[1]])
+#usar la variable PPT_CLIP como referencia para sobreescribir los resultados del krigging
+start <- Sys.time()
 COV_PROY <- projectRaster(COV[[1]], crs = CRS("+init=epsg:32618"),
                       method='ngb')
+print(Sys.time() - start)
+
 COV_SPG <- as(COV_PROY, "SpatialGridDataFrame")
-plot(COV_SPG)
-proj4string(dat_sp) <- CRS("+init=epsg:32618")
-names(dat_sp)
-library(automap)
-kriging_result = autoKrige(L~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
 
-kriging_result_2 = autoKrige(u~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
-
+#procedimiento de hacer interpolacion automatica para diferentes variables de los datos espacializados
+#kriging_result = autoKrige(L~1, input_data=dat_sp,new_data=COV_SPG,verbose = T) #TODO no funciona porque falta la variable L
+#kriging_result_2 = autoKrige(u~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
 kriging_result_3 = autoKrige(v~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
-
-kriging_result_4 = autoKrige(Luv~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
-
+#kriging_result_4 = autoKrige(Luv~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
 kriging_result_5 = autoKrige(r~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
-
-kriging_result_6 = autoKrige(r~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
-
+kriging_result_6 = autoKrige(g~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
 kriging_result_7 = autoKrige(b~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
-
 kriging_result_8 = autoKrige(red_ind~1, input_data=dat_sp,new_data=COV_SPG,verbose = T)
 
-
+#conversion a formato raster de los resultados
 OKpred_1 <- raster(kriging_result$krige_output[1])
 OKpredsd_1 <- raster(kriging_result$krige_output[3])
-
 
 OKpred_2 <- raster(kriging_result_2$krige_output[1])
 OKpredsd_2 <- raster(kriging_result_2$krige_output[3])
@@ -205,7 +160,7 @@ OKpredsd_7 <- raster(kriging_result_7$krige_output[3])
 OKpred_8 <- raster(kriging_result_8$krige_output[1])
 OKpredsd_8 <- raster(kriging_result_8$krige_output[3])
 
-
+#exportar resultados
 writeRaster(OKpred_1,"OK_PRED_L_H2.tif",overwrite=T)
 writeRaster(OKpredsd_1,"OK_PREDSD_L_H2.tif",overwrite=T)
 
@@ -230,38 +185,32 @@ writeRaster(OKpredsd_7,"OK_PREDSD_b_H2.tif",overwrite=T)
 writeRaster(OKpred_8,"OK_PRED_RI_H2.tif",overwrite=T)
 writeRaster(OKpredsd_8,"OK_PREDSD_RI_H2.tif",overwrite=T)
 
-
-kr.cv = autoKrige.cv(L~1, input_data=dat_sp, nfold = 10)
+#usar krigging basado en crosvalidacion
+#kr.cv = autoKrige.cv(L~1, input_data=dat_sp, nfold = 10)
 kr.cv_2= autoKrige.cv(u~1, input_data=dat_sp, nfold = 10)
 kr.cv_3 = autoKrige.cv(v~1, input_data=dat_sp, nfold = 10)
-kr.cv_4 = autoKrige.cv(Luv~1, input_data=dat_sp, nfold = 10)
+#kr.cv_4 = autoKrige.cv(Luv~1, input_data=dat_sp, nfold = 10)
 kr.cv_5 = autoKrige.cv(r~1, input_data=dat_sp, nfold = 10)
 kr.cv_6 = autoKrige.cv(g~1, input_data=dat_sp, nfold = 10)
 kr.cv_7 = autoKrige.cv(b~1, input_data=dat_sp, nfold = 10)
 kr.cv_8 = autoKrige.cv(red_ind~1, input_data=dat_sp, nfold = 10)
-summary(kr.cv)
-summary(kr.cv_2)
-summary(kr.cv_3)
-summary(kr.cv_4)
-summary(kr.cv_5)
-summary(kr.cv_6)
-summary(kr.cv_7)
-summary(kr.cv_8)
 
-##Interpolaci�n IDW
-library(gstat)
-lim <- readOGR(dsn="E:/SIBUNDOY/SIBUNDOY_covariables/COV_5M/LIMITE_SIBUNDOY_WGS84.shp")
+##Interpolacion 2: IDW##
+#cargar limite
+lim <- readOGR(dsn='LIMITE_SIBUNDOY_WGS84.shp')
 lim <- spTransform(lim,CRS("+init=epsg:32618"))
 
-
+#implementar IDW
 idw_r<-idw(formula=r~1, locations=dat_sp, newdata=COV_SPG)
+
+#conversion a formato raster de los resultados
 idw_r <- raster(idw_r, 'var1.pred')
-plot(idw_r)
+
+#exportar resultados
 idw_r <- idw_r*255
-writeRaster(idw_r, "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/idw_r.tif", overwrite=T)
-#idw_r <- mask(idw_r, lim)
+writeRaster(idw_r, "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/idw_r.tif", overwrite=T)
 
-
+#y continua...
 idw_g<-idw(formula=g~1, locations=dat_sp, newdata=COV_SPG)
 idw_g <- raster(idw_g, 'var1.pred')
 plot(idw_g)
@@ -276,17 +225,15 @@ idw_b <- idw_b*255
 writeRaster(idw_b,"idw_b_H2.tif",overwrite=T)
 #idw_b <- mask(idw_b, lim)
 
-
-
-
+##Comparar resultados indices de color##
 ##OTROS INDICES DE COLOR
-OK_R <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/OK_PRED_R_Clip.tif")
-OK_G <- raster("OK_PRED_G_Clip.tif")
-OK_B <- raster("OK_PRED_B_Clip.tif")
+OK_R <- raster('OK_PRED_R_Clip.tif')
+OK_G <- raster('OK_PRED_G_Clip.tif')
+OK_B <- raster('OK_PRED_B_Clip.tif')
 
-IDW_R <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/idw_r_clip.tif")
-IDW_G <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/idw_g_clip.tif")
-IDW_B <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/idw_b_clip.tif")
+IDW_R <- raster('idw_r_clip.tif')
+IDW_G <- raster('idw_g_clip.tif')
+IDW_B <- raster('idw_b_clip.tif')
 
 OK_CI <- (OK_R-OK_G)/(OK_R+OK_G)
 IDW_CI <- (IDW_R-IDW_G)/(IDW_R+IDW_G)
@@ -318,16 +265,8 @@ par(mfrow=c(1,2))
 plot(OK_HI)
 plot(IDW_HI)
 
-#plot(r)
-#points(p)
-
-###======NUMERICAL VARIABLES- ORDINARY KRIGING=====
-
+##Indice de Moran##
 # MORAN INDEX
-library(spdep)
-names(dat_sp)
-proj4string(dat_sp) <- CRS("+init=epsg:3116")
-dat_sp <- spTransform(dat_sp,CRS("+init=epsg:3116"))
 cord <- coordinates(dat_sp)
 k1 <- knn2nb(knearneigh(cord))
 all.linked <- max(unlist(nbdists(k1, cord)))
@@ -347,14 +286,14 @@ i.moran <- moran.mc(dat_sp$b, list=lw, nsim=999)
 i.moran
 
 ###Indice de enrojecimiento
-i.moran <- moran.mc(dat_sp$REDIND, list=lw, nsim=999)
+i.moran <- moran.mc(dat_sp$red_ind, list=lw, nsim=999)
 i.moran
 
+##using GSTAT and GEOR packages##
 ###Semiautomatic - using GSTAT and GEOR packages
-library(geoR)
 dat_sp2 <- data.frame(x=coordinates(dat_sp)[,1],y=coordinates(dat_sp)[,2],
-                      RI=dat_sp$REDIND, r=dat_sp$r,g=dat_sp$g,b=dat_sp$b)
-dat_sp2
+                      RI=dat_sp$red_ind, r=dat_sp$r,g=dat_sp$g,b=dat_sp$b)
+
 geo = as.geodata(dat_sp2, coords.col = 1:2, data.col = 4)
 plot(geo, scatter3d = TRUE)
 
@@ -365,11 +304,8 @@ plot(var2,ylim=c(0,0.018))
 
 plot(variog4(geo))### max.dist maxima distancia a la cual calcular la semivarianza
 
-x11()
 (ev=eyefit(var2))
-ev
 ev[[1]]
-
 
 mod1cub=variofit(var2,ini=ev[[1]]$cov.pars,nugget=ev[[1]]$nugget,fix.nugget=F,cov.model=ev[[1]]$cov.model,weights="equal")
 mod2cub=variofit(var2,ini=ev[[1]]$cov.pars,nugget=ev[[1]]$nugget,fix.nugget=F,cov.model=ev[[1]]$cov.model,weights="npairs")
@@ -399,19 +335,12 @@ cvwlsncressieexp <- krige.cv(pH ~ 1, txt_sp, ve.fit3exp, maxdist = 15428.47)
 cvmlexp <- krige.cv(pH ~ 1, txt_sp, ve.fit4exp, maxdist = 15428.47)
 cvremlexp <- krige.cv(pH ~ 1, txt_sp, ve.fit5exp, maxdist = 15428.47)
 
-
+##using GSTAT and GEOR packages##
 #Estructurando matriz de regresi�n
-setwd("E:\\SIBUNDOY\\SIBUNDOY_covariables\\COV_5M\\COV_COLOR")
-COV <- stack("COV_VF.tif")
-names(COV) <- readRDS("NAMES_COV_VF_COLOR.rds")
-names(COV)
-COV
-plot(COV[[30]])
+setwd('/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/data/agrologia/Sibundoy/Modelos_sibundoy/MOD_5M/COV_COLOR')
+COV <- stack('COV_VF.tif')
+names(COV) <- readRDS('NAMES_COV_VF_COLOR.rds')
 
-
-
-names(profiles@horizons)
-head(profiles$id_horz)
 indx1 <- grep('_1$', profiles$id_horz)#Primer horizonte
 indx2 <- grep('_2$', profiles$id_horz)#Primer horizonte
 dat <- data.frame(id=profiles$id[indx1],top=profiles$top[indx1], bottom=profiles$bottom[indx1],
@@ -422,56 +351,31 @@ dat <- data.frame(id=profiles$id[indx1],top=profiles$top[indx1], bottom=profiles
                   cl_txt_2=profiles$txt[indx2],naf_2=profiles$naf[indx2],
                   hcl_2=profiles$hcl[indx2],h2o2_2=profiles$h2o2[indx2],
                   dip_2=profiles$dip[indx2],pH_2=profiles$ph[indx2],esp_2=profiles$esp[indx2])
-dat
 
-names(profiles@site)
-coordinates(profiles)
 dat_subset <- data.frame(coordinates(profiles),id=profiles@site$id,orden=profiles@site$soilorder,suborden=profiles@site$suborder,grangrupo=profiles@site$greatgroup,subgrupo=profiles@site$subgroup)
 dat_subset <- join(dat_subset, dat, type="inner")
-
-dim(dat_subset)
-summary(dat_subset)
-names(dat_subset)
 dat_subset$id <- as.factor(dat_subset$id)
-str(dat_subset)
-
 
 #### Juntamos covariables con los datos  ####
-# Convert to spatial points df and project
-library(sp)
+
+#extraccion
 dat_subset_sp <- dat_subset
 coordinates(dat_subset_sp) <- ~ Este + Norte
 str(dat_subset_sp)
 dat_subset_sp
 proy <- CRS("+proj=longlat +datum=WGS84")
 dat_subset_sp@proj4string <- proy
-
-start <- Sys.time()
 dat_subset <- cbind(dat_subset, extract(COV, dat_subset_sp))
-summary(dat_subset)
-names(dat_subset)
-print(Sys.time() - start)
 
+#exportar datos extraidos
 write.csv(dat_subset, 'RegMatrix_VF_Antes_observaciones.csv')
-dim(dat_subset)
 dat_subset <- dat_subset[complete.cases(dat_subset[,]),]
-dim(dat_subset)
-write.csv(dat_subset, '../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones.csv')
-dim(dat_subset)
+write.csv(dat_subset, 'RegMatrix_VF_observaciones.csv')
 
 #importacia de covariables para orden
-dat_subset <- read.csv('../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones.csv', sep=",")
-names(dat_subset)
-head(dat_subset)
-library(raster)
-library(caret)
-library(doMC)
-library(doParallel)
-names(dat_subset)
-dim(dat_subset)
-summary(dat_subset)
+dat_subset <- read.csv('RegMatrix_VF_observaciones.csv', sep=",")
 dat_subset <- na.omit(dat_subset)
-dim(dat_subset)
+
 dat_subset$orden <- factor(dat_subset$orden)
 dat_subset$Cobertura <- factor(dat_subset$Cobertura)
 dat_subset$dip_1<- factor(dat_subset$dip_1)
@@ -482,12 +386,10 @@ dat_subset$T_Relieve <- factor(dat_subset$T_Relieve)
 dat_subset$F_TERRENO <- factor(dat_subset$F_TERRENO)
 dat_subset$MAT_PARENTAL <- factor(dat_subset$MAT_PARENTAL)
 
-str(dat_subset)
-names(dat_subset)
-
-cl <- makeCluster(detectCores(), type='PSOCK')
+#iniciar proceso RFE
+cl <- makeCluster(detectCores()-1, type='PSOCK')
 registerDoParallel(cl)
-control2 <- rfeControl(functions=rfFuncs, method="repeatdcv", number=10, repeats=10)
+control2 <- rfeControl(functions=rfFuncs, method="repeatdcv", number=10, repeats=2)
 (RFE_RF_model <- rfe(dat_subset[-c(1:26,32)], dat_subset[,5], sizes=c(1:10), rfeControl=control2))
 plot(RFE_RF_model, type=c("g", "o"))
 predictors(RFE_RF_model)[1:5]
@@ -495,38 +397,27 @@ predictors(RFE_RF_model)[1:5]
 predictors(RFE_RF_model2)
 stopCluster(cl = cl)
 
+##usando metodos de aprendizajes de maquinas##
+##MODELAR ORDEN
+##crear formula
+fm = as.formula(paste("orden~", paste0(names(COV)[c(9,3,2,21,30)],collapse = "+")))
 
-names(dat_subset)
-names(COV)
-plot(COV84[[2]])
-fm = as.formula(paste("orden~", paste0(names(COV)[c(9,3,2,21,30)],collapse = "+"))) 
-fm
-library(randomForest)
-library(caret)
-
-
-##RANDOM FOREST
-# Default 10-fold cross-validation
+##Random Forest
+# Usar por defecto 10-fold cross-validation
 ctrl <- trainControl(method = "cv", savePred=T)
 
 # Search for the best mtry parameter
-names(dat_subset)
-library(caret)
-library(randomForest)
 dat_subset_sp <- dat_subset
 coordinates(dat_subset_sp) <- ~ Este + Norte
-str(dat_subset_sp)
-names(dat_subset_sp)
 proy <- CRS("+proj=longlat +datum=WGS84")
 dat_subset_sp@proj4string <- proy
-#ls(getModelInfo())
-(rfmodel <- train(fm, data=dat_subset_sp@data, method = "rf", trControl = ctrl, 
+
+(rfmodel <- train(fm, data=dat_subset_sp@data, method = "rf", trControl = ctrl,
                  importance=TRUE))
 rfmodel$pred[,1]
 xtab <- table(rfmodel$pred[,1], rfmodel$pred[,2])
 con.mat <- confusionMatrix(xtab)
 con.mat
-
 
 varImpPlot(rfmodel[11][[1]])
 plot(rfmodel[11][[1]])
@@ -534,19 +425,13 @@ pred <- predict(COV, rfmodel,filename = "RF_5m_PRED_orden_17092018.tif",
                 format = "GTiff", overwrite = T)
 plot(pred)
 
-
-
-
-##REGRESI�N LOG�STICA MULTINOMIAL
-library(nnet)
+##REGRESION MULTINOMIAL LOGISTICA
 set.seed(8)
 training <- sample(nrow(dat_subset), 0.7 * nrow(dat_subset))
 rlmodel <- multinom(fm, data = dat_subset[training, ])
 summary(rlmodel)
 probs.rlmodel<- fitted(rlmodel)
 pred.rlmodel <- predict(rlmodel)
-
-str(rlmodel)
 
 xtab <- table(dat_subset$naf_1[training],pred.rlmodel)
 con.mat <- confusionMatrix(xtab)
@@ -557,7 +442,7 @@ xtab.v <- table(dat_subset$NAF_1[-training],V.pred.rlmodel)
 con.mat.v <- confusionMatrix(xtab)
 con.mat.v
 
-map.RLMN.c <- predict(COV84, rlmodel, type = "class",filename = "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_DIP_1_CAJ_10092018.tif",
+map.RLMN.c <- predict(COV84, rlmodel, type = "class",filename = "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_DIP_1_CAJ_10092018.tif",
                       format = "GTiff", overwrite = T)
 
 plot(map.RLMN.c)
@@ -567,9 +452,8 @@ map.RLMN.p4 <- predict(COV84, rlmodel, type = "probs", index = 4,
 
 plot(map.RLMN.p4)
 
-
 map.RLMN.p1 <- predict(COV84, rlmodel, type = "probs", index = 1,
-                       filename = "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PROB1_NAF_1_CAJ_10092018.tif", format = "GTiff", overwrite = T)
+                       filename = "RLMN_5m_PROB1_NAF_1_CAJ_10092018.tif", format = "GTiff", overwrite = T)
 
 plot(map.RLMN.p1)
 
@@ -579,39 +463,32 @@ map.RLMN.p3 <- predict(COV84, rlmodel, type = "probs", index = 3,
 
 plot(map.RLMN.p3)
 
+##MODELAR TIPO DE SUELO
+RF_NAF_C <- raster('RF_5m_PRED_NAF_1_CAJ_10092018.tif')
+RL_NAF_C <- raster('RLMN_5m_PRED_NAF_1_CAJ_10092018.tif')
+RL_NAF_P4 <- raster('RLMN_5m_PROB4_NAF_1_CAJ_06092018.tif')
+RL_NAF_P1 <- raster('RLMN_5m_PROB1_NAF_1_CAJ_06092018.tif')
+RL_NAF_P3 <- raster('RLMN_5m_PROB3_NAF_1_CAJ_06092018.tif')
 
+RF_DIP_C <- raster('RF_5m_PRED_DIP_1_CAJ_10092018.tif')
+RL_DIP_C <- raster('RLMN_5m_PRED_DIP_1_CAJ_06092018.tif')
+RL_DIP_P4 <-  raster('RLMN_5m_PROB4_DIP_1_CAJ_06092018.tif')
+RL_DIP_P1 <- raster('RLMN_5m_PROB1_DIP_1_CAJ_06092018.tif')
+RL_DIP_P3 <-  raster('RLMN_5m_PROB3_DIP_1_CAJ_06092018.tif')
 
-#####MODELANDO TIPO DE SUELO
-
-COV84
-RF_NAF_C <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_NAF_1_CAJ_10092018.tif")
-RL_NAF_C <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_NAF_1_CAJ_10092018.tif")
-RL_NAF_P4 <- raster("RLMN_5m_PROB4_NAF_1_CAJ_06092018.tif")
-RL_NAF_P1 <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PROB1_NAF_1_CAJ_06092018.tif")
-RL_NAF_P3 <- raster("RLMN_5m_PROB3_NAF_1_CAJ_06092018.tif")
-
-RF_DIP_C <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_DIP_1_CAJ_10092018.tif")
-RL_DIP_C <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_DIP_1_CAJ_06092018.tif")
-RL_DIP_P4 <-  raster("RLMN_5m_PROB4_DIP_1_CAJ_06092018.tif")
-RL_DIP_P1 <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PROB1_DIP_1_CAJ_06092018.tif")
-RL_DIP_P3 <-  raster("RLMN_5m_PROB3_DIP_1_CAJ_06092018.tif")
-
-RF_H2O2_C <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_H2O2_1_CAJ_06092018.tif")
-RL_H2O2_C <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_H2O2_1_CAJ_06092018.tif")
-RL_H2O2_P4 <- raster("RLMN_5m_PROB4_H2O2_1_CAJ_06092018.tif")
-RL_H2O2_P1 <- raster("../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PROB1_H2O2_1_CAJ_06092018.tif")
-RL_H2O2_P2 <- raster("RLMN_5m_PROB2_H2O2_1_CAJ_06092018.tif")
+RF_H2O2_C <- raster('RF_5m_PRED_H2O2_1_CAJ_06092018.tif')
+RL_H2O2_C <- raster('RLMN_5m_PRED_H2O2_1_CAJ_06092018.tif')
+RL_H2O2_P4 <- raster('RLMN_5m_PROB4_H2O2_1_CAJ_06092018.tif')
+RL_H2O2_P1 <- raster('RLMN_5m_PROB1_H2O2_1_CAJ_06092018.tif')
+RL_H2O2_P2 <- raster('RLMN_5m_PROB2_H2O2_1_CAJ_06092018.tif')
 
 COV84 <- stack(COV84, 
       RF_NAF_C,
       RL_NAF_C,
       RF_DIP_C)
 
-
-names(COV84)
-writeRaster(COV84, "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/COV_SIB_WGS84_CAJ_REACCIONES_VF.tif", format="GTiff", overwrite=T)
-saveRDS(names(COV84), "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/NAMES_COV_SIB_WGS84_CAJ_REACCIONES_VF.rds")
-
+writeRaster(COV84, 'COV_SIB_WGS84_CAJ_REACCIONES_VF.tif', format='GTiff', overwrite=T)
+saveRDS(names(COV84), 'NAMES_COV_SIB_WGS84_CAJ_REACCIONES_VF.rds')
 
 dat_subset_sp <- dat_subset
 coordinates(dat_subset_sp) <- ~ Este + Norte
@@ -629,11 +506,11 @@ print(Sys.time() - start)
 names(dat_subset)
 dat_subset <- dat_subset[,-c(49:70)]
 dim(dat_subset)
-write.csv(dat_subset, '../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_Antes_observaciones_reacciones.csv')
+write.csv(dat_subset, '../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_Antes_observaciones_reacciones.csv')
 dim(dat_subset)
 dat_subset <- dat_subset[complete.cases(dat_subset[,]),]
 dim(dat_subset)
-write.csv(dat_subset, '../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv')
+write.csv(dat_subset, '../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv')
 dim(dat_subset)
 names(dat_subset)
 colnames(dat_subset)[c(49:51)] <- c("RF_NAF_C",
@@ -646,10 +523,10 @@ names(COV84)[23:25]  <- c("RF_NAF_C",
 
 colnames(dat_subset)
 names(dat_subset)
-write.csv(dat_subset, '../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv')
+write.csv(dat_subset, '../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv')
 
 #importacia de covariables para orden
-dat_subset <- read.csv('../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv', sep=",")
+dat_subset <- read.csv('../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv', sep=",")
 names(dat_subset)
 head(dat_subset)
 library(raster)
@@ -715,7 +592,7 @@ con.mat
 
 varImpPlot(rfmodel[11][[1]])
 plot(rfmodel[11][[1]])
-pred <- predict(COV84, rfmodel,filename = "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_orden_CAJ_10092018.tif",
+pred <- predict(COV84, rfmodel,filename = "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_orden_CAJ_10092018.tif",
                 format = "GTiff", overwrite = T)
 plot(pred)
 
@@ -744,7 +621,7 @@ xtab.v <- table(dat_subset$suborden[-training],V.pred.rlmodel)
 con.mat.v <- confusionMatrix(xtab)
 con.mat.v
 
-map.RLMN.c <- predict(COV84, rlmodel, type = "class",filename = "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_orden_CAJ_06092018.tif",
+map.RLMN.c <- predict(COV84, rlmodel, type = "class",filename = "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RLMN_5m_PRED_orden_CAJ_06092018.tif",
                       format = "GTiff", overwrite = T)
 
 plot(map.RLMN.c)
@@ -888,7 +765,7 @@ plot(rfmodel[11][[1]])
 pred <- predict(COV84, rfmodel)
 plot(pred)
 
-writeRaster(pred, filename = "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_SUBORDEN_03092018.tif",
+writeRaster(pred, filename = "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_5m_PRED_SUBORDEN_03092018.tif",
             overwrite=TRUE)
 
 
@@ -959,13 +836,13 @@ unc <- clusterR(COV84, predict, args=list(model=model,what=sd))
 mean <- clusterR(COV84, predict, 
                  args=list(model=model, what=mean))
 plot(mean, main='OCSKGM based in all data')
-writeRaster(mean, "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_PRED_SIB_5M_13072017.tif")
+writeRaster(mean, "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_PRED_SIB_5M_13072017.tif")
 
 # The total uncertainty is the sum of sensitivity and model 
 # uncertainty
 unc <- unc + sensitivity
 plot(unc,main="Inceridumbre COS30cm Sibundoy")
-writeRaster(unc, "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_UNC_SIB_5M_13072017.tif")
+writeRaster(unc, "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RF_UNC_SIB_5M_13072017.tif")
 # Express the uncertainty in percent % (divide by the mean)
 #Total_unc_Percent <- exp(unc)/exp(mean)
 endCluster()
@@ -1121,7 +998,7 @@ beginCluster()
 (predEns <- clusterR(COV_ens, predict, args=list(model=ens, keepNA=FALSE)))
 plot(predEns)
 dir()
-writeRaster(predEns, "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/ENS_PRED_SIB_5M_16072018_V2.tif", overwrite=TRUE)
+writeRaster(predEns, "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/ENS_PRED_SIB_5M_16072018_V2.tif", overwrite=TRUE)
 endCluster()
 
 #uncertainty
@@ -1134,7 +1011,7 @@ beginCluster(6,type="SOCK")
 unc <- clusterR(COV_ens,predict, args=list(model=model,what=sd))
 plot(unc)
 
-writeRaster(unc, "../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/ENS_UNC_SIB_5M_16072018_V2.tif", overwrite=TRUE)
+writeRaster(unc, "../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/ENS_UNC_SIB_5M_16072018_V2.tif", overwrite=TRUE)
 
 
 

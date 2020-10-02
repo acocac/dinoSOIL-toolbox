@@ -369,7 +369,7 @@ library(sp)
 library(readxl)
 getwd()
 
-list.files(".")
+list.files("..")
 excel_sheets("SIBUNDOY_VF.xlsx")
 base <- data.frame(read_excel("SIBUNDOY_VF.xlsx", sheet = "BASE_DEF"))
 dim(base)

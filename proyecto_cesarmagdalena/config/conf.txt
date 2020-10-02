@@ -8,7 +8,7 @@ Bogota; Septiembre 2020
 #######################
 Rutas
 #######################
-path = /Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy
+path = /Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena
 
 #######################
 Aprendizaje de Maquinas
