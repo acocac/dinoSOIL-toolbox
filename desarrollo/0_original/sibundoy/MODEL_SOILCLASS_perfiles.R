@@ -96,7 +96,7 @@ dat_subset$id <- as.factor(dat_subset$id)
 str(dat_subset)
 
 
-#### Juntamos covariables con los datos  ####
+#### Juntamos 1_covariables con los datos  ####
 # Convert to spatial points df and project
 library(sp)
 dat_subset_sp <- dat_subset
@@ -117,7 +117,7 @@ dat_subset <- dat_subset[complete.cases(dat_subset[,]),]
 write.csv(dat_subset, 'RegMatrix_VF_observaciones.csv')
 dim(dat_subset)
 
-#importacia de covariables para orden
+#importacia de 1_covariables para orden
 dat_subset <- read.csv('RegMatrix_VF_observaciones.csv',sep=";")
 names(dat_subset)
 head(dat_subset)

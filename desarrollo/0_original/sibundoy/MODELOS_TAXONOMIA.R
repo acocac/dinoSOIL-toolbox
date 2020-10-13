@@ -19,7 +19,7 @@ names(COV)
 COV
 plot(COV[[30]])
 
-#importacia de covariables para orden
+#importacia de 1_covariables para orden
 dat_subset <- read.csv('E:\\SIBUNDOY\\SIBUNDOY_covariables\\COV_5M\\COV_COLOR\\RegMatrix_VF_observaciones.csv',sep=";")
 names(dat_subset)
 head(dat_subset)

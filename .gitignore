@@ -5,6 +5,10 @@ proyecto_sibundoy/modelos
 proyecto_sibundoy/datos/entrada/1_covariables/color/*
 proyecto_sibundoy/exploratorio
 proyecto_sibundoy/exploratorio/*
+proyecto_cesarmagdalena/datos/entrada/1_covariables/*
+*.csv
+*.rds
+*.RData
 
 #model
 *.pickle
@@ -19,6 +23,5 @@ proyecto_sibundoy/exploratorio/*
 .idea/
 
 #R files
-*.RData
 *.Rapp.history
 *.Rhistory

@@ -7,20 +7,28 @@
 rm(list=ls())
 
 setwd("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\CODIGOS")
-library(readxl)
-library(raster)
-library(sp)
-library(rgdal)
-library(magrittr)
-library(gdalUtilities)
-library(rgeos)
+
+pckg = c('readxl','raster','sp',
+         'rgdal','magrittr','gdalUtilities',
+          'rgeos','sf')
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
+}
+
+lapply(pckg,usePackage)
 
 #-----------------------------------
-#Carga de limite de zona de estudio
+#Carga de limite de zona de estudio y verificar que es solo un único poligono
 #-----------------------------------
-
-lim <- readOGR("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\LIMITE\\LIMTE_PT2020.shp")
-
+lim <- readOGR('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite')
+if (dim(lim)[1] > 1){
+  lim$id <- 0
+  lim <- aggregate(lim, 'id')
+}
+plot(lim)
 #----------------------
 #Carga de 1_covariables
 #----------------------
@@ -38,7 +46,18 @@ plot(cov[[1]])
 plot(lim,add=T)
 
 #Clima
-clima <- readOGR("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\COVARIABLES\\Clima\\CLIMA_PT_2020_vf.shp")
+clima_files <- list.files(path = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/clima', pattern = "\\.shp$", full.names=TRUE)
+clima_list <- lapply(clima_files, readOGR)
+clima_list_target <- lapply(listOfShp, "[", c('Denominaci'))
+clima_combined <- as_Spatial(do.call(what = sf:::rbind.sf, args=clima_list_target))
+clima2 <- raster::intersect(clima_combined, lim)
+clima2 <- aggregate(clima2, 'Denominaci')
+plot(clima2)
+
+#TODO - comparar resultados clima - diferencias
+clima <- readOGR("/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/guia/CIAF/COVARIABLES/Clima/CLIMA_PT_2020_vf.shp")
+plot(clima)
+
 clima <- spTransform (clima, CRS=projection(cov))
 clima$denom_char <- as.factor(clima$DENOMINACI)
 clima_rast <- gRasterize(clima, cov, "denom_char")

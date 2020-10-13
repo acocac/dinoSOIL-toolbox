@@ -11,8 +11,8 @@
 
 #Perform recursive feature elimination
 findOutliers <- function(col,coef){
-  cuartil.primero = quantile(col,0.05)
-  cuartil.tercero = quantile(col,0.95)
+  cuartil.primero = quantile(col,0.05, na.rm=TRUE)
+  cuartil.tercero = quantile(col,0.95, na.rm=TRUE)
   iqr <- cuartil.tercero - cuartil.primero
 
   extremo.superior.outlier <- cuartil.tercero + coef * iqr

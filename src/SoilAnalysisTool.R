@@ -26,7 +26,7 @@ r.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuel
 
 ### Directorio del proyecto ### #copiar la ruta completa donde se aloja el proyecto (carpeta proyecto)
 # Indicar la ruta al proyecto
-proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy'
+proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena'
 # Cargar el archivo de configuracion
 conf.file = paste0(proyecto.dir,'/config/conf.txt')
 # Cargar funciones de interaccion con el usuario
@@ -35,99 +35,92 @@ source(paste0(r.dir,'/functions/0a_UserArgs.R'))
 ########################################################
 ####PARTE 1 - Preprocesamiento de la base de datos #####
 ########################################################
-
+##TODO falta verticalizacion de las observaciones
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/1_Preprocesamiento.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 OBSERVACIONES_20160603_VF.xls, pregunta 2 RESHAPE, pregunta 3 Obs
+#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL, pregunta 4 COD_PERFIL
 args_p1 <- prompt.user.part1()
 
 #### ejecutar la funcion del modulo ###
-Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]])
+Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]],args_p1[[4]])
 
 
 ########################################################
-####PARTE 2 - Preprocesamiento de las covariables ######
+####PARTE 2 - Generación de los Datos                ###
 ########################################################
 ##TODO
 
 
 ########################################################
-#####PARTE 3 - Analisis Exploratorio de los Datos ######
+#####PARTE 3a - Analisis Exploratorio de los Datos ######
 ########################################################
 ##TODO
 
 ########################################################
 #####PARTE 3b - Explotarorio RFE                  ######
 ########################################################
-
+##TODO Done
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/3b_RFE.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 OBSERVACIONES_20160603_VF.xls, pregunta 2 RESHAPE, pregunta 3 Obs
-#args_p1 <- prompt.user.part1()
+#para el demo llenar pregunta 1 Variable Objetivo
+args_p3b <- prompt.user.part3b()
 
 #### ejecutar la funcion del modulo ###
-ExpRFE()
-
-
-########################################################
-#####PARTE 4 - Crear datos de entrenamiento     ########
-########################################################
-##TODO
-
+ExpRFE(args_p3b[[1]])
 
 ########################################################
-#####PARTE 5a - Modelacion ML: Ejecutar algoritmos  ####
+#####PARTE 4a - Modelacion ML: Ejecutar algoritmos  ####
 ########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/5a_ModEjecutar.R'))
+source(paste0(r.dir,'/modules/4a_ModEjecutar.R'))
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 C45
-#args_p2 <- prompt.user.part2()
+args_p4a <- prompt.user.part4a()
 
 #### ejecutar la funcion del modulo ###
-ModEntrenamiento()
+ModEntrenamiento(args_p4a[[1]])
 
 
 ###########################################################
-#####PARTE 5b - Modelacion ML: Identificar mejor modelo  ##
+#####PARTE 4b - Modelacion ML: Identificar mejor modelo  ##
 ###########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/5b_ModMejor.R'))
+source(paste0(r.dir,'/modules/4b_ModMejor.R'))
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 C45
-#args_p2 <- prompt.user.part2()
+args_p4b <- prompt.user.part4b()
 
 #### ejecutar la funcion del modulo ###
-ModMejorModelo()
+ModMejorModelo(args_p4b[[1]])
 
 
 ###########################################################
-#####PARTE 5c - Modelacion ML: Sensibilidad/Incertidumbre #
+#####PARTE 4c - Modelacion ML: Sensibilidad/Incertidumbre #
 ###########################################################
 ##TODO
 
 
 ###########################################################
-#####PARTE 5d - Modelacion: Uso del modelo               ##
+#####PARTE 4d - Modelacion: Uso del modelo               ##
 ###########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/5d_ModUso.R'))
+source(paste0(r.dir,'/modules/4d_ModUso.R'))
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 C45
-#args_p2 <- prompt.user.part2()
+args_p4d <- prompt.user.part4d()
 
 #### ejecutar la funcion del modulo ###
-ModUso()
+ModUso(args_p4d[[1]])
 
 ###########################################################
 #####                    FINAL                        #####

@@ -17,11 +17,22 @@ conf.list <- lapply(strsplit(readLines(x, warn=FALSE)," "), as.character)
 root.index <- grep("*path",conf.list)
 root.path = conf.list[[root.index]][[length(conf.list[[root.index]])]]
 
-#read models
-modelos.index <- grep("*modelos",conf.list)
-root.modelos = conf.list[[modelos.index]][[length(conf.list[[modelos.index]])]]
+#leer variables objetivo categoricas
+variables.categoricas.index <- grep("*variables.categoricas",conf.list)
+root.vars.categoricas = conf.list[[variables.categoricas.index]][[length(conf.list[[variables.categoricas.index]])]]
 
-newlist = list(root.path, root.modelos)
+#leer variables objetivo continuas
+variables.continuas.index <- grep("*variables.continuas",conf.list)
+root.vars.continuas = conf.list[[variables.continuas.index]][[length(conf.list[[variables.continuas.index]])]]
+
+#read models
+modelos.categoricas.index <- grep("*modelos.categoricas",conf.list)
+root.modelos.categoricas = conf.list[[modelos.categoricas.index]][[length(conf.list[[modelos.categoricas.index]])]]
+
+modelos.continuas.index <- grep("*modelos.continuas",conf.list)
+root.modelos.continuas = conf.list[[modelos.continuas.index]][[length(conf.list[[modelos.continuas.index]])]]
+
+newlist = list(root.path, root.vars.categoricas, root.vars.continuas, root.modelos.categoricas, root.modelos.continuas)
 return(newlist)
 }
 

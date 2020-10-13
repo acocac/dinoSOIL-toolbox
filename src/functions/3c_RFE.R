@@ -65,7 +65,7 @@ perform_rfe <- function(response, base_learner = "ranger", type = "classificatio
       ctrl <- caret::trainControl(method = "repeatedcv",
                                   number = 10,
                                   rep = 1,
-                                  sampling = "down",
+                                  #sampling = ifelse(type == "classification", 'down', FALSE),
                                   verbose = FALSE,
                                   allowParallel = TRUE,
                                   savePredictions = TRUE,

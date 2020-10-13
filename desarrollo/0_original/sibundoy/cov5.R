@@ -149,7 +149,7 @@ dat_subset$PERFIL <- as.factor(dat_subset$PERFIL)
 
 str(dat_subset)
 
-#### Juntamos covariables con los datos  ####
+#### Juntamos 1_covariables con los datos  ####
 # Convert to spatial points df and project
 library(sp)
 dat_subset_sp <- dat_subset

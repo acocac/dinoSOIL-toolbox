@@ -1,5 +1,5 @@
 ################################################
-Configuracion del proyecto Prueba
+Configuracion del proyecto Cesar Magdalena
 ################################################
 Por: Alejandro Coca-Castro
 Bogota; Septiembre 2020
@@ -11,8 +11,21 @@ Rutas
 path = /Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena
 
 #######################
+Variables objetivo
+#######################
+variables.categoricas = ORDEN
+variables.continuas = pH
+
+#######################
+Covariables
+#######################
+covars =
+
+#######################
 Aprendizaje de Maquinas
 #######################
-modelos = C45;SVM
+modelos.categoricas = C45;SVM
+modelos.continuas = RandomForest;xgbTree;glmnet;mlp
+metrica.continuas = RMSE
 
 ##################################################

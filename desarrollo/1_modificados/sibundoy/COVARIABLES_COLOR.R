@@ -15,7 +15,7 @@ usePackage <- function(p) {
 lapply(pckg,usePackage)
 
 ##PARA OBSERVACIONES
-#Cargando covariables disponibles
+#Cargando 1_covariables disponibles
 dir()
 COV84 <- stack('COV_SIB_WGS84_CAJ_VF.tif')
 names(COV84) <- readRDS('NAMES_COV_SIB_WGS84_CAJ_VF.rds')
@@ -356,7 +356,7 @@ dat_subset <- data.frame(coordinates(profiles),id=profiles@site$id,orden=profile
 dat_subset <- join(dat_subset, dat, type="inner")
 dat_subset$id <- as.factor(dat_subset$id)
 
-#### Juntamos covariables con los datos  ####
+#### Juntamos 1_covariables con los datos  ####
 
 #extraccion
 dat_subset_sp <- dat_subset
@@ -372,7 +372,7 @@ write.csv(dat_subset, 'RegMatrix_VF_Antes_observaciones.csv')
 dat_subset <- dat_subset[complete.cases(dat_subset[,]),]
 write.csv(dat_subset, 'RegMatrix_VF_observaciones.csv')
 
-#importacia de covariables para orden
+#importacia de 1_covariables para orden
 dat_subset <- read.csv('RegMatrix_VF_observaciones.csv', sep=",")
 dat_subset <- na.omit(dat_subset)
 
@@ -525,7 +525,7 @@ colnames(dat_subset)
 names(dat_subset)
 write.csv(dat_subset, '../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv')
 
-#importacia de covariables para orden
+#importacia de 1_covariables para orden
 dat_subset <- read.csv('../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv', sep=",")
 names(dat_subset)
 head(dat_subset)

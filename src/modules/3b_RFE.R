@@ -8,15 +8,23 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ExpRFE <- function(){
+ExpRFE <- function(VarObj){
+  ##
+  ## src1:
+  ## https://github.com/m2-rshiny/ProjetTut/blob/426fcff7642ffdd8f84743c88cc732e2bd617ca7/Archives/MLShiny2/analysis-UGA.R
+  ## https://github.com/raiajeet/AmExpert-2018-Machine-Learning-Hackathon-/blob/9f9c6711cc5c012bbf5520ebb0c188c0d3847c67/code.R
+  ## https://github.com/Edimer/DataSource.ai/blob/226e358b5d106d075b396324956bd28e05d96e51/PreciosApartamentos/codeR/LightGBM2.R
+  ## https://github.com/Edimer/Zindi.africa/blob/2802ad05863fdf3b5d52f602d545bc39d8b3affe/Prediction_Flood/R/lgbmR1.R
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
-  # Librerias
-  pckg = c('compareGroups','caret','raster',
-           'doParallel','dplyr','labelled',
-            'ranger', 'tidyverse', 'reshape2',
-            'hrbrthemes', 'ggpubr')
+  ## Librerias
+  #pckg = c('compareGroups','caret','raster',
+  #         'doParallel','dplyr','labelled',
+  #          'ranger', 'tidyverse', 'reshape2',
+  #          'hrbrthemes', 'ggpubr', 'Boruta')
+  pckg <- c('caret', 'doParallel', 'randomForest', 'Boruta', 'stringr')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -41,17 +49,17 @@ ExpRFE <- function(){
 
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
-  modelos.proyecto <- conf.args[[2]]
-  modelos.proyecto = sort(unlist(strsplit(modelos.proyecto,';')))
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  exploratorio.rfe.rdata = paste0(proyecto.directorio,'/exploratorio/Rdata')
-  dir.create(exploratorio.rfe.rdata, recursive = T, mode = "0777", showWarnings = F)
-  exploratorio.rfe.figuras = paste0(proyecto.directorio,'/exploratorio/figuras')
-  dir.create(exploratorio.rfe.figuras, recursive = T, mode = "0777", showWarnings = F)
+  exploratorio.variables.rds = paste0(proyecto.directorio,'/exploratorio/rds/',str_replace(VarObj,'[.]','-'))
+  dir.create(exploratorio.variables.rds, recursive = T, mode = "0777", showWarnings = F)
+  exploratorio.variables.figuras = paste0(proyecto.directorio,'/exploratorio/figuras/',str_replace(VarObj,'[.]','-'))
+  dir.create(exploratorio.variables.figuras, recursive = T, mode = "0777", showWarnings = F)
+  modelos.particion.datos = paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  dir.create(modelos.particion.datos, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -59,141 +67,85 @@ ExpRFE <- function(){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  datos.entrada <- paste0(proyecto.directorio,'/datos/entrada/1_covariables')
+  datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
 
   # Cargar matrix observaciones
-  dat_subset <- read.csv(paste0(datos.entrada,'/color/tabular/RegMatrix_VF_observaciones.csv'),sep=',')
+  matriz <- read.csv(paste0(datos.entrada,'/tabular/MatrixRegresion.csv'),sep=';')
 
-  dat_subset$orden <- factor(dat_subset$orden)
-  names_group <- levels(dat_subset$orden)
+  if (is(matriz[,VarObj],'numeric')){
 
-  explanatory_exclude <- c(1:26,32,49,60,28)
+    explanatory_exclude <- c(1:16,24,40,41) #algunas variables con artifactos (distribución espacial) son eliminadas y no tenidas en cuenta en RFE
 
-  final_df = data.frame(group=dat_subset$orden, dat_subset[,-c(explanatory_exclude)])
+    final_df <- data.frame(target=matriz[,VarObj], matriz[,-c(explanatory_exclude)])
 
-  gooddata = computeOutliers(dat_subset[,-c(explanatory_exclude)], type = 'remove')
-  good_df_q95 = final_df[gooddata,]
+    # identificar y remote outliers
+    gooddata = computeOutliers(matriz[,-c(explanatory_exclude)], type = 'remove')
+    good_df_q95 = final_df[gooddata,]
 
-  df_wnoise = good_df_q95
-  #remove variable(s) with ZeroVariance
-  df_wnoise[,nearZeroVar(df_wnoise)] = NULL
+    df_wnoise = good_df_q95
 
-  exploratorio.boxplot.archivo <- paste0(exploratorio.rfe.figuras,'/boxplots_variables.png')
-  if (!file.exists(exploratorio.boxplot.archivo)){
-    cat(paste0('El archivo boxplot de las variables para RFE NO existe, se va crear','\n'))
-    ##charts###
-    preProcValues <- preProcess(df_wnoise[-1], method = c("range"))
-    trainTransformed <- predict(preProcValues, df_wnoise[-1])
-    boxplot_df <- cbind(group=df_wnoise$group,trainTransformed)
-    target_reshape <- melt(boxplot_df, id = c('group'), value.name = "value")
+    # Remover variables con cero variabilidad
+    df_wnoise[,nearZeroVar(df_wnoise)] = NULL
 
-    explanatory_topograficas <- c('ANALYTICAL_HILLSHADING','ASPECT','CONVERGENCE_INDEX',
-                                  'CROSS_SEC_CURVATURE', 'DEM_05', 'FLOW_ACCUMULATION',
-                                  'LONGITUDINAL_CURVATURE', 'LS_FACTOR', 'RELATIVE_SLOPE_POSITION',
-                                  'SLOPE','TOPOGRAPHIC_WETNESS_INDEX','VALLEY_DEPTH',
-                                  'VERTICAL_DISTANCE_TO_CHANNEL_NETWORK')
+    # Datos finales
+    data <- df_wnoise
 
-    explanatory_clima <- c('PPT_CLIP','TEMP_CLIP')
+    # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
+    data <- data[complete.cases(data), ]
 
-    explanatory_vegetacion <- c('NDVI_SIBUNDOY_CLIP','Cobertura')
+    ##Conjunto de datos para entrenamiento y para validacion
+    set.seed(225)
+    inTrain <- createDataPartition(y = data[,1], p = .70, list = FALSE)
+    train_data <- as.data.frame(data[inTrain,])
+    test_data <- as.data.frame(data[-inTrain,])
+    particion <- list(train=train_data,test=test_data)
+    save(particion, file=paste0(modelos.particion.datos,'/particion.RData'))
 
-    explanatory_geomorfologia <- c('MAT_PARENTAL','T_Relieve', 'F_TERRENO')
-
-    explanatory_quimicacolores <- c('RF_5m_PRED_DIP_1_CAJ_10092018', 'idw_b','idw_g','idw_r','OK_Luv','OK_v','OK_u','OK_L',
-                             'idw_RI','OK_B','OK_G','OK_R')
-
-    p1 <- boxplot_covars(target_reshape, explanatory_topograficas, 'Topografia')
-    p2 <- boxplot_covars(target_reshape, explanatory_clima, 'Clima')
-    p3 <- boxplot_covars(target_reshape, explanatory_vegetacion, 'Vegetacion')
-    p4 <- boxplot_covars(target_reshape, explanatory_geomorfologia, 'Geomorfologia')
-    p5 <- boxplot_covars(target_reshape, explanatory_quimicacolores, 'Quimica y Color')
-
-    final_plot <- ggarrange(p1, p2, p3, p4, p5, legend = 'top', common.legend = TRUE, ncol=1, nrow=5)
-    final_plot <- annotate_figure(final_plot, top = text_grob('Orden', size = 17, face = 'bold'))
-
-    png(file = paste0(exploratorio.rfe.figuras,'/boxplots_variables.png'), width = 1700, height = 3200, res = 150)
-    print(final_plot)
-    dev.off()
-  } else {
-    cat(paste0('El archivo boxplot de las variables para RFE ya existe','\n'))
-  }
-
-  #RFE #TODO replace with traditional RFE or find error character...
-  data <- df_wnoise
-  cat(table(data$group)) #TODO check reduction number of groups
-  cat('\n')
-
-  classifiers <- c('multinom')
-  CV = 10
-  subsets <- c(33:1)
-
-  for (c in classifiers){
-    file_name <- paste0("rfe_",c,"_",CV,"CV_variables.RData")
-    exploratorio.rfe.modelo <- paste0(exploratorio.rfe.rdata,'/',file_name)
-    if (!file.exists(exploratorio.rfe.modelo)){
-      cat(paste0('RFE para el modelo ',c,' NO existe','\n'))
-      # Set up a cluster
+    ##Seleccion de variables --> RFE
+    file_name <- 'rfe.rds'
+    exploratorio.variables.rfe <- paste0(exploratorio.variables.rds,'/',file_name)
+    if (!file.exists(exploratorio.variables.rfe)){
+      cat('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE','\n','\n')
+      start <- Sys.time()
       no_cores <- detectCores() - 1
-
-      cl <- makeCluster(no_cores, type = "SOCK")    #create a cluster
-      registerDoParallel(cl)                #register the cluster
-
+      cl <- makeCluster(no_cores, type = "SOCK")
+      registerDoParallel(cl)
       set.seed(40)
-
-      # Perform recursive feature elimination
-      rfe <- perform_rfe(response = "group", base_learner = c, type = "classification",
-                         p = 0.8, times = CV,
-                         subsets = subsets, data = data,
-                         importance = "permutation",
-                         num.trees = 100)
-
-
-
-      save(rfe, file=exploratorio.rfe.modelo)
-
+      control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=5, repeats=5) #number=10, repeats=10 de acuerdo FAO
+      (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=c(1:10), rfeControl=control2)) #sizes se refiere al detalle de la curva,
       stopCluster(cl = cl)
+      png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 600)
+      print(plot(rfmodel, type=c("g", "o")))
+      dev.off()
+      predictors(rfmodel)[1:10]
+      save(rfmodel, file=exploratorio.variables.rfe)
+      print(Sys.time() - start)
     } else {
-      cat(paste0('RFE para el modelo ',c,' ya existe','\n'))
+      cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
     }
+
+    file_name <- 'boruta.rds'
+    exploratorio.variables.boruta <- paste0(exploratorio.variables.rds,'/',file_name)
+    if (!file.exists(exploratorio.variables.boruta)){
+      cat('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta','\n','\n')
+      nCores <- detectCores() - 1
+      start <- Sys.time()
+      formula <- as.formula('target ~ .')
+      (bor <- Boruta(formula, data = data, doTrace = 0, num.threads = nCores, ntree = 30, maxRuns=500)) #se debe evaluar ntree (numero de arboles), maxRuns (cantidad de interacciones)
+      save(bor, file=exploratorio.variables.boruta)
+      png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 600)
+      plot(bor, xlab = "", xaxt = "n")
+      lz<-lapply(1:ncol(bor$ImpHistory),function(i)
+        bor$ImpHistory[is.finite(bor$ImpHistory[,i]),i])
+      names(lz) <- colnames(bor$ImpHistory)
+      Labels <- sort(sapply(lz,median))
+      axis(side = 1,las=2,labels = names(Labels),
+           at = 1:ncol(bor$ImpHistory), cex.axis = 0.7)
+      dev.off()
+      print(Sys.time() - start)
+    } else {
+      cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
+    }
+
   }
-
-  #====================================================================================== -
-  c <- 'ranger'
-  CV <- 5
-  exploratorio.rfe.rdata <- '/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_sibundoy/exploratorio/Rdata'
-  file_name <- paste0("rfe_",c,"_",CV,"CV_variables.RData")
-  file_path <- paste0(exploratorio.rfe.rdata,'/',file_name)
-
-  load(file_path)
-
-  #data <- rfe
-  #subsets <- data[[1]][[length(data[[1]])-1]]
-  #ranks <- lapply(data, "[[", 1) %>%
-  #  Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by = "var"), .) %>%
-  #  purrr::set_names(., c("var", paste("Resample", 1:length(data), sep = "")))
-  #RMSEtrain <- lapply(data, "[[", 2) %>% lapply(., cbind, subsets) %>%
-  #  lapply(., as_tibble) %>% Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by = "subsets"), .) %>%
-  #  dplyr::select(subsets, everything()) %>%
-  #  purrr::set_names(c("subset_size", paste("Resample", 1:length(data), sep = "")))
-  #Trainperf <- RMSEtrain %>%
-  #  gather(resample, RMSE, contains("Resample")) %>%
-  #  group_by(subset_size) %>%
-  #  arrange(subset_size) %>%
-  #  summarise_at(vars(RMSE), funs(mean, sd), na.rm = TRUE) %>%
-  #  mutate(set = "Train")
-
-  out <- tidy_rfe_output(rfe, "MLR")
-  #PROF <- plot_perf_profile(out[[1]])
-  #cat(PROF)
-  #
-  #p1_rf1 <- PROF
-  #p2_rf2 <- PROF
-  #
-  #final_plot <- ggarrange(p1_rf1, p2_rf2, legend = "top", common.legend = TRUE, ncol=2, nrow=1)
-  #
-  #png(file = paste0(exploratorio.rfe.figuras,"/RFE_comparison_all.png"), width = 1700, height = 1200, res = 150)
-  #print(final_plot)
-  #dev.off()
-
-
 }

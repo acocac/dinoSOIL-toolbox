@@ -5,30 +5,31 @@
 #======================================================================================
 rm(list=ls())
 
-setwd("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\CODIGOS")
-{
-library(raster)
-library(rgdal)
-library(sp)
-library(magrittr)
-library(raster)
-library(readxl)
-library(tidyr)
-library(hddtools)
-library(caret)
-library(doParallel)
-library(randomForest)
-library(SuperLearner)
-library(Boruta)
+source('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/src/functions/5_Predict.R')
+
+proyecto.directorio <- '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena'
+datos.salida <- paste0(proyecto.directorio,'/datos/salida/1_predicciones')
+dir.create(datos.salida, recursive = T, mode = "0777", showWarnings = F)
+
+# Librerias
+pckg <- c('raster', 'rgdal', 'sp', 'magrittr', 'readxl', 'tidyr',
+          'hddtools', 'caret', 'doParallel', 'randomForest', 'SuperLearner', 'Boruta')
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
 }
 
+lapply(pckg,usePackage)
+
 ##Carga de de matriz de regresion
-data <- read.csv("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\BASES\\MatrixRegresion_29092020.csv",sep=";")
+data <- read.csv("/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/tabular/MatrixRegresion_29092020.csv",sep=";")
 
 
 ##Carga de 1_covariables y nombres
-cov <- stack("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\COVARIABLES\\Covariables_PT_2020.tif")
-names(cov) <- readRDS("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\COVARIABLES\\NombresCovariables_PT_2020.rds")
+cov <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/covariables/Covariables_PT_2020.tif')
+names(cov) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/rds/NombresCovariables_PT_2020.rds')
 
 
 #=============================
@@ -37,11 +38,13 @@ names(cov) <- readRDS("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\M
 names(data)
 data <- data[,-c(1:5,7:16)] %>% na.omit
 data$ORDEN <- factor(data$ORDEN)
+table(data$ORDEN)
 
 data <- downSample(as.matrix(data[,-1]), data[,1])
 dim(data)
 names(data)
 summary(data)
+table(data$Class)
 
 ### Conjunto de datos para entrenamiento y para validacion
 set.seed(149)
@@ -52,7 +55,7 @@ test_data <- data[-inTrain,]
 dim(test_data)
 
 names(data)
-cl <- makeCluster(detectCores(), type='PSOCK')
+cl <- makeCluster(detectCores()-1, type='PSOCK')
 registerDoParallel(cl)
 control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=10, repeats=10)
 (rfmodel <- rfe(x=data[,-27], y=data[,27], sizes=c(1:10), rfeControl=control2))
@@ -81,7 +84,7 @@ ctrl <- caret::trainControl(method = "cv",
                             verboseIter = FALSE,
                             summaryFunction = multiClassSummary,
                             sampling = "down")
-fm <-  as.formula(paste0("Class~",paste0(as.character(predictors(rfmodel)[c(1:10)]),collapse = "+")))
+fm <-  as.formula(paste0("Class~",paste0(as.character(predictors(rfmodel)[c(1:7)]),collapse = "+")))
 fm
 ls(getModelInfo())
 set.seed(472)
@@ -96,14 +99,14 @@ val <- factor(val)
 data.frame(levels(val))
 caret::confusionMatrix(val,test_data[,27])
 
-pred <- predict(cov[[predictors(rfmodel)[c(1:10)]]],
-                model_rf_under,
-                filename = "E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\SALIDAS\\RANGER_ORDEN_30092020.tif",
-                format = "GTiff", overwrite = T)
+modelos.mejor <- 'ranger'
+PredictGeoTIFF(cov[[predictors(rfmodel)[c(1:7)]]], model_rf_under, datos.salida, modelos.mejor)
+
+pred <- raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_predicciones/ranger_5m_PRED_orden_18092018_v2.tif')
+
 plot(pred)
 
 ##MODELO 2
-
 ctrl <- caret::trainControl(method = "cv",
                             number = 10,
                             verboseIter = FALSE,

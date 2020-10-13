@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModUso <- function(){
+ModUso <- function(VarObj){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -43,14 +43,12 @@ ModUso <- function(){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  datos.entrada <- paste0(proyecto.directorio,'/datos/entrada/1_covariables')
-  datos.salida <- paste0(proyecto.directorio,'/datos/salida/1_predicciones')
+  modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
+  datos.salida <- paste0(proyecto.directorio,'/prediccion')
   dir.create(datos.salida, recursive = T, mode = "0777", showWarnings = F)
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/rds')
-  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/tabular')
-  dir.create(modelos.analisis.tabular, recursive = T, mode = "0777", showWarnings = F)
-  modelos.analisis.figuras = paste0(proyecto.directorio,'/modelos/figuras')
-  dir.create(modelos.analisis.figuras, recursive = T, mode = "0777", showWarnings = F)
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/1_modelos/',str_replace(VarObj,'[.]','-'))
+  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/2_analisis/tabular/',str_replace(VarObj,'[.]','-'))
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -58,19 +56,42 @@ ModUso <- function(){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  # Cargar covariables
-  COV <- stack(paste0(datos.entrada,'/color/raster/COV_VF.tif'))
-  names(COV) <- readRDS(paste0(datos.entrada,'/color/rds/NAMES_COV_VF_COLOR.rds'))
+  # Cargar particición
+  load(paste0(modelos.datos.entrada,'/particion.RData'))
+  train.data <- as.data.frame(particion['train'])
+  names(train.data) <- sub("train.", "", names(train.data))
+
+  # Cargar 1_covariables
+  COV <- stack(paste0(datos.entrada,'/raster/covariables.tif'))
+  names(COV) <- readRDS(paste0(datos.entrada,'/rds/nombrescovariables.rds'))
 
   #identificar mejor modelo
   modelos.resultado <- read.csv(file = paste0(modelos.analisis.tabular,'/mejoresmodelos_parametros.csv'))
-  modelos.mejor <- modelos.resultado[modelos.resultado$Accuracy == max(modelos.resultado$Accuracy), 'modelo']
+
+  if (is(train.data[,'target'],'numeric')){
+    modelos.mejor <- modelos.resultado[modelos.resultado$RMSE == min(modelos.resultado$RMSE), 'modelo']
+  } else if (is(train.data[,'target'],'factor')){
+    modelos.mejor <- modelos.resultado[modelos.resultado$Accuracy == max(modelos.resultado$Accuracy), 'modelo']
+  }
+
   ##### output messages ####
-  cat(paste0('### RESULTADO 1 de 1: El mejor modelo es ',modelos.mejor,' y es usado para prediccion ###','\n'))
+  cat(paste0('### RESULTADO 1 de 2: El mejor modelo es ',modelos.mejor,' y se comprueba si ya existe archivo GeoTIFF de prediccion ###','\n'))
   ##### end output messages ####
 
   get(load(paste0(modelos.entrada,'/',modelos.mejor,".rds",sep="")))
 
-  PredictGeoTIFF(COV, modelo.ajuste, datos.salida, modelos.mejor)
+  prediccion.archivo <- paste0(datos.salida,'/',str_replace(VarObj,'[.]','-'),'_PRED_',modelos.mejor,'.tif')
+  if (!file.exists(prediccion.archivo)){
+    ##### output messages ####
+    cat(paste0('### RESULTADO 2 de 2: El archivo GeoTIFF de predicción usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo,' ###','\n'))
+    ##### end output messages ####
+    start <- Sys.time()
+    PredictGeoTIFF(COV, modelo.ajuste, prediccion.archivo)
+    print(Sys.time() - start)
+  } else{
+    ##### output messages ####
+    cat(paste0('### RESULTADO 2 de 2: El archivo GeoTIFF de predicción usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo,' ###','\n'))
+    ##### end output messages ####
+  }
 
 }

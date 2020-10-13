@@ -39,16 +39,14 @@ ModEntrenamiento <- function(){
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
   project.name <- sapply(strsplit(proyecto.directorio, '_'), tail, 1)
-  proyecto.modelos <- conf.args[[2]]
-  proyecto.modelos = unlist(strsplit(proyecto.modelos,';'))
+  proyecto.modelos.categoricas <- conf.args[[4]]
+  proyecto.modelos.categoricas = unlist(strsplit(proyecto.modelos.categoricas,';'))
+  proyecto.modelos.continuas <- conf.args[[5]]
+  proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
 
   # Modelos disponibles y configuraciones
   modelos.lista <-c('C45'='J48', 'C50'='C5.0', 'RandomForest'='rf', 'SVM'='svmLinear')
   tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=30, 'SVM'=5)
-
-  # Determinar modelos objetivo segun listado en el archivo conf.txt y modelos disponibles
-  modelos.idx <- match(proyecto.modelos, names(modelos.lista))
-  modelos.objetivo <- modelos.lista[modelos.idx]
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
@@ -66,7 +64,7 @@ ModEntrenamiento <- function(){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  # Cargar covariables
+  # Cargar 1_covariables
   COV <- stack(paste0(datos.entrada,'/color/raster/COV_VF.tif'))
   names(COV) <- readRDS(paste0(datos.entrada,'/color/rds/NAMES_COV_VF_COLOR.rds'))
 
@@ -75,6 +73,12 @@ ModEntrenamiento <- function(){
 
   # Remover NAs
   dat_subset <- na.omit(dat_subset)
+
+  if (is(matriz[,VarObj],'numeric')){
+
+  # Determinar modelos objetivo segun listado en el archivo conf.txt y modelos disponibles por categoria
+  modelos.idx <- match(proyecto.modelos, names(modelos.lista))
+  modelos.objetivo <- modelos.lista[modelos.idx]
 
   # Factorizar
   dat_subset$orden <- factor(dat_subset$orden)
@@ -93,7 +97,7 @@ ModEntrenamiento <- function(){
   # Crear formula
   fm <- as.formula(paste("orden~", paste0(names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)], collapse = "+")))
   #print(paste0(names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)],collapse='-'))
-  #print('MODELAR: Orden con las covariables :',names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)])
+  #print('MODELAR: Orden con las 1_covariables :',names(COV)[c(23, 6, 34, 9, 3, 8, 10, 7, 21)])
 
   #Random grid search
   fitControl <- trainControl(method="repeatedcv", number = 3,

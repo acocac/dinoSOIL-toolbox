@@ -20,25 +20,29 @@ library(doParallel)
 library(randomForest)
 library(SuperLearner)
 library(Boruta)
+library(caret)
+
 }
 
 ##Carga de de matriz de regresion
-data <- read.csv("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\BASES\\MatrixRegresion_29092020.csv",sep=";")
+data <- read.csv("/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/tabular/MatrixRegresion_29092020.csv",sep=";")
 
 
 ##Carga de 1_covariables y nombres
-cov <- stack("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\COVARIABLES\\Covariables_PT_2020.tif")
-names(cov) <- readRDS("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\COVARIABLES\\NombresCovariables_PT_2020.rds")
+cov <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/covariables/Covariables_PT_2020.tif')
+names(cov) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/rds/NombresCovariables_PT_2020.rds')
 
 
 #=============================
-#Modelo Orden de suelos
+#Modelo Gran Grupo de suelos
 #=============================
 names(data)
-data <- data[,-c(1:5,7:16)] %>% na.omit
-data$ORDEN <- factor(data$ORDEN)
+data <- data[,-c(1:7,9:16)] %>% na.omit
+data$GRANGRUPO <- factor(data$GRANGRUPO)
+table(data$GRANGRUPO)
 
-data <- downSample(as.matrix(data[,-1]), data[,1])
+data2 <- downSample(as.matrix(data[,-1]), data[,1])
+table(data2$Class)
 dim(data)
 names(data)
 summary(data)

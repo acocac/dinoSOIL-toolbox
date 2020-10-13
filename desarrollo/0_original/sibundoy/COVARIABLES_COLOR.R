@@ -16,7 +16,7 @@ library(sp)
 
 
 ##PARA OBSERVACIONES
-#Cargando covariables disponibles
+#Cargando 1_covariables disponibles
 dir()
 COV84 <- stack("../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/COV_SIB_WGS84_CAJ_VF.tif")
 names(COV84) <- readRDS("../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/NAMES_COV_SIB_WGS84_CAJ_VF.rds")
@@ -436,7 +436,7 @@ dat_subset$id <- as.factor(dat_subset$id)
 str(dat_subset)
 
 
-#### Juntamos covariables con los datos  ####
+#### Juntamos 1_covariables con los datos  ####
 # Convert to spatial points df and project
 library(sp)
 dat_subset_sp <- dat_subset
@@ -459,7 +459,7 @@ dim(dat_subset)
 write.csv(dat_subset, '../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones.csv')
 dim(dat_subset)
 
-#importacia de covariables para orden
+#importacia de 1_covariables para orden
 dat_subset <- read.csv('../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones.csv', sep=",")
 names(dat_subset)
 head(dat_subset)
@@ -648,7 +648,7 @@ colnames(dat_subset)
 names(dat_subset)
 write.csv(dat_subset, '../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv')
 
-#importacia de covariables para orden
+#importacia de 1_covariables para orden
 dat_subset <- read.csv('../../../../../data/agrologia/Compilado Sibundoy/Modelos_sibundoy/MOD_5m/RegMatrix_VF_observaciones_reacciones.csv', sep=",")
 names(dat_subset)
 head(dat_subset)

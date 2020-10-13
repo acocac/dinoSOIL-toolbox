@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModMejorModelo <- function(){
+ModMejorModelo <- function(VarObj){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -36,17 +36,20 @@ ModMejorModelo <- function(){
 
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
-  modelos.proyecto <- conf.args[[2]]
-  modelos.proyecto = sort(unlist(strsplit(modelos.proyecto,';')))
+  proyecto.modelos.categoricas <- conf.args[[4]]
+  proyecto.modelos.categoricas = unlist(strsplit(proyecto.modelos.categoricas,';'))
+  proyecto.modelos.continuas <- conf.args[[5]]
+  proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/rds')
-  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/tabular')
+  datos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/1_modelos/',str_replace(VarObj,'[.]','-'))
+  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/2_analisis/tabular/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.analisis.tabular, recursive = T, mode = "0777", showWarnings = F)
-  modelos.analisis.figuras = paste0(proyecto.directorio,'/modelos/figuras')
+  modelos.analisis.figuras = paste0(proyecto.directorio,'/modelos/2_analisis/figuras/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.analisis.figuras, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
@@ -55,11 +58,16 @@ ModMejorModelo <- function(){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
+  # Cargar particición
+  load(paste0(datos.entrada,'/particion.RData'))
+  train.data <- as.data.frame(particion['train'])
+  names(train.data) <- sub("train.", "", names(train.data))
+
   #identificar modelos entrenados
   modelos.procesados = strsplit(list.files(modelos.entrada, recursive = T, full.names = F),"[.]")
   modelos.procesados = c(unique(sapply(modelos.procesados, "[", 1)))
 
-  if (modelos.proyecto == modelos.procesados){
+  if (sort(proyecto.modelos.continuas) == sort(modelos.procesados)){
     cat('Los modelos listados en el archivo config.txt estan completos')
     ##### processing ####
     #merge models results
@@ -80,8 +88,10 @@ ModMejorModelo <- function(){
     C45.Models = objects(pattern="*C45")
     C50.Models = objects(pattern="*C50")
     RF.Models = objects(pattern="*RandomForest")
+    xgbTree.Models = objects(pattern="*xgbTree")
     SVM.Models = objects(pattern="*SVM")
-    DM.Models = c(C45.Models,C50.Models,RF.Models,SVM.Models)
+    MLP.Models = objects(pattern="*mlp")
+    DM.Models = c(C45.Models,C50.Models,RF.Models,SVM.Models,xgbTree.Models,MLP.Models)
 
     #create list for resampling
     resampling.list <- list()
@@ -103,10 +113,16 @@ ModMejorModelo <- function(){
   cat(paste('### RESULTADO 2 de 3: The best models statistics of perfomance results were generated and store as tabular data in the model (tabular) folder! ###','\n'))
   ##### end output messages ####
 
-  #boxplots charts
-  png(file = paste0(modelos.analisis.figuras,'/boxplots_modelos.png'), width = 700, height = 600)
-  print(bwplot(resamps, layout = c(2, 1), box.ratio = 1, auto.key = T))
-  dev.off()
+  if (is(train.data[,'target'],'numeric')){
+    #boxplots charts
+    png(file = paste0(modelos.analisis.figuras,'/boxplots_modelos.png'), width = 700, height = 600)
+    print(bwplot(resamps, metric=c('RMSE','Rsquared'), layout = c(2, 1), box.ratio = 1, auto.key = T))
+    dev.off()
+  } else if (is(train.data[,'target'],'factor')){
+    png(file = paste0(modelos.analisis.figuras,'/boxplots_modelos.png'), width = 700, height = 600)
+    print(bwplot(resamps, metric=c('Accuracy','OA'), layout = c(2, 1), box.ratio = 1, auto.key = T))
+    dev.off()
+  }
 
   ##### output messages ####
   cat(paste('### RESULTADO 3 de 3: The boxplots to compare the best models according to perfomance variables were generated and store as chart in the models (figures) folder! ###'),'\n')
