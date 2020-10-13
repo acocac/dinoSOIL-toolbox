@@ -11,7 +11,7 @@
 prompt.user.part1 <- function()#get arguments from user
 {
 
-  message(prompt="Indique tipo de base de datos para verticalizar (PEFILES o OBSERVACIONES):>>> ")
+  message(prompt="Indique tipo de base de datos para verticalizar (PERFILES o OBSERVACIONES):>>> ")
   a <- readLines(n = 1)
   a <- gsub("\\\\", "/", a)
 

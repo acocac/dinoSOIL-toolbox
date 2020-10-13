@@ -51,7 +51,15 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]],args_p1[[4]])
 ####PARTE 2 - Generación de los Datos                ###
 ########################################################
 ##TODO
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/2_Datos.R'))
 
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL, pregunta 4 COD_PERFIL
+args_p2 <- prompt.user.part2()
+
+#### ejecutar la funcion del modulo ###
+Preprocesamiento(args_p2)
 
 ########################################################
 #####PARTE 3a - Analisis Exploratorio de los Datos ######

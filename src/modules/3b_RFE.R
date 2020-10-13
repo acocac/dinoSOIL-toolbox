@@ -93,6 +93,8 @@ ExpRFE <- function(VarObj){
     # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
     data <- data[complete.cases(data), ]
 
+    cat(dim(data))
+
     ##Conjunto de datos para entrenamiento y para validacion
     set.seed(225)
     inTrain <- createDataPartition(y = data[,1], p = .70, list = FALSE)

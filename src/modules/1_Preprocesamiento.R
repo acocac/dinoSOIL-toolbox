@@ -16,7 +16,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  pckg <- c('readxl', 'tidyr')
+  pckg <- c('readxl', 'tidyr', 'dplyr')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -59,6 +59,25 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   datos_HOR <- datos_HOR[!duplicated(datos_HOR[,columna]),]
   row.names(datos_HOR) <- datos_HOR[,columna]
 
+  datos_HOR <- cbind(datos_HOR[,columna],datos_HOR[, grep('^H[0-9]', names(datos_HOR))])
+
+  #detectar nombres con mas de dos separaciones
+  str_count <- sapply(strsplit(names(datos_HOR), '_'), length)
+
+  if (any(str_count > 2)){
+    temp = names(datos_HOR)[which(str_count > 2)]
+    target <- gsub('H[0-9]_','',temp)
+    target <- gsub('_','-',target)
+    horizons <- sapply(strsplit(temp, "_", fixed = TRUE), "[", 1)
+    list_final <- list(horizons,rep('_', length(target)),target)
+    list_final <- do.call('paste0', list_final)
+    names(datos_HOR)[which(str_count > 2)] <- list_final
+  }
+
+  # Remover column de color matriz humedo (si existe) que se encuentra en la base de datos de observaciones
+  datos_HOR <- datos_HOR %>% select_if(!endsWith(names(.),'_COLOR_MATRIZ_HUMEDO1'))
+  datos_HOR <- datos_HOR %>% select_if(!endsWith(names(.),'CO-H1'))
+
   # Reemplazar patron .*_
   indx <- gsub(".*_", "", names(datos_HOR))
 
@@ -88,12 +107,33 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   datos_vertical <- datos_PERxHOR[,-c(remover)]
   datos_vertical <- data.frame(ID_PERFIL=row.names(datos_HOR),datos_vertical)
   datos_vertical <- datos_vertical[order(datos_vertical$ID_PERFIL_HOR),]
+  datos_vertical <- datos_vertical %>% select_if(!names(.) %in% c('PERFIL'))
 
-  # Corregir valores de profundidad inicial sin datos de profundidad final
-  datos_vertical[which(!is.na(datos_vertical$PROFUNDIDADINICIAL) & is.na(datos_vertical$PROFUNDIDADFINAL)), 'PROFUNDIDADINICIAL'] <- NA
+  # Renombrar columnas
+  TEXTURA <- select(datos_vertical, matches('TEX'))
+  HCL <- select(datos_vertical, matches('HCl'))
+  PROFUNDIDADINICIAL <- select(datos_vertical, matches('INI'))
+  PROFUNDIDADFINAL <- select(datos_vertical, matches('FIN'))
+  pH <- select(datos_vertical, matches('pH'))
+  NOMENCLATURA <- select(datos_vertical, matches('NOM'))
+  ESPESOR <- select(datos_vertical, matches('ESPESOR'))
+
+  # Crear archivo analisis
+  datos_vertical_cov <- data.frame(PROFUNDIDADINICIAL, PROFUNDIDADFINAL, pH, ESPESOR, NOMENCLATURA, HCL, TEXTURA)
+  names(datos_vertical_cov) <- c('PROFUNDIDADINICIAL', 'PROFUNDIDADFINAL', 'pH', 'ESPESOR', 'NOMENCLATURA', 'HCL', 'TEXTURA')
+
+  datos_vertical <- data.frame(datos_vertical[,1:3],datos_vertical_cov)
+  datos_vertical[,'pH'] <- sub(',','.', datos_vertical[,'pH'], fixed = TRUE)
+
+  datos_vertical[, 'PROFUNDIDADINICIAL' ] <- sapply(datos_vertical[, 'PROFUNDIDADINICIAL' ], as.numeric)
 
   # Corregir valores de profundidad final con valores iguales a X, reemplazando por 10 (según FAO) - El valor X es común en las bases de datos
   datos_vertical[which(datos_vertical$PROFUNDIDADFINAL == 'X'),'PROFUNDIDADFINAL'] <- datos_vertical[which(datos_vertical$PROFUNDIDADFINAL == 'X'),'PROFUNDIDADINICIAL'] + 10
+
+  datos_vertical[, 'PROFUNDIDADFINAL' ] <- sapply(datos_vertical[, 'PROFUNDIDADFINAL'], as.numeric)
+
+  # Corregir valores de profundidad inicial sin datos de profundidad final
+  datos_vertical[which(!is.na(datos_vertical$PROFUNDIDADINICIAL) & is.na(datos_vertical$PROFUNDIDADFINAL)), 'PROFUNDIDADINICIAL'] <- NA
 
   # Recalcular espesor
   datos_vertical[,'ESPESOR'] <- as.numeric(datos_vertical[,'PROFUNDIDADFINAL']) - as.numeric(datos_vertical[,'PROFUNDIDADINICIAL'])
@@ -125,23 +165,27 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   # Recalcular espesor
   datos_vertical[,'ESPESOR'] <- as.numeric(datos_vertical[,'PROFUNDIDADFINAL']) - as.numeric(datos_vertical[,'PROFUNDIDADINICIAL'])
 
-  # Remover columna RANGOPROFUNDIDAD
-  datos_vertical[,'RANGOPROFUNDIDAD'] <- NULL
+  ## Remover columna RANGOPROFUNDIDAD
+  #datos_vertical[,'RANGOPROFUNDIDAD'] <- NULL
+
+  # Cambiar valores NAs en columna Textura
+  datos_vertical[which(datos_vertical$TEXTURA %in% c('Sin dato','N/AN')),'TEXTURA'] <- NA
 
   # Cambiar valores X en columna Nomenclatura
   datos_vertical[which(datos_vertical$NOMENCLATURA == 'X'),'NOMENCLATURA'] <- NA
 
   # Reemplazar valores pH de cero a NA
-  datos_vertical[which(datos_vertical$ph %in% c(0,'Sin dato')),'ph'] <- NA
+  datos_vertical[which(datos_vertical$pH %in% c(0,'Sin dato')),'pH'] <- NA
 
-  # Agregar columnas color #TODO: hay todavia inconsistencias en columna V_H1, automatizar
-  datos_vertical$COLOR <- as.character(datos_vertical$COLOR)
-  datos_vertical$vc_H1 <- ifelse(grepl('2.5/',datos_vertical$COLOR),yes=substr(datos_vertical$COLOR, nchar(datos_vertical$COLOR)-4, nchar(datos_vertical$COLOR)),
-                           no = substr(datos_vertical$COLOR, nchar(datos_vertical$COLOR)-2, nchar(datos_vertical$COLOR)))
-  datos_vertical$HUE_H1 <- substr(datos_vertical$COLOR, 1,nchar(datos_vertical$COLOR)-nchar(datos_vertical$vc_H1))
-  datos_vertical <- tidyr::separate(datos_vertical,vc_H1,sep="/",into = c("V_H1","C_H1"))
-  datos_vertical$V_H1 <- as.numeric(datos_vertical$V_H1)
-  datos_vertical$C_H1 <- as.numeric(datos_vertical$C_H1)
+  ### COLOR NO ES NECESARIO PARA CESAR MAGDALENA
+  ## Agregar columnas color #TODO: hay todavia inconsistencias en columna V_H1, automatizar
+  #datos_vertical$COLOR <- as.character(datos_vertical$COLOR)
+  #datos_vertical$vc_H1 <- ifelse(grepl('2.5/',datos_vertical$COLOR),yes=substr(datos_vertical$COLOR, nchar(datos_vertical$COLOR)-4, nchar(datos_vertical$COLOR)),
+  #                         no = substr(datos_vertical$COLOR, nchar(datos_vertical$COLOR)-2, nchar(datos_vertical$COLOR)))
+  #datos_vertical$HUE_H1 <- substr(datos_vertical$COLOR, 1,nchar(datos_vertical$COLOR)-nchar(datos_vertical$vc_H1))
+  #datos_vertical <- tidyr::separate(datos_vertical,vc_H1,sep="/",into = c("V_H1","C_H1"))
+  #datos_vertical$V_H1 <- as.numeric(datos_vertical$V_H1)
+  #datos_vertical$C_H1 <- as.numeric(datos_vertical$C_H1)
 
   if (tipo == 'PERFILES'){
     file_prefix <- 'BDP'
@@ -150,11 +194,11 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   }
 
   # Export datos verticalizados
-  write.csv2(datos_vertical, paste0(out.data,'/',file_prefix,'_',project.name,'_Vert.csv'), row.names=F)
+  write.table(datos_vertical, paste0(out.data,'/',file_prefix,'_',project.name,'_Vert.csv'), row.names=F, sep=',')
 
   # ------------------------------------------------------- #
   # Mensajes de salida
   # ------------------------------------------------------- #
-  cat(paste0("### RESULTADO: La base de datos del proyecto ",basename(project.name)," fue procesada con exito y contiene ",dim(datos_HOR)[1], " perfiles"))
+  cat(paste0('### RESULTADO: La base de datos de ',tipo,' del proyecto ',basename(project.name),' fue procesada con exito y contiene ',dim(datos_HOR)[1], ' perfiles'))
 
 }

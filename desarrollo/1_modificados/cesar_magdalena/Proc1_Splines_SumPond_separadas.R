@@ -5,7 +5,7 @@
 #Opcion de calculo 1: Splines (funciones de suavizado de area equivalente)
 #Opcion de calculo 2: Suma ponderada (asumiendo espesor de horizontes como ponderador)
 #======================================================================================
-rm(list=ls())
+rm(list=ls()) ### TODO falta comparar sebastian vs mia
 library(readxl)
 library(GSIF)
 library(aqp)
@@ -15,13 +15,12 @@ library(plyr)
 #data <- read.csv("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\BASES\\BD_28092020.csv",sep=";",na="NA")
 data_obs <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_basededatos/BDO_cesarmagdalena_Vert.csv',sep=',',,na='NA')
 data_per <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_basededatos/BDP_cesarmagdalena_Vert.csv',sep=',',,na='NA')
+data <- rbind.fill(data_obs,data_per)
+names(data)
+names(data) <- c("profileId","HorID","HorNO","top","bottom","pH","depth","NOM","HCL","CLTEX")
 
-data_all <- rbind(data_obs,data_per)
-names(data_all)
+data <- data[!is.na(data$pH), ]
 
-data <- data.frame(read_excel('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/0_basededatos/BD_28092020_PH.xlsx', sheet = 'BD_28092020', na = 'N/A'))
-
-names(data) <- c("profileId","HorID","HorNO","top","bottom","pH","NOM","COH1","CLTEX")
 data$pH = as.numeric(as.character(data$pH))
 sites <- data.frame(profileId=unique(data$profileId))
 names(sites)
@@ -53,9 +52,10 @@ sites <- plyr::join(sites,dat_spline,by="profileId")
 #-------------------------------------------------------------------------------
 
 # Intervalo deseado
-upDepth <- 0
-lowDepth <- 30
+upDepth <- 30
+lowDepth <- 100
 
+{
 data2 <- data
 
 # Nuevos rangos de prof inicial y final para cada horizonte
@@ -68,16 +68,14 @@ data2$lower <- ifelse(data2$bottom < upDepth, yes = upDepth, no = data2$lower)
 data2$depth <- data2$lower - data2$upper
 
 # Descartar horizonte sin dato de pH
-(no.inf.indx <- which(is.na(data2$pH)))
-data2 <- data2[-no.inf.indx,]
+#(no.inf.indx <- which(is.na(data2$pH)))
+#data2 <- data2[-no.inf.indx,]
 
 # Descartar horizontes que no caen en el rango deseado
 data2 <- data2[data2$depth!=0,]
 
 # Ponderacion de valores de pH por horizonte
 data2$weighted <- (data2$depth*data2$pH)/(lowDepth-upDepth)
-head(data2)
-dim(data2)
 
 # Suma ponderada de valores de pH por perfil
 wSum<- ddply(
@@ -103,8 +101,8 @@ sites <- plyr::join(sites, wSum,by="profileId")
 head(sites)
 tail(sites)
 summary(sites)
-write.csv(sites,"E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\BASES\\BD_pH_Spl_SumPond.csv",
-          row.names = F)
+write.table(sites,'/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_basededatos/BD_pH_Spl_SumPond_mio.csv',
+          row.names = F, sep=',')
 
 par(mfrow=c(2,2))
 {
@@ -113,4 +111,3 @@ par(mfrow=c(2,2))
   hist(sites$pH.0_30_Sum.Pond)
   hist(sites$pH.30_100_Sum.Pond)
 }
-
