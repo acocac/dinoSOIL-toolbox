@@ -17,7 +17,7 @@ PredictGeoTIFF = function(COV, fit.model, out.file)
 
   # Predecir en subarea
   #COVSub <- crop(COV, extent(COV, 1, 100, 1, 100))
-  #pred <- predict(COVSub, fit.model, filename = paste0(out.data,'/',modelo,'_5m_PRED_orden_18092018_v2.tif'),
+  #pred <- predict(COVSub, fit.model, filename = paste0(out.data,'/',modelo,'_5m_PRED_orden_18092018_v2.individuales'),
   #              format = "GTiff", overwrite = T)
   no_cores <- detectCores() - 1
   beginCluster(no_cores)
@@ -26,6 +26,6 @@ PredictGeoTIFF = function(COV, fit.model, out.file)
       overwrite = T)
   endCluster()
 
-  #pred <- predict(COV, fit.model, filename = paste0(out.data,'/',modelo,'_PRED_',var,'.tif'),
+  #pred <- predict(COV, fit.model, filename = paste0(out.data,'/',modelo,'_PRED_',var,'.individuales'),
   #              format = "GTiff", overwrite = T)
 }

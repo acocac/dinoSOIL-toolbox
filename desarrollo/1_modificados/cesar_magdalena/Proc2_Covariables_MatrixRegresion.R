@@ -10,7 +10,7 @@ setwd("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\COD
 
 pckg = c('readxl','raster','sp',
          'rgdal','magrittr','gdalUtilities',
-          'rgeos','sf')
+          'rgeos','sf','spdplyr','smoothr')
 
 usePackage <- function(p) {
   if (!is.element(p, installed.packages()[,1]))
@@ -35,45 +35,48 @@ plot(lim)
 
 #Derivados del DEM
 cov <- stack("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\DEM_DERIVADOS.tif")
-names(cov) <- c("DEM","AnHill","Slo","Aspect","Plan_Curv",
+ls <- c("DEM","AnHill","Slo","Aspect","Plan_Curv",
                 "Prof_Curv","Conv_Ind","Closs_Dep",
                 "TotCatchAr","TWI","LSfactor","CHBL",
                 "CND","VD","RSP","MRVBF","MRRTF","TRI",
                 "visSky","SkyVF","Pos_Op","Neg_Op","TPI")
+
+cov <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/dem/derivados/TIF/DERIVADOS.tif')
+plot(cov)
+
+dem <- raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/dem/original/DEM_PT_2020.tif')
+dem_derivado <- stack(list.files(path='/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/dem/derivados/individuales', pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
+cov <- stack(dem, dem_derivado)
+names(cov)[1] <- 'DEM'
+
 cov <- crop(cov,lim)
 cov <- mask(cov,lim)
 plot(cov[[1]])
 plot(lim,add=T)
 
+require(dplyr)
 #Clima
 clima_files <- list.files(path = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/clima', pattern = "\\.shp$", full.names=TRUE)
 clima_list <- lapply(clima_files, readOGR)
-clima_list_target <- lapply(listOfShp, "[", c('Denominaci'))
-clima_combined <- as_Spatial(do.call(what = sf:::rbind.sf, args=clima_list_target))
-clima2 <- raster::intersect(clima_combined, lim)
-clima2 <- aggregate(clima2, 'Denominaci')
-plot(clima2)
-
-#TODO - comparar resultados clima - diferencias
-clima <- readOGR("/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/guia/CIAF/COVARIABLES/Clima/CLIMA_PT_2020_vf.shp")
-plot(clima)
-
+clima_list_target <- lapply(clima_list, "[", c('Denominaci'))
+clima <- raster::intersect(clima_combined, lim)
+clima@data[['Denominaci']] = gsub(",", "", clima@data[['Denominaci']])
+clima <- aggregate(clima, 'Denominaci')
+clima <- fill_holes(clima, units::set_units(1, km^2))
 clima <- spTransform (clima, CRS=projection(cov))
-clima$denom_char <- as.factor(clima$DENOMINACI)
+clima$denom_char <- as.factor(clima$Denominaci)
 clima_rast <- gRasterize(clima, cov, "denom_char")
 clima_rast_res <- resample(clima_rast,cov,method="ngb")
 values(clima_rast_res) <- round(values(clima_rast_res),0)
 names(clima_rast_res) <- 'clima'
-# (cl_dummy <- dummyRaster(MATPAR_rast_res))
-# names(mp_dummy) <- levels(factor(MATPAR$MP_RAST))
-# cov <- stack(cov,MATPAR_rast_res, mp_dummy)
 cov <- stack(cov,clima_rast_res)
 names(cov)
 rm(clima_rast)
 
 
 #Geomorfologia- tipo de relieve
-tr <- readOGR("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\INSUMOS\\COVARIABLES\\Geomorfologia\\Geomorfologia_03092020.shp")
+tr <- readOGR('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/geomorfologia')
+tr <- readOGR("/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/geomorfologia/GEOMORFOLOGIA_CESAR_MAGDALENA_V7_20200309.shp")
 tr <- spTransform (tr, CRS=projection(cov))
 tr$TIPO_RELIE <- as.character(tr$TIPO_RELIE)
 tr_rast <- gRasterize(tr, cov, "TIPO_RELIE")

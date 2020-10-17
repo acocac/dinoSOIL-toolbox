@@ -44,9 +44,9 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  in.data <- paste0(project.folder,'/datos/entrada/0_basededatos')
-  out.data <- paste0(project.folder,'/datos/salida/0_basededatos')
-  dir.create(out.data, recursive = T, mode = "0777", showWarnings = F)
+  datos.entrada.original <- paste0(project.folder,'/datos/entrada/0_basededatos/originales')
+  datos.salida.procesado <- paste0(project.folder,'/datos/entrada/0_basededatos/derivados/verticalizado')
+  dir.create(datos.salida.procesado, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
   setwd(paste0(project.folder))
@@ -55,7 +55,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
   # Base de datos (horizontal)
-  datos_HOR <- data.frame(read_excel(paste0(in.data,'/',filename), sheet = hoja, na = "N/A"))
+  datos_HOR <- data.frame(read_excel(paste0(datos.entrada.original,'/',filename), sheet = hoja, na = "N/A"))
   datos_HOR <- datos_HOR[!duplicated(datos_HOR[,columna]),]
   row.names(datos_HOR) <- datos_HOR[,columna]
 
@@ -128,7 +128,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   datos_vertical[, 'PROFUNDIDADINICIAL' ] <- sapply(datos_vertical[, 'PROFUNDIDADINICIAL' ], as.numeric)
 
   # Corregir valores de profundidad final con valores iguales a X, reemplazando por 10 (según FAO) - El valor X es común en las bases de datos
-  datos_vertical[which(datos_vertical$PROFUNDIDADFINAL == 'X'),'PROFUNDIDADFINAL'] <- datos_vertical[which(datos_vertical$PROFUNDIDADFINAL == 'X'),'PROFUNDIDADINICIAL'] + 10
+  datos_vertical[which(datos_vertical$PROFUNDIDADFINAL %in% c('X','Sin dato','N/A')),'PROFUNDIDADFINAL'] <- datos_vertical[which(datos_vertical$PROFUNDIDADFINAL %in% c('X','Sin dato','N/A')),'PROFUNDIDADINICIAL'] + 10
 
   datos_vertical[, 'PROFUNDIDADFINAL' ] <- sapply(datos_vertical[, 'PROFUNDIDADFINAL'], as.numeric)
 
@@ -194,7 +194,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   }
 
   # Export datos verticalizados
-  write.table(datos_vertical, paste0(out.data,'/',file_prefix,'_',project.name,'_Vert.csv'), row.names=F, sep=',')
+  write.table(datos_vertical, paste0(datos.salida.procesado,'/',file_prefix,'_',project.name,'_Vert.csv'), row.names=F, sep=',')
 
   # ------------------------------------------------------- #
   # Mensajes de salida

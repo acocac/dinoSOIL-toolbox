@@ -13,12 +13,6 @@ library(plyr)
 
 ##Carga de base de datos con observaciones y perfiles
 #data <- read.csv("E:\\IGAC2020\\ENTREGA_FINAL_CONTRATO\\POLITICA_TIERRAS\\MODELOS_2020\\BASES\\BD_28092020.csv",sep=";",na="NA")
-data_obs <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_basededatos/BDO_cesarmagdalena_Vert.csv',sep=',',,na='NA')
-data_per <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_basededatos/BDP_cesarmagdalena_Vert.csv',sep=',',,na='NA')
-
-data_all <- rbind(data_obs,data_per)
-names(data_all)
-
 data <- data.frame(read_excel('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/0_basededatos/BD_28092020_PH.xlsx', sheet = 'BD_28092020', na = 'N/A'))
 
 names(data) <- c("profileId","HorID","HorNO","top","bottom","pH","NOM","COH1","CLTEX")
@@ -26,6 +20,7 @@ data$pH = as.numeric(as.character(data$pH))
 sites <- data.frame(profileId=unique(data$profileId))
 names(sites)
 str(data)
+data <- data[data$profileId =="AF-006", ]
 
 #--------------------------------------------------------
 #OPCION 1: FUNCIONES DE SUAVIZADO DE AREA EQUIVALENTE
@@ -53,8 +48,8 @@ sites <- plyr::join(sites,dat_spline,by="profileId")
 #-------------------------------------------------------------------------------
 
 # Intervalo deseado
-upDepth <- 0
-lowDepth <- 30
+upDepth <- 30
+lowDepth <- 100
 
 data2 <- data
 
@@ -92,7 +87,6 @@ wSum<- ddply(
 colnames(wSum)[2] <- paste0("pH.",upDepth,"_",lowDepth,"_Sum.Pond")
 wSum$profileId <- as.character(wSum$profileId)
 wSum
-}
 
 #-------------------------------
 #RESULTADO FINAL DE PONDERACION 

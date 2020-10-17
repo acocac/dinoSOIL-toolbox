@@ -189,7 +189,7 @@ class(N_1)
 class(q)
 
 dat_sp <- dat #renombrar la base dat a dat_sp
-coordinates(dat_sp) <- ~ W_1 + N_1 ##coordenadas que están en dat_sp, de W_1 Y N_1 
+coordinates(dat_sp) <- ~ W_1 + N_1 ##coordenadas que estï¿½n en dat_sp, de W_1 Y N_1 
 
 ## Ajustamos un modelo de regresion lineal multiple
 ## Pruebas de modelos ####
@@ -205,7 +205,7 @@ COR #matriz de correlaciÃ³n de todos los datos
 
 x <- subset(melt(COR), value != 1 | value!= NA) #x matriz de correlaciÃ³n, excluyendo los valores de 1 y los NA
 x <- x[with(x, order(-abs(x$value))),]#define un orden para x
-#as.character(x$X2[1:10]) # ¿qué es x2?
+#as.character(x$X2[1:10]) # ï¿½quï¿½ es x2?
 x[1:5,] #x de 5 filas con todas sus columnas
 
 idx <- as.character(x$X2[c(1:5)])#vuelve caraCter, pero que es x2? 
@@ -227,69 +227,69 @@ anova(modelo.MLR) #Analisis de varianza del modelo .MLR
 
 
 ## Hacemos seleccion de variables por stepwise
-modelo.MLR.step <- step(modelo.MLR, direction="both") #al modelo se le aplica funció stepwise, hacia atrás 
+modelo.MLR.step <- step(modelo.MLR, direction="both") #al modelo se le aplica funciï¿½ stepwise, hacia atrï¿½s 
 
 summary(modelo.MLR.step) #resumen descriptivo del modelo, ya habiendo sacado variables no significativas  
-anova(modelo.MLR.step) #se realiza análisis de varianza al modelo con stepwise
+anova(modelo.MLR.step) #se realiza anï¿½lisis de varianza al modelo con stepwise
 
-par(mfrow=c(2,2)) # plotea gráfico de dos filas por dos columnas 
+par(mfrow=c(2,2)) # plotea grï¿½fico de dos filas por dos columnas 
 plot(modelo.MLR.step)#grafica el modelo con stepwise
-par(mfrow=c(1,1)) #grafica un gráfico
+par(mfrow=c(1,1)) #grafica un grï¿½fico
 
 #Falta de multicolinealidad en las variables x: podemos comprobar esto mediante
 #el calculo de los Factores de Inflacion de la Varianza (FIVs)
 # lo ideal es: no haya dependecia lineal entre variables explicativas= multicolinealidad
 library(car) #regresion aplicada
 #Variables problematicas tienen sqrt(FIV) > 2
-vif(modelo.MLR.step)#Calcula factores de variación-inflación y variación-inflación generalizada para modelos lineales, lineales generalizados, modelo stepwise en este caso
-sqrt(vif(modelo.MLR.step)) #se calcula la raíz cuadrada del vif ultimo 
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . -  DEM_90 )#actualizará y (por defecto) volverá a ajustar un modelo, sin la variable DEM_90
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . - tx1mod3a )#actualizará y (por defecto) volverá a ajustar un modelo, sin la variable tx1mod3a
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . - inssre3a )#actualizará y (por defecto) volcerá a ajustar un modelo, sin la variable inssre3a 
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . - twisre3a )#actualizará y (por defecto) volcerá a ajustar un modelo, sin la variable twisre3a
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . - TX4MOD3a )#actualizará y (por defecto) volcerá a ajustar un modelo, sin la variable TX4MOD3a
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . - PEND_90)#actualizará y (por defecto) volcerá a ajustar un modelo, sin la variable PEND_90 
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
-modelo.MLR.step <- update(modelo.MLR.step, . ~ . - px4wcl3a)#actualizará y (por defecto) volcerá a ajustar un modelo, sin la variable px4wcl3a 
-sqrt(vif(modelo.MLR.step))#se calcula la raíz cuadrada del vif ultimo
+vif(modelo.MLR.step)#Calcula factores de variaciï¿½n-inflaciï¿½n y variaciï¿½n-inflaciï¿½n generalizada para modelos lineales, lineales generalizados, modelo stepwise en este caso
+sqrt(vif(modelo.MLR.step)) #se calcula la raï¿½z cuadrada del vif ultimo 
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . -  DEM_90 )#actualizarï¿½ y (por defecto) volverï¿½ a ajustar un modelo, sin la variable DEM_90
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . - tx1mod3a )#actualizarï¿½ y (por defecto) volverï¿½ a ajustar un modelo, sin la variable tx1mod3a
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . - inssre3a )#actualizarï¿½ y (por defecto) volcerï¿½ a ajustar un modelo, sin la variable inssre3a 
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . - twisre3a )#actualizarï¿½ y (por defecto) volcerï¿½ a ajustar un modelo, sin la variable twisre3a
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . - TX4MOD3a )#actualizarï¿½ y (por defecto) volcerï¿½ a ajustar un modelo, sin la variable TX4MOD3a
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . - PEND_90)#actualizarï¿½ y (por defecto) volcerï¿½ a ajustar un modelo, sin la variable PEND_90 
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
+modelo.MLR.step <- update(modelo.MLR.step, . ~ . - px4wcl3a)#actualizarï¿½ y (por defecto) volcerï¿½ a ajustar un modelo, sin la variable px4wcl3a 
+sqrt(vif(modelo.MLR.step))#se calcula la raï¿½z cuadrada del vif ultimo
 #Duda, todos los modelos se llaman igual y no se sabe cual es el mejor con que variable
 #SUGERENCIA:Mirar si se puede implementar modelo akaike (aic) y criterio Schwarz (SIC)
 
 #Usar la prueba de Bonferroni para valores atipicos: 
 #La prueba de bonferroni 
-#plantear rango intercuartílico u otro test para calculo de outliers al comienzo del análisis, seguido a analisis exploratorio
-#en este punto no deberían ya haber outliers
-outlierTest(modelo.MLR.step)#Identificación de outliers(datos atipicos) del modelo.MLR.step
+#plantear rango intercuartï¿½lico u otro test para calculo de outliers al comienzo del anï¿½lisis, seguido a analisis exploratorio
+#en este punto no deberï¿½an ya haber outliers
+outlierTest(modelo.MLR.step)#Identificaciï¿½n de outliers(datos atipicos) del modelo.MLR.step
 summary(modelo.MLR.step)#medidas resume n de modelo.MLR.step
 
-'Covariables_VF_Rasterizadas/COV_VF.tif'#Documento tipo .tif
+'Covariables_VF_Rasterizadas/COV_VF.tif'#Documento tipo .individuales
 'Covariables_VF_Rasterizadas/namesCovariables_VF.rds'#Documento tipo .rds
 
 # Lo convertimos a un SpatialGridDataFrame
 getwd() #Se mira cual es el directorio de trabajo
 dir() #enumera todos los archivos de un directorio
 
-library(raster)#librería cargada anteriormente
+library(raster)#librerï¿½a cargada anteriormente
 
-install.packages("raster") #instale el paquete ráster
-COV <- stack("COV_SIBU.tif")#Los vectores de apilamiento concatenan múltiples vectores en un solo vector junto con un factor que indica dónde se originó cada observación
+install.packages("raster") #instale el paquete rï¿½ster
+COV <- stack("COV_SIBU.tif")#Los vectores de apilamiento concatenan mï¿½ltiples vectores en un solo vector junto con un factor que indica dï¿½nde se originï¿½ cada observaciï¿½n
 namesCov<- readRDS('NAMES_COV_SIB.rds')# se utiliza la funcion readRDS, funciones para escribir un solo objeto R en un archivo y restaurarlo.
 names(COV)#nombre de variables de un solo vector o de varios(UN VECTOR CONCATENA CON VARIOS EN UN SOLO VECTOR),TOCA MIRAR QUE ARROJA  
 names(COV) <- namesCov #a namesCov le asigna el nombre de names(COV)
 names(COV) #compilar names(COV)
 
-COV<- COV[[idx]] #covarianza de idx, vector de caracteres(tamaño 1x5)
+COV<- COV[[idx]] #covarianza de idx, vector de caracteres(tamaï¿½o 1x5)
 #idx <- as.character(x$X2[c(1:5)])
 
-# Project point data ##proyección de los puntos de las base de datos 
+# Project point data ##proyecciï¿½n de los puntos de las base de datos 
 #dat2 <- dat[c('COS30CM', idx, 'N_1', 'W_1')]
 dat2_sp <- dat2 # al vector dat2 se le da el nombre dat2_sp
-coordinates(dat2_sp) <- ~ W_1 + N_1 #coordenadas que están en dat2_sp, de W_1 Y N_1
+coordinates(dat2_sp) <- ~ W_1 + N_1 #coordenadas que estï¿½n en dat2_sp, de W_1 Y N_1
 
 #############################################
 #ACLARAR ESTA ESTRUCTURA##
@@ -298,7 +298,7 @@ proy <- CRS("+proj=longlat +datum=WGS84")
 dat2_sp@proj4string <- proy
 ###########################################
 
-dat2_sp <- spTransform(dat2_sp, CRS("+init=epsg:32618")) #spTransform para proyección de mapas y transformación de sistma de modelos de ref. del elipsoide
+dat2_sp <- spTransform(dat2_sp, CRS("+init=epsg:32618")) #spTransform para proyecciï¿½n de mapas y transformaciï¿½n de sistma de modelos de ref. del elipsoide
 #CRS:sistea de coordenadas del objeto
 #epsg= sistema de coordenadas el software GIS
 
@@ -308,19 +308,19 @@ start <- Sys.time()#devuelve la idea del sistema de la fecha actual con y sin ho
 
 COV <- projectRaster(COV, crs = CRS("+init=epsg:32618"), method='ngb')
 #COV<- COV[[idx]]
-#paquete raster:admite la pryección del vecino más cercano (interpolacion)
+#paquete raster:admite la pryecciï¿½n del vecino mï¿½s cercano (interpolacion)
 #projectRaster=para poner un raster en un nuevo CRS.
 #Para utilizar la funcion projectRaster, se deben definir dos cosas: 1. el objeto que se quiere reproyectar 
 #2. el sistema de coordenadas al cual quiero reproyectar(crs).
 #metodo"ngb":vecinos cercanos
-COV.sp <- as(COV, "SpatialGridDataFrame")#asignación de COV a un dataframe espacial
+COV.sp <- as(COV, "SpatialGridDataFrame")#asignaciï¿½n de COV a un dataframe espacial
 
 ## Datos duplicados?
 zerodist(dat_sp)#encuentra pares de puntos con coordenadas espaciales iguales
 
 ### RK model ##modelo kriging##
 
-library(automap)#Este paquete realiza una interpolación automática estimando automáticamente el variograma y luego llamando a gstat
+library(automap)#Este paquete realiza una interpolaciï¿½n automï¿½tica estimando automï¿½ticamente el variograma y luego llamando a gstat
 #dat2_sp <- dat2_sp[dat2_sp$COS30CM != 0,]
 
 
@@ -329,7 +329,7 @@ OCS.krige <- autoKrige(formula = as.formula(modelo.MLR.step$call$formula),
                        new_data = COV.sp,
                        verbose = TRUE,
                        block = c(1000, 1000))
-#autokrige: realiza kriging automático al conjunto de datos
+#autokrige: realiza kriging automï¿½tico al conjunto de datos
 #formula: define la variable dependiente como un modelo lineal de variables independientes
 #input_data: objeto de la clase spatialpointsdataframe que contiene los datos que se van a interpolar (dataframe de puntos espaciales)
 #new_data:objeto con ubicaciones de prediccion, puede ser un conjunto de puntos, una cuadricula o poligono
@@ -343,24 +343,24 @@ RKpredsd <- raster(OCS.krige$krige_output[3])
 
 summary(RKprediction)#resumen de resultados
 summary(RKpredsd)##resumen de resultados
-print(Sys.time() - start)#esto debería dar 0
+print(Sys.time() - start)#esto deberï¿½a dar 0
 #start <- Sys.time()
 
 
-memory.size()> memory.size(TRUE)#asignación de memoria acutual
+memory.size()> memory.size(TRUE)#asignaciï¿½n de memoria acutual
 memory.limit(40000)#informa o aumenta el limite vigente sobre asignacion actual
 
 
 # Remove bad values
-#de los valores de RKprediction que sea <0, >1000 son NA´S 
+#de los valores de RKprediction que sea <0, >1000 son NAï¿½S 
 values(RKprediction )[values(RKprediction ) < 0]  <- NA
 values(RKprediction )[values(RKprediction ) > 1000]  <- NA
-#de los valores de RKpredsd que sea >100 son NA´S 
+#de los valores de RKpredsd que sea >100 son NAï¿½S 
 values(RKpredsd)[values(RKpredsd ) > 100]  <- NA
 
 
-summary(RKprediction)##RESULTADOS DE EXTRACCIÓN DE VALORES DE LA VARIABLE RKprediction
-summary(RKpredsd)###RESULTADOS DE EXTRACCIÓN DE VALORES DE LA VARIABLE RKpredsd
+summary(RKprediction)##RESULTADOS DE EXTRACCIï¿½N DE VALORES DE LA VARIABLE RKprediction
+summary(RKpredsd)###RESULTADOS DE EXTRACCIï¿½N DE VALORES DE LA VARIABLE RKpredsd
 
 getwd()# Se mira cual es el directorio de trabajo 
  

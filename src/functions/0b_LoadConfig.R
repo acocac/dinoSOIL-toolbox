@@ -25,14 +25,18 @@ root.vars.categoricas = conf.list[[variables.categoricas.index]][[length(conf.li
 variables.continuas.index <- grep("*variables.continuas",conf.list)
 root.vars.continuas = conf.list[[variables.continuas.index]][[length(conf.list[[variables.continuas.index]])]]
 
-#read models
+#leer lista covariables
+covariables.list.index <- grep("*covariables",conf.list)
+root.covariables.list = conf.list[[covariables.list.index]][[length(conf.list[[covariables.list.index]])]]
+
+#leer modelos segun variable
 modelos.categoricas.index <- grep("*modelos.categoricas",conf.list)
 root.modelos.categoricas = conf.list[[modelos.categoricas.index]][[length(conf.list[[modelos.categoricas.index]])]]
 
 modelos.continuas.index <- grep("*modelos.continuas",conf.list)
 root.modelos.continuas = conf.list[[modelos.continuas.index]][[length(conf.list[[modelos.continuas.index]])]]
 
-newlist = list(root.path, root.vars.categoricas, root.vars.continuas, root.modelos.categoricas, root.modelos.continuas)
+newlist = list(root.path, root.vars.categoricas, root.vars.continuas, root.covariables.list, root.modelos.categoricas, root.modelos.continuas)
 return(newlist)
 }
 

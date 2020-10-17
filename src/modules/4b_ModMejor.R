@@ -36,9 +36,9 @@ ModMejorModelo <- function(VarObj){
 
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
-  proyecto.modelos.categoricas <- conf.args[[4]]
+  proyecto.modelos.categoricas <- conf.args[[5]]
   proyecto.modelos.categoricas = unlist(strsplit(proyecto.modelos.categoricas,';'))
-  proyecto.modelos.continuas <- conf.args[[5]]
+  proyecto.modelos.continuas <- conf.args[[6]]
   proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
 
   # ------------------------------------------------------- #

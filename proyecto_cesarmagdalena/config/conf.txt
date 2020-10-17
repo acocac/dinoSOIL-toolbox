@@ -19,7 +19,8 @@ variables.continuas = pH
 #######################
 Covariables
 #######################
-covars =
+covariables = clima;relieve;NDVI;DEM
+NDVI.fechas = 2019-01-01;2020-08-30
 
 #######################
 Aprendizaje de Maquinas

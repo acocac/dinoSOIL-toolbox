@@ -183,7 +183,7 @@ sqrt(vif(modelo.MLR.step))#se calcula la ra�z cuadrada del vif ultimo
 outlierTest(modelo.MLR.step)#Identificaci�n de outliers(datos atipicos) del modelo.MLR.step
 summary(modelo.MLR.step)#medidas resume n de modelo.MLR.step
 
-'Covariables_VF_Rasterizadas/COV_VF.tif'#Documento tipo .tif
+'Covariables_VF_Rasterizadas/COV_VF.tif'#Documento tipo .individuales
 'Covariables_VF_Rasterizadas/namesCovariables_VF.rds'#Documento tipo .rds
 
 # Lo convertimos a un SpatialGridDataFrame
