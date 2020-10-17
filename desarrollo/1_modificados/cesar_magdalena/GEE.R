@@ -37,12 +37,12 @@ usePackage <- function(p) {
 }
 
 lapply(pckg,usePackage)
-
+require(rgee)
 ## It is necessary just once
-ee_install()
+ee_install_upgrade(version = "0.1.224")
 # Initialize Earth Engine!
 #ee_Initialize(drive = TRUE)
-ee_Initialize(email = 'acocac@gmail.com')
+ee_Initialize()
 
 pathshp <- file.path('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba/limite_prueba_sirgas.shp')
 

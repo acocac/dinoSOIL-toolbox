@@ -14,7 +14,8 @@ Datos <- function(){
   # ------------------------------------------------------- #
   # Librerias
   pckg <- c('readxl', 'tidyr', 'raster', 'GSIF',
-            'aqp', 'plyr')
+            'aqp', 'plyr', 'sf', 'dplyr', 'rgdal',
+            'smoothr', 'gdalUtilities', 'magrittr')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -94,11 +95,10 @@ Datos <- function(){
         DEM_rast_res <- stack(covariable.archivo)
         nombres_DEM <- readRDS(gsub('.tif','.rds',covariable.archivo))
         names(DEM_rast_res) <- nombres_DEM
-        print(names(DEM_rast_res))
       }
     }
 
-    # Vegetación
+    # Vegetación #TODO Adicionar fechas de covariable
     if ('NDVI' %in% project.covars.list){
       out.dir <- paste0(in.geo.data,'/raster/separados/ndvi')
       dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
@@ -121,6 +121,8 @@ Datos <- function(){
 
         ## It is necessary just once
         #ee_install()
+        ##if Error in reticulate::py_discover_config()
+        ##ee_install_upgrade(version = "0.1.224")
         # Initialize Earth Engine!
         ee_Initialize()
 
@@ -149,12 +151,6 @@ Datos <- function(){
 
         #### Mediana de la coleccion ####
         median <- filteredCollection$reduce(ee$Reducer$median())
-        vizParams <- list(
-          bands = c("B5_median", "B4_median", "B3_median"),
-          min = 5000,
-          max = 15000,
-          gamma = 1.3
-        )
 
         #### NDVI ####
         getNDVI <- function(image) {
@@ -182,6 +178,7 @@ Datos <- function(){
         NDVI_rast <- raster(imgloc)
         NDVI_rast_res <- projectRaster(NDVI_rast,dem,method="bilinear")
         NDVI_rast_res <- crop(NDVI_rast_res,limite_shp)
+        NDVI_rast_res <- mask(NDVI_rast_res,limite_shp)
         # Guardar archivo
         writeRaster(NDVI_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
       } else{
@@ -217,6 +214,7 @@ Datos <- function(){
         values(clima_rast_res) <- round(values(clima_rast_res),0)
 
         clima_rast_res <- crop(clima_rast_res,limite_shp)
+        clima_rast_res <- mask(clima_rast_res,limite_shp)
 
         # Guardar archivo
         writeRaster(clima_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
@@ -236,11 +234,12 @@ Datos <- function(){
         relieve <- readOGR(paste0(in.geo.data,'/vector/geomorfologia'))
         relieve <- spTransform (relieve, CRS=projection(dem))
         relieve$TIPO_RELIE <- as.character(relieve$TIPO_RELIE)
-        relieve_rast <- gRasterize(terrerno, dem, 'TIPO_RELIE')
+        relieve_rast <- gRasterize(relieve, dem, 'TIPO_RELIE')
         relieve_rast_res <- resample(relieve_rast, dem,method='ngb')
         values(relieve_rast_res) <- round(values(relieve_rast_res),0)
         # Guardar archivo
         relieve_rast_res <- crop(relieve_rast_res,limite_shp)
+        relieve_rast_res <- mask(relieve_rast_res,limite_shp)
 
         writeRaster(relieve_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
       } else {
@@ -253,7 +252,7 @@ Datos <- function(){
     # Generar COV tif
     list_obj = objects(pattern="*_rast_res")
     list_covs <- lapply(list_obj, function(x) get(x))
-    covariables <- stack(list_covs)
+    covariables <- stack(list_covs) #TODO agregar exportar variables
     writeRaster(covariables,covariables.archivo.stack, drivers = 'GeoTIFF', overwrite=TRUE)
   } else{
     covariables <- stack(covariables.archivo.stack)
@@ -340,9 +339,11 @@ Datos <- function(){
   columnas_factores <- c('EPIPEDON', 'ENDOPEDON', 'ORDEN', 'SUBORDEN', 'SUBGRUPO', 'GRANGRUPO', 'FAMILIA_TE')
   datos_final <- datos_final %<>% mutate_at(columnas_factores, funs(factor(.)))
 
-  datos_sp <-st_as_sf(points, coords=c("LONGITUD","LATITUD"))
+  dem <- raster(paste0(in.geo.data,'/raster/separados/dem/original/DEM_PT_2020.tif'))
+
+  datos_sp <-st_as_sf(datos_final, coords=c("LONGITUD","LATITUD"))
   proyeccion <- CRS("+proj=longlat +datum=WGS84")
-  st_crs(points) <- proyeccion
+  st_crs(datos_sp) <- proyeccion
   datos_sp_cov <- st_transform(datos_sp, projection(dem))
 
   ###prueba areas pequeñas
@@ -357,7 +358,6 @@ Datos <- function(){
   #out_cov <- as(out_cov, "Spatial")
 
   # Extraer valores metodo normal raster
-  print(dim(cov))
   start <- Sys.time()
   #matriz_datos <- data.frame(raster::extract(covariables, out_cov))
   matriz_datos <- cbind(datos_final, raster::extract(covariables, datos_sp_cov))
