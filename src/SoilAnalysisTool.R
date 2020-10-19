@@ -92,7 +92,7 @@ source(paste0(r.dir,'/modules/4a_ModEjecutar.R'))
 args_p4a <- prompt.user.part4a()
 
 #### ejecutar la funcion del modulo ###
-ModEntrenamiento(args_p4a[[1]])
+ModEntrenamiento(args_p4a[[1]],args_p4a[[2]])
 
 
 ###########################################################
@@ -121,7 +121,7 @@ ModMejorModelo(args_p4b[[1]])
 ###########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/4d_ModUso.R'))
+source(paste0(r.dir,'/modules/4d_ModUso.R')) ## TODO revisar predicion
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 C45

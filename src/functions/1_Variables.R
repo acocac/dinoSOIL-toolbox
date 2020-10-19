@@ -22,8 +22,8 @@ VariablesObjectivo = function()
   project.vars.continuas <- conf.args[[3]]
   project.vars.continuas = unlist(strsplit(project.vars.continuas,';'))
 
-  carpeta.entrada <- paste0(project.folder,'/datos/salida/1_covariables/tabular')
-  datos.entrada <- read.csv(paste0(carpeta.entrada,'/MatrixRegresion.csv'),sep=';')
+  carpeta.entrada <- paste0(project.folder,'/datos/salida/0_matriz')
+  datos.entrada <- read.csv(paste0(carpeta.entrada,'/MatrixDatos.csv'),sep=',')
 
   columnas.matriz <- names(datos.entrada[which(startsWith(colnames(datos.entrada),project.vars.categoricas) |  startsWith(colnames(datos.entrada),project.vars.continuas))])
 return(columnas.matriz)

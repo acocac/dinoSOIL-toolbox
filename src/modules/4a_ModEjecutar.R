@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModEntrenamiento <- function(VarObj){
+ModEntrenamiento <- function(VarObj, rfe_lim){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -48,9 +48,9 @@ ModEntrenamiento <- function(VarObj){
 
   # Modelos disponibles y configuraciones
   modelos.lista <-c('C45'='J48', 'C50'='C5.0', 'RandomForest'='ranger', 'SVM'='svmLinear',
-                    'xgbTree'='xgbTree','gbm'='gbm_h2o', 'glmnet'='glmnet','mlp'='mlp')
-  tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=5, 'SVM'=5, 'xgbTree'=5, 'gbm_h2o'=3,
-                 'glmnet'=5,'mlp'=5)
+                    'xgbTree'='xgbTree','gbm'='gbm_h2o', 'glmnet'='glmnet','mlp'='mlp', 'svmRadial'='svmRadial')
+  tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=10, 'SVM'=5, 'xgbTree'=10, 'gbm_h2o'=3,
+                 'glmnet'=5,'mlp'=5, 'svmRadial'=10)
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
@@ -71,8 +71,6 @@ ModEntrenamiento <- function(VarObj){
   # Cargar particición
   load(paste0(modelos.entrada,'/particion.RData'))
   train.data <- as.data.frame(particion['train'])
-  test.data <- particion['test']
-
   names(train.data) <- sub("train.", "", names(train.data))
 
   # Cargar rfe
@@ -87,7 +85,7 @@ ModEntrenamiento <- function(VarObj){
     # Modelos
     # ------------------------------------------------------- #
     # Crear formula
-    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:3)]),collapse = "+"))) #TODO dejar número variables según usuario
+    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
 
     #Random grid search
     fitControl <- trainControl(method = "cv", #verificar tecnicas repeatedcv

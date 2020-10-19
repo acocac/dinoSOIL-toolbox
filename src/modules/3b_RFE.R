@@ -67,19 +67,18 @@ ExpRFE <- function(VarObj){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
+  datos.entrada <- paste0(proyecto.directorio,'/datos/salida')
 
   # Cargar matrix observaciones
-  matriz <- read.csv(paste0(datos.entrada,'/tabular/MatrixRegresion.csv'),sep=';')
+  matriz <- read.csv(paste0(datos.entrada,'/0_matriz/MatrixDatos.csv'),sep=',')
+  covariables <- readRDS(paste0(datos.entrada,'/1_covariables/covariables.rds'))
 
   if (is(matriz[,VarObj],'numeric')){
 
-    explanatory_exclude <- c(1:16,24,40,41) #algunas variables con artifactos (distribución espacial) son eliminadas y no tenidas en cuenta en RFE
-
-    final_df <- data.frame(target=matriz[,VarObj], matriz[,-c(explanatory_exclude)])
+    final_df <- data.frame(target=matriz[,VarObj], matriz[,which(names(matriz) %in% covariables)])
 
     # identificar y remote outliers
-    gooddata = computeOutliers(matriz[,-c(explanatory_exclude)], type = 'remove')
+    gooddata = computeOutliers(matriz[,covariables], type = 'remove')
     good_df_q95 = final_df[gooddata,]
 
     df_wnoise = good_df_q95
@@ -93,8 +92,6 @@ ExpRFE <- function(VarObj){
     # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
     data <- data[complete.cases(data), ]
 
-    cat(dim(data))
-
     ##Conjunto de datos para entrenamiento y para validacion
     set.seed(225)
     inTrain <- createDataPartition(y = data[,1], p = .70, list = FALSE)
@@ -107,7 +104,7 @@ ExpRFE <- function(VarObj){
     file_name <- 'rfe.rds'
     exploratorio.variables.rfe <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.rfe)){
-      cat('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE','\n','\n')
+      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE'),'\n','\n')
       start <- Sys.time()
       no_cores <- detectCores() - 1
       cl <- makeCluster(no_cores, type = "SOCK")
@@ -129,7 +126,7 @@ ExpRFE <- function(VarObj){
     file_name <- 'boruta.rds'
     exploratorio.variables.boruta <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.boruta)){
-      cat('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta','\n','\n')
+      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta'),'\n','\n')
       nCores <- detectCores() - 1
       start <- Sys.time()
       formula <- as.formula('target ~ .')

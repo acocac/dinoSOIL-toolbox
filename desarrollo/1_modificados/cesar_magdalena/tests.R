@@ -83,5 +83,95 @@ poligono<- st_transform(poligono, projection(poligono))
 out <- st_intersection(points2, poligono)
 plot(out)
 
-#oad
-readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.rds')
+#load
+b<-readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.rds')
+a<-stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.tif')
+b
+
+#comparar
+modelo <- get(load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/1_modelos/pH-0_30_spline/RandomForest.rds'))
+
+#covariables geotiff
+require(raster)
+require(sf)
+limite_shp <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
+
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/0_particion/pH-0_30_spline/particion.RData')
+train.data <- as.data.frame(particion['train'])
+names(train.data) <- sub("train.", "", names(train.data))
+vars_modelos <- names(train.data)[which(names(train.data) != 'target')]
+z <- names(cov)[which(!names(cov) %in% vars_modelos)]
+
+cov4 <- dropLayer(cov, z)
+dim(cov4)
+cov <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.tif')
+names(cov) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.rds')
+#cov[is.na(cov)] <- 0
+cov <- crop(cov4,limite_shp)
+cov <- mask(cov,limite_shp)
+cov[is.na(cov)] <- 0
+cov3 <- cov
+cov$ClosedDepressions <- 0
+dim(cov)
+writeRaster(cov,'/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables_final.tif', drivers = 'GTiff', overwrite=TRUE, NAflag=0)
+dim(cov)
+names(cov)
+max(cov$ClosedDepressions)
+hist(cov,
+     maxpixels=ncell(cov), na.rm=TRUE)
+hist(cov$ClosedDepressions,maxpixels=ncell(cov$ClosedDepressions))
+cov_na<- cov
+for (i in names(cov)){
+  print(i)
+  #print(any(is.na(values(cov[[i]]))))
+  f <- freq(cov[[i]], value=NA) / ncell(cov[[i]])
+  print(f)
+}
+f <- freq(cov, value=NA) / ncell(cov)
+i <- which(f <= 0.5)
+i
+names(cov)
+cov2 <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/old/covariables.tif')
+names(cov2) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/old/covariables.rds')
+cov2 <- crop(cov2,limite_shp)
+dim(cov2)
+for (i in names(cov2)){
+  print(i)
+  #print(any(is.na(values(cov2[[i]]))))
+  f <- freq(cov2[[i]], value=NA) / ncell(cov2[[i]])
+  print(f)
+}
+
+hist(cov2$Closs_Dep,
+     maxpixels=ncell(cov2))
+max(values(cov2$Closs_Dep))
+## predict error
+modelo <- '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/1_modelos/pH-0_30_spline/RandomForest.rds'
+get(load(modelo))
+require(waldo)
+waldo::compare(cov2$ChanneNetworkBaseLevel,cov$ChanneNetworkBaseLevel)
+cov3 <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.tif')
+
+target <- data.frame(ChanneNetworkBaseLevel=87.2,dem=90,ValleyDepth=468,clima=3)
+s2 <- predict(cov2, modelo.ajuste)
+plot(s2)
+
+names(cov2)[which(names(cov2) == 'CHBL')] <- 'ChanneNetworkBaseLevel'
+names(cov2)[which(names(cov2) == 'DEM')] <- 'dem'
+names(cov2)[which(names(cov2) == 'VD')] <- 'ValleyDepth'
+
+predict(modelo.ajuste, cov2[1,1])
+predict(modelo.ajuste, cov[1,1])
+
+dim(cov)
+#predict
+f <- list(levels(as.factor(unique(values(cov$clima)))),levels(as.factor(unique(values(cov$tipo_relieve)))))
+names(f) <- c('clima','tipo_relieve')
+s1 <- raster::predict(cov, modelo.ajuste)
+plot(s1)
+s2 <- predict(cov2, modelo.ajuste)
+plot(s2)
+names(cov)
+waldo::compare(s1,s2)
+
+names(cov[1:20,1:5,1:26])
