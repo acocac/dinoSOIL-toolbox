@@ -59,7 +59,7 @@ ModEntrenamiento <- function(VarObj, rfe_lim){
   exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/rds/',str_replace(VarObj,'[.]','-'))
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.entrada, recursive = T, mode = "0777", showWarnings = F)
-  modelos.salida <- paste0(proyecto.directorio,'/modelos/1_modelos/',str_replace(VarObj,'[.]','-'))
+  modelos.salida <- paste0(proyecto.directorio,'/modelos/1_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.salida, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo

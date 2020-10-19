@@ -110,11 +110,11 @@ ExpRFE <- function(VarObj){
       cl <- makeCluster(no_cores, type = "SOCK")
       registerDoParallel(cl)
       set.seed(40)
-      control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=5, repeats=5) #number=10, repeats=10 de acuerdo FAO
+      control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=5, repeats=5) #number=10, repeats=10 de acuerdo FAO sin embargo MGuevara usa 5 https://github.com/DSM-LAC/MEXICO/search?q=rfe
       (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=c(1:10), rfeControl=control2)) #sizes se refiere al detalle de la curva,
       stopCluster(cl = cl)
-      png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 600)
-      print(plot(rfmodel, type=c("g", "o")))
+      png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
+      print(plot(rfmodel, type=c("g", "o"), cex=2,cex.names = 2, metric = "RMSE"))
       dev.off()
       predictors(rfmodel)[1:10]
       save(rfmodel, file=exploratorio.variables.rfe)
@@ -132,14 +132,16 @@ ExpRFE <- function(VarObj){
       formula <- as.formula('target ~ .')
       (bor <- Boruta(formula, data = data, doTrace = 0, num.threads = nCores, ntree = 30, maxRuns=500)) #se debe evaluar ntree (numero de arboles), maxRuns (cantidad de interacciones)
       save(bor, file=exploratorio.variables.boruta)
-      png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 600)
-      plot(bor, xlab = "", xaxt = "n")
-      lz<-lapply(1:ncol(bor$ImpHistory),function(i)
-        bor$ImpHistory[is.finite(bor$ImpHistory[,i]),i])
-      names(lz) <- colnames(bor$ImpHistory)
-      Labels <- sort(sapply(lz,median))
-      axis(side = 1,las=2,labels = names(Labels),
-           at = 1:ncol(bor$ImpHistory), cex.axis = 0.7)
+      png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
+      par(mar = c(18, 4, 1, 1))
+      plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
+      #plot(bor, xlab = "", xaxt = "n")
+      #lz<-lapply(1:ncol(bor$ImpHistory),function(i)
+      #  bor$ImpHistory[is.finite(bor$ImpHistory[,i]),i])
+      #names(lz) <- colnames(bor$ImpHistory)
+      #Labels <- sort(sapply(lz,median))
+      #axis(side = 1,las=2,labels = names(Labels),
+      #     at = 1:ncol(bor$ImpHistory), cex.axis = 0.7)
       dev.off()
       print(Sys.time() - start)
     } else {

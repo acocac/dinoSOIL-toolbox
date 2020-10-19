@@ -175,3 +175,101 @@ names(cov)
 waldo::compare(s1,s2)
 
 names(cov[1:20,1:5,1:26])
+
+# Mejorar plots RFE
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/rds/pH-0_30_spline/boruta.rds')
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/rds/pH-0_30_spline/rfe.rds')
+
+png('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/figuras/pH-0_30_spline/rfe.png', width = 700, height = 550)
+plot(rfmodel, type=c('g', 'o'), cex=2, metric = "RMSE")
+dev.off()
+
+png('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/figuras/pH-0_30_spline/boruta.png', width = 700, height = 550)
+par(mar = c(18, 4, 1, 1))
+plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
+dev.off()
+
+plot(bor, xlab = "", xaxt = "n")
+lz<-lapply(1:ncol(bor$ImpHistory),function(i)
+        bor$ImpHistory[is.finite(bor$ImpHistory[,i]),i])
+      names(lz) <- colnames(bor$ImpHistory)
+      Labels <- sort(sapply(lz,median))
+      axis(side = 1,las=2,labels = names(Labels),
+           at = 1:ncol(bor$ImpHistory), cex.axis = 0.7)
+     #Now, we'll plot the boruta variable importance chart.
+
+plot(bor, xlab = "")
+#plot function in Boruta adds the attribute values to the x-axis horizontally where all the attribute values are not dispayed due to lack of space.
+lz <-lapply(seq_len(ncol(bor$ImpHistory)), function(i)
+  bor$ImpHistory[is.finite(bor$ImpHistory[,i]),i])
+names(lz) <- colnames(bor$ImpHistory)
+axis(side = 1, cex.axis = 0.2)
+
+v <- varImp(rfmodel$fit, type = 1, scale = F)
+v[,"covar"] <- row.names(v)
+v <- v[order(v$Overall,decreasing = T),]
+top_species <- v[1:8,"covar"]
+
+#plot top 25 geo indicator species fig s13
+png('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/figuras/test.png')
+par(font = 3)
+dotchart(rev(v[1:8,"Overall"])*100,labels= rev(top_species),cex=1.2,pt.cex = 1.3,
+         xlab="Mean decrease in accuracy", mgp = c(2.2,0,0))
+dev.off()
+
+importances <- sort(rfmodel$fit$importance[,1],decreasing = TRUE)
+barplot(importances, cex.names=0.55, cex.axis=0.5)
+
+### probar mapas
+require(maps)
+map("world", "Colombia")
+map.cities(country = "Colombia", capitals = 2)
+
+require(ows4R)
+require(httr)
+wfs_regions <- "https://eservices.minfin.fgov.be/arcgis/services/R2C/Regions/MapServer/WFSServer"
+url <- parse_url(wfs_regions)
+url$query <- list(service = "wfs",
+                  version = "2.0.0",
+                  request = "GetFeature",
+                  typename = "regions",
+                  srsName = "EPSG:4326",
+                  outputFormat = "GEOJSON")
+request <- build_url(url)
+
+bel_regions <- read_sf(request) #Lambert2008
+ggplot(bel_regions) +
+  geom_sf()
+
+### cortar geometrias
+require(sf)
+require(dplyr)
+vias <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/data/igac/500k/via_t1_limite.shp')
+limite <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/ZONAS_VIDA_CESAR_MARGDALENA.shp')
+if (dim(limite)[1] > 1){
+    limite$id <- 0
+    limite <- limite %>% group_by(id) %>% summarize()
+}
+
+dem <- raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/dem/original/DEM_PT_2020.tif')
+
+vias2 < vias  %>%
+  st_transform(CRS(dem))
+limite2 <- limite %>%
+  st_transform(CRS(dem))
+
+vias <- st_as_sf(vias)
+
+intersect_test <- st_intersection(vias,limite)
+
+st_is_valid(vias)
+
+plot(intersect_test)
+dev.off()
+
+##localizacion entrenamiento
+# Cargar particición
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/0_particion/pH-0_30_spline/particion.RData')
+train.data <- as.data.frame(particion['train'])
+names(train.data) <- sub("train.", "", names(train.data))
+names(train.data)

@@ -107,7 +107,7 @@ source(paste0(r.dir,'/modules/4b_ModMejor.R'))
 args_p4b <- prompt.user.part4b()
 
 #### ejecutar la funcion del modulo ###
-ModMejorModelo(args_p4b[[1]])
+ModMejorModelo(args_p4b[[1]],args_p4b[[2]])
 
 
 ###########################################################
@@ -128,7 +128,7 @@ source(paste0(r.dir,'/modules/4d_ModUso.R')) ## TODO revisar predicion
 args_p4d <- prompt.user.part4d()
 
 #### ejecutar la funcion del modulo ###
-ModUso(args_p4d[[1]])
+ModUso(args_p4d[[1]],args_p4d[[2]])
 
 ###########################################################
 #####                    FINAL                        #####

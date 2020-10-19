@@ -95,11 +95,17 @@ prompt.user.part4b <- function()#get arguments from user
   cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
   cat(paste0(variables.usuario, sep=" | "))
   cat(paste0('\n','\n'))
+
   message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
   a <- readLines(n = 1)
   a <- gsub("\\\\", "/", a)
 
-  newlist = list(a)
+  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  newlist = list(a, b)
+
   return(newlist)
 }
 
@@ -114,10 +120,15 @@ prompt.user.part4d <- function()#get arguments from user
   cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
   cat(paste0(variables.usuario, sep=" | "))
   cat(paste0('\n','\n'))
+
   message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
   a <- readLines(n = 1)
   a <- gsub("\\\\", "/", a)
 
-  newlist = list(a)
+  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  newlist = list(a, b)
   return(newlist)
 }
