@@ -273,3 +273,113 @@ load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/
 train.data <- as.data.frame(particion['train'])
 names(train.data) <- sub("train.", "", names(train.data))
 names(train.data)
+
+##terra
+install.packages("terra")
+require(terra)
+require(sf)
+
+cov <- terra::rast('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.tif')
+names(cov) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.rds')
+get(load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/1_modelos/pH-0_30_spline/8_covariables/RandomForest.rds'))
+
+limite <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
+if (dim(limite)[1] > 1){
+    limite$id <- 0
+    limite <- limite %>% group_by(id) %>% summarize()
+}
+
+cov_subset <- terra::crop(cov, limite)
+
+start <- Sys.time()
+a <- terra::predict(cov_subset, modelo.ajuste)
+print(Sys.time() - start)
+
+start <- Sys.time()
+b <- raster::predict(cov_subset, modelo.ajuste)
+print(Sys.time() - start)
+
+require(doParallel)
+require(raster)
+start <- Sys.time()
+no_cores <- detectCores() - 1
+raster::beginCluster(no_cores)
+raster::clusterR(cov_subset, predict, args = list(modelo.ajuste),
+      filename = out.file, format = "GTiff",
+      overwrite = T)
+raster::endCluster()
+print(Sys.time() - start)
+
+##familia textural
+tex <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_matriz/MatrixDatos.csv')
+names(tex)
+
+library(tidyr)
+tex2 <- tex %>% drop_na(names(tex[16:41]))
+
+tex2 <-tex[na.omit(tex[17:41]),]
+
+tex2 <- na.omit(tex, cols = names(tex[17:41]))
+
+tex2 <- tex %>% drop_na(clima)
+
+any(is.na(tex2$MRVBF))
+
+require(readxl)
+write.csv(table(tex2$FAMILIA_TE), paste0('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/enviado/familiaT.csv'), row.names = F)
+write
+
+##convert rdata
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/0_particion/pH-30_100_spline/particion.RData')
+
+train = particion['train']
+test = particion['test']
+
+write.csv(train, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/enviado/arosso/pH-30_100_spline/train.csv', row.names = F)
+write.csv(test, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/enviado/arosso/pH-30_100_spline/test.csv', row.names = F)
+
+##load rde
+require(caret)
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/rds/pH-30_100_spline/rfe.rds')
+rfe_lim = 8
+a = predictors(rfmodel)[c(1:rfe_lim)]
+paste(a, collapse=',')
+
+z = c('train_correlationmatrix','test_correlationmatrix', a)
+e = 'train_correlationmatrix'
+sprintf('%s_clima', a)
+
+difs <- setdiff(z,e)
+
+
+## crop area
+require(terra)
+require(sf)
+cov <- terra::rast('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.tif')
+names(cov) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.rds')
+get(load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/1_modelos/pH-0_30_spline/8_covariables/RandomForest.rds'))
+
+limite <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
+if (dim(limite)[1] > 1){
+    limite$id <- 0
+    limite <- limite %>% group_by(id) %>% summarize()
+}
+
+train.data <- as.data.frame(particion['train'])
+names(train.data) <- sub("train.", "", names(train.data))
+colfinal <- names(train.data)[2:ncol(train.data)]
+
+
+cov_subset <- terra::crop(cov, limite)
+
+cov_subset2 <- raster::subset(cov_subset, colfinal, value = T)
+
+writeRaster(cov_subset2, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/enviado/arosso/area2.tif', drivers = 'GTiff', overwrite=TRUE, NAflag=0, options='COMPRESS=LZW')
+
+## ver capa
+clima_raster = raster::raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/raster/clima/clima.tif')
+clima_vector <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
+if (dim(limite)[1] > 1){
+    limite$id <- 0
+    limite <- limite %>% group_by(id) %>% summarize()
+}

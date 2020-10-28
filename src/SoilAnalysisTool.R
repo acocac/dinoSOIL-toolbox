@@ -2,9 +2,9 @@
 # titulo        : Herramienta para explorar, procesar y analizar informacion de suelos
 #                 bajo el enfoque de Mapeo Digital de Suelos (MDS);
 # proposito     : Automatizar procesos relacionados con MDS dentro de la Subdirección de Agrología;
-# autor(es)     : Conceptualizado por Alejandro Coca-Castro, CIAF/IGAC (PhD Geografia, experto en Geotecnologias); Equipo de trabajo Oficina CIAF/IGAC: Pedro Karin Serrato (Profesor, experto en Agrologia),
-#                 Victoria Camacho (Estadistica), Patricia Escudero (Estadistica), Andrés Rosso (PhD Ingenieria, experto en Machine Learning), Yesenia Vargas (MSc Geografia, experta en Proyectos);
-#                 Equipo de trabajo Subdirección de Agrología/IGAC: Juan Camilo García, Ricardo Devia Cartagena, Joan Sebastián Gutiérrez Díaz
+# autor(es)     : Conceptualizado y liderado por Alejandro Coca-Castro, CIAF/IGAC (PhD en Geografía, experto en Geotecnologias); Equipo de trabajo Oficina CIAF/IGAC: Pedro Karin Serrato (Profesor, experto en Agrologia),
+#                 Victoria Camacho (Estadistica), Patricia Escudero (Estadistica), Andrés Rosso (Candidato PhD en Ingeniería, experto en Machine Learning), Yesenia Vargas (MSc Geografia, experta en Proyectos);
+#                 Equipo de trabajo Subdirección de Agrología/IGAC: Juan Camilo García, Ricardo Devia Cartagena, Joan Sebastián Gutiérrez Díaz, Daniela Prieto
 #                 Supervisores: CIAF/IGAC, Carlos Franco y Diana Galindo - Subdirección de Agrología/IGAC, Janeth González Nivia y Napoleón Ordoñez
 # actualizacion : v1 Bogota, Colombia - Septiembre 2020;
 # observaciones : Detalles de los pasos mencionados pueden consultarse en el manual;
@@ -35,7 +35,7 @@ source(paste0(r.dir,'/functions/0a_UserArgs.R'))
 ########################################################
 ####PARTE 1 - Preprocesamiento de la base de datos #####
 ########################################################
-##TODO falta verticalizacion de las observaciones
+
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/1_Preprocesamiento.R'))
 
@@ -50,7 +50,7 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]],args_p1[[4]])
 ########################################################
 ####PARTE 2 - Generación de los Datos                ###
 ########################################################
-##TODO
+
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/2_Datos.R'))
 
@@ -61,74 +61,86 @@ source(paste0(r.dir,'/modules/2_Datos.R'))
 #### ejecutar la funcion del modulo ###
 Datos()
 
-########################################################
-#####PARTE 3a - Analisis Exploratorio de los Datos ######
-########################################################
-##TODO
 
 ########################################################
-#####PARTE 3b - Explotarorio RFE                  ######
+#####PARTE 3 - Selección variables                ######
 ########################################################
-##TODO Done
+
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/3b_RFE.R'))
+source(paste0(r.dir,'/modules/3_RFE.R'))
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 Variable Objetivo
-args_p3b <- prompt.user.part3b()
+args_p3 <- prompt.user.part3()
 
 #### ejecutar la funcion del modulo ###
-ExpRFE(args_p3b[[1]])
+ExpRFE(args_p3[[1]])
+
 
 ########################################################
-#####PARTE 4a - Modelacion ML: Ejecutar algoritmos  ####
+#####PARTE 4a - Modelación: Exploración datos         ##
 ########################################################
-
+##TODO
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/4a_ModEjecutar.R'))
+source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 C45
+#para el demo llenar pregunta 1 Variable Objetivo
 args_p4a <- prompt.user.part4a()
 
 #### ejecutar la funcion del modulo ###
-ModEntrenamiento(args_p4a[[1]],args_p4a[[2]])
+ModExploracion(args_p4a[[1]], args_p4a[[2]])
 
 
-###########################################################
-#####PARTE 4b - Modelacion ML: Identificar mejor modelo  ##
-###########################################################
+########################################################
+#####PARTE 4b - Modelación: Ejecutar algoritmos     ####
+########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/4b_ModMejor.R'))
+source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 C45
 args_p4b <- prompt.user.part4b()
 
 #### ejecutar la funcion del modulo ###
-ModMejorModelo(args_p4b[[1]],args_p4b[[2]])
+ModEntrenamiento(args_p4b[[1]],args_p4b[[2]])
 
 
 ###########################################################
-#####PARTE 4c - Modelacion ML: Sensibilidad/Incertidumbre #
+#####PARTE 4c - Modelación: Identificar mejor modelo    ###
+###########################################################
+
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/4c_ModMejor.R'))
+
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 C45
+args_p4c <- prompt.user.part4c()
+
+#### ejecutar la funcion del modulo ###
+ModMejorModelo(args_p4c[[1]],args_p4c[[2]])
+
+
+###########################################################
+#####PARTE 4d - Modelación: Sensibilidad/Incertidumbre  ###
 ###########################################################
 ##TODO
 
 
 ###########################################################
-#####PARTE 4d - Modelacion: Uso del modelo               ##
+#####PARTE 4e - Modelacion: Uso del modelo               ##
 ###########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/4d_ModUso.R')) ## TODO revisar predicion
+source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
 
 #### consultar al usuario argumentos del modulo ###
 #para el demo llenar pregunta 1 C45
-args_p4d <- prompt.user.part4d()
+args_p4e <- prompt.user.part4e()
 
 #### ejecutar la funcion del modulo ###
-ModUso(args_p4d[[1]],args_p4d[[2]])
+ModUso(args_p4e[[1]],args_p4e[[2]])
 
 ###########################################################
 #####                    FINAL                        #####

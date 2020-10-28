@@ -41,7 +41,7 @@ prompt.user.part2 <- function()#get arguments from user
   return(newlist)
 }
 
-prompt.user.part3b <- function()#get arguments from user
+prompt.user.part3 <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
@@ -105,11 +105,35 @@ prompt.user.part4b <- function()#get arguments from user
   b <- gsub("\\\\", "/", b)
 
   newlist = list(a, b)
+  return(newlist)
+}
+
+prompt.user.part4c <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  newlist = list(a, b)
 
   return(newlist)
 }
 
-prompt.user.part4d <- function()#get arguments from user
+prompt.user.part4e <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
