@@ -51,6 +51,9 @@ datap1<-data.frame(ph1_spline1, DEM, AnHill, Slope, Aspect, CNBL, Conv_Ind,
                    CSC, FA, LC, LSfactor, MRRTF, MRVBF, Neg_Op, Pos_Op, RSP, skyVF,
                    TRI, TPI, TWI, VD, VDCN, visSky, ndvi, tipo_relieve, Clima)
 
+variables_obj <- c('ph1_spline1', 'DEM')
+names(variables_obj) <- c('pH', 'Modelo Digital de Elevacion')
+
 ####
 ####Pairs.pannel##
 #variables#
@@ -59,7 +62,8 @@ datpairs<-data.frame(Slope,LSfactor,CNBL,visSky,RSP,DEM)
 length(datpairs)
 str(datpairs)
 #pairs.panels(datpairs)
-chart.Correlation(datpairs,hist=T)
+p <- PerformanceAnalytics::chart.Correlation(datpairs,hist=T)
+print(p)
 ######################mirar esto
 
 ##Correlaciones de la variable PH (0-30, SPLINE) con las dem�s covariables
@@ -82,14 +86,24 @@ View(datap1$Clima)
 ####Diagramas de dispersion####
 ##DIAGRAMAS DE DISPERSION CON RESPECTO AL CLIMA
 
-#Variable PH con DEM
-p <- ggplot(data=datap1, aes(x=DEM, y=ph1_spline1, colour=clima)) +
-  geom_point() +
-  labs(fill="Clima")+
-  ggtitle("PH(0-30, spline)Vs. DEM") +
-  xlab("Modelo Digital de Elevaci�n")+
-  ylab("Ph, nivel:0-30,Spline")
+##Optimizado
+objectivo <- c('DEM', 'AnHill', 'Slope')
+names(objectivo) <- c('Modelo Digital de Elevacion', 'AnHill', 'Slope')
 
+listado_final = list()
+for (i in seq(length(objectivo))){
+  print(objectivo[i])
+  p <- ggplot(data=datap1, aes_string(x=objectivo[i], y='ph1_spline1', colour='clima')) +
+    geom_point() +
+    labs(fill="Clima") +
+    ggtitle("PH(0-30, spline)Vs. " + objectivo[i]) +
+    xlab(names(objectivo)[i])+
+    ylab("Ph, nivel:0-30,Spline")
+    print(p)
+  listado_final[[i]] = p
+}
+
+#Individual
 #Variable PH con AnHill
 ggplot(datap1, aes(y=ph1_spline1, x=AnHill, colour=clima)) + 
   labs(fill="Clima")+

@@ -80,7 +80,7 @@ ExpRFE(args_p3[[1]])
 ########################################################
 #####PARTE 4a - Modelación: Exploración datos         ##
 ########################################################
-##TODO
+##TODO: Boxplots y Variables Cualitativas
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 
@@ -94,7 +94,6 @@ ModExploracion(args_p4a[[1]], args_p4a[[2]])
 
 ########################################################
 #####PARTE 4b - Modelación: Ejecutar algoritmos     ####
-########################################################
 
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
@@ -125,7 +124,16 @@ ModMejorModelo(args_p4c[[1]],args_p4c[[2]])
 ###########################################################
 #####PARTE 4d - Modelación: Sensibilidad/Incertidumbre  ###
 ###########################################################
-##TODO
+
+#### cargar modulo ###
+source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
+
+#### consultar al usuario argumentos del modulo ###
+#para el demo llenar pregunta 1 C45
+args_p4d <- prompt.user.part4d()
+
+#### ejecutar la funcion del modulo ###
+ModIncertidumbre(args_p4d[[1]],args_p4d[[2]])
 
 
 ###########################################################
@@ -136,7 +144,6 @@ ModMejorModelo(args_p4c[[1]],args_p4c[[2]])
 source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 C45
 args_p4e <- prompt.user.part4e()
 
 #### ejecutar la funcion del modulo ###

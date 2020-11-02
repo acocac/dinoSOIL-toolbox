@@ -13,7 +13,8 @@ ModExploracion <- function(VarObj, rfe_lim){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  pckg <- c('ggplot2', 'tidyr', 'PerformanceAnalytics')
+  pckg <- c('ggplot2', 'tidyr', 'PerformanceAnalytics',
+            'stringr', 'caret')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -97,15 +98,16 @@ ModExploracion <- function(VarObj, rfe_lim){
     # directorios
     carpeta.correlacion = paste0(modelos.salida,'/correlacion')
     dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
-    carpeta.individuales.clima = paste0(modelos.salida,'/individuales/clima')
-    dir.create(carpeta.individuales.clima, recursive = T, mode = "0777", showWarnings = F)
-    carpeta.individuales.relieve = paste0(modelos.salida,'/individuales/relieve')
-    dir.create(carpeta.individuales.relieve, recursive = T, mode = "0777", showWarnings = F)
-    carpeta.individuales.climaxrelieve = paste0(modelos.salida,'/individuales/climaxrelieve')
-    dir.create(carpeta.individuales.climaxrelieve, recursive = T, mode = "0777", showWarnings = F)
+    carpeta.dispersion.clima = paste0(modelos.salida,'/dispersion/clima')
+    dir.create(carpeta.dispersion.clima, recursive = T, mode = "0777", showWarnings = F)
+    carpeta.dispersion.relieve = paste0(modelos.salida,'/dispersion/relieve')
+    dir.create(carpeta.dispersion.relieve, recursive = T, mode = "0777", showWarnings = F)
+    carpeta.boxplot.clima = paste0(modelos.salida,'/boxplot')
+    dir.create(carpeta.boxplot.clima, recursive = T, mode = "0777", showWarnings = F)
 
     # lista de graficos
-    lista.graficos = c('train_correlationmatrix','test_correlationmatrix', sprintf('%s_clima', covars), sprintf('%s_relieve', covars),sprintf('%s_climaxrelieve', covars))
+    lista.graficos.dispersion = c(sprintf('%s_dispersion_clima', covars), sprintf('%s_dispersion_relieve', covars))
+    lista.graficos = c('train_correlationmatrix','test_correlationmatrix', lista.graficos.dispersion, sprintf('clima_boxplot_%s', VarObj))
     lista.graficos.procesados = gsub("\\.png$", "", basename(list.files(path= modelos.salida, pattern = "\\.png$", recursive = T)))
 
     lista.graficos.faltantes <- setdiff(lista.graficos,lista.graficos.procesados)
@@ -125,16 +127,16 @@ ModExploracion <- function(VarObj, rfe_lim){
           par(xpd=TRUE)
           dev.off()
         }
-        else if (endsWith(j, '_clima')){
+        else if (endsWith(j, 'dispersion_clima')){
           ## Graficos comparaciones
           clima.clases = factor(data[data$particion == 'train', 'clima'])
           clima.clases.grafica = as.vector(global_clima[which(names(global_clima) %in% clima.clases)])
 
           i = strsplit(j, "_")[[1]][1]
 
-          png(file = paste0(carpeta.individuales.clima,'/',j,'.png'), width = 700, height = 400)
+          png(file = paste0(carpeta.dispersion.clima,'/',j,'.png'), width = 700, height = 400)
           p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","clima"))) +
-            geom_point(alpha = 0.6) +
+            geom_point(alpha = 0.4) +
             scale_color_discrete(name='Clima',labels=clima.clases.grafica) +
             xlab(i) +
             ylab(VarObj) +
@@ -144,16 +146,16 @@ ModExploracion <- function(VarObj, rfe_lim){
             print(p)
           dev.off()
         }
-        else if (endsWith(j, '_relieve')){
+        else if (endsWith(j, 'dispersion_relieve')){
           ## Graficos comparaciones
           relieve.clases = factor(data[data$particion == 'train', 'tipo_relieve'])
           relieve.clases.grafica = as.vector(global_relieve[which(names(global_relieve) %in% relieve.clases)])
 
           i = strsplit(j, "_")[[1]][1]
 
-          png(file = paste0(carpeta.individuales.relieve,'/',j,'.png'), width = 700, height = 400)
+          png(file = paste0(carpeta.dispersion.relieve,'/',j,'.png'), width = 700, height = 400)
           p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","tipo_relieve"))) +
-            geom_point(alpha = 0.6) +
+            geom_point(alpha = 0.4) +
             scale_color_discrete(name='Relieve', labels=relieve.clases.grafica) +
             xlab(i) +
             ylab(VarObj) +
@@ -163,23 +165,21 @@ ModExploracion <- function(VarObj, rfe_lim){
             print(p)
           dev.off()
         }
-        else if (endsWith(j, '_climaxrelieve')){
+        else if (j == sprintf('clima_boxplot_%s', VarObj)){
           ## Graficos comparaciones
           clima.clases = factor(data[data$particion == 'train', 'clima'])
           clima.clases.grafica = as.vector(global_clima[which(names(global_clima) %in% clima.clases)])
 
-          relieve.clases = factor(data[data$particion == 'train', 'tipo_relieve'])
-          relieve.clases.grafica = as.vector(global_relieve[which(names(global_relieve) %in% relieve.clases)])
-
           i = strsplit(j, "_")[[1]][1]
 
-          png(file = paste0(carpeta.individuales.climaxrelieve,'/',j,'.png'), width = 700, height = 400)
-          p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","tipo_relieve"), shape = sprintf("factor(%s)","clima"))) +
-            geom_point(alpha = 0.6) +
-            scale_shape_discrete(name='Clima', labels=clima.clases.grafica) +
-            scale_color_discrete(name='Relieve', labels=relieve.clases.grafica) +
-            xlab(i) +
+          png(file = paste0(carpeta.boxplot.clima,'/',j,'.png'), width = 700, height = 400)
+          p <- ggplot(data = data[data$particion == 'train', names(data)], aes_string(x=sprintf("factor(%s)",i), y='target', fill=sprintf("factor(%s)",i))) +
+            geom_boxplot() +
             ylab(VarObj) +
+            scale_fill_discrete(name='Clima', labels=clima.clases.grafica) +
+            theme(axis.title.x=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank())
             theme(legend.position='top') +
             guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
             theme_light()

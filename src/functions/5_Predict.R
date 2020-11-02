@@ -19,7 +19,7 @@ PredictGeoTIFF = function(COV, fit.model, out.file)
   beginCluster(no_cores)
   clusterR(COV, predict, args = list(fit.model),
       filename = out.file, format = "GTiff",
-      overwrite = T)
+      overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
   endCluster()
 
   #pred <- predict(COV, fit.model, filename = paste0(out.data,'/',modelo,'_PRED_',var,'.individuales'),

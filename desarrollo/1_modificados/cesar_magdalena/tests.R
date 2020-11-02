@@ -97,8 +97,8 @@ require(sf)
 limite_shp <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
 
 load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/0_particion/pH-0_30_spline/particion.RData')
-train.data <- as.data.frame(particion['train'])
-names(train.data) <- sub("train.", "", names(train.data))
+train.data <- as.data.frame(particion['test'])
+names(train.data) <- sub("test.", "", names(train.data))
 vars_modelos <- names(train.data)[which(names(train.data) != 'target')]
 z <- names(cov)[which(!names(cov) %in% vars_modelos)]
 
@@ -342,13 +342,15 @@ write.csv(test, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_m
 require(caret)
 load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/rds/pH-30_100_spline/rfe.rds')
 rfe_lim = 8
-a = predictors(rfmodel)[c(1:rfe_lim)]
+covars = predictors(rfmodel)[c(1:rfe_lim)]
 paste(a, collapse=',')
 
 z = c('train_correlationmatrix','test_correlationmatrix', a)
 e = 'train_correlationmatrix'
 sprintf('%s_clima', a)
 
+lista.graficos.dispersion = c(sprintf('%s_dispersion_clima', covars), sprintf('%s_dispersion_clima', covars),sprintf('%s_dispersion_clima', covars))
+gsub('dispersion','boxplot', lista.graficos.dispersion)
 difs <- setdiff(z,e)
 
 

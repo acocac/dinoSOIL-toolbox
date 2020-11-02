@@ -49,8 +49,8 @@ ModUso <- function(VarObj, rfe_lim){
   dir.create(datos.salida.geotiff, recursive = T, mode = "0777", showWarnings = F)
   datos.salida.figuras <- paste0(proyecto.directorio,'/prediccion/figuras/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(datos.salida.figuras, recursive = T, mode = "0777", showWarnings = F)
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/1_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
-  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/2_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
