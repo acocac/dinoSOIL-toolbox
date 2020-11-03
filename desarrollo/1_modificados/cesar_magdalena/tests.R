@@ -385,3 +385,14 @@ if (dim(limite)[1] > 1){
     limite$id <- 0
     limite <- limite %>% group_by(id) %>% summarize()
 }
+
+
+## best model parameters
+modelos.resultado <- read.csv(file = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/3_analisis/tabular/pH-0_30_spline/8_covariables/mejoresmodelos_parametros.csv')
+modelos.mejor <- modelos.resultado[modelos.resultado$RMSE == min(modelos.resultado$RMSE), 'modelo']
+
+get(load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/2_modelos/pH-0_30_spline/8_covariables/RandomForest.rds'))
+
+modelo.ajuste$bestTune$mtry
+
+

@@ -32,6 +32,7 @@ conf.file = paste0(proyecto.dir,'/config/conf.txt')
 # Cargar funciones de interaccion con el usuario
 source(paste0(r.dir,'/functions/0a_UserArgs.R'))
 
+
 ########################################################
 ####PARTE 1 - Preprocesamiento de la base de datos #####
 ########################################################
@@ -74,7 +75,7 @@ source(paste0(r.dir,'/modules/3_RFE.R'))
 args_p3 <- prompt.user.part3()
 
 #### ejecutar la funcion del modulo ###
-ExpRFE(args_p3[[1]])
+ExpRFE(args_p3[[1]], args_p3[[2]])
 
 
 ########################################################
@@ -89,7 +90,7 @@ source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 args_p4a <- prompt.user.part4a()
 
 #### ejecutar la funcion del modulo ###
-ModExploracion(args_p4a[[1]], args_p4a[[2]])
+ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]])
 
 
 ########################################################
@@ -103,7 +104,7 @@ source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
 args_p4b <- prompt.user.part4b()
 
 #### ejecutar la funcion del modulo ###
-ModEntrenamiento(args_p4b[[1]],args_p4b[[2]])
+ModEntrenamiento(args_p4b[[1]],args_p4b[[2]],args_p4b[[3]])
 
 
 ###########################################################
@@ -118,7 +119,7 @@ source(paste0(r.dir,'/modules/4c_ModMejor.R'))
 args_p4c <- prompt.user.part4c()
 
 #### ejecutar la funcion del modulo ###
-ModMejorModelo(args_p4c[[1]],args_p4c[[2]])
+ModMejorModelo(args_p4c[[1]],args_p4c[[2]],args_p4c[[3]])
 
 
 ###########################################################
@@ -133,7 +134,7 @@ source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
 args_p4d <- prompt.user.part4d()
 
 #### ejecutar la funcion del modulo ###
-ModIncertidumbre(args_p4d[[1]],args_p4d[[2]])
+ModIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]])
 
 
 ###########################################################

@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModEntrenamiento <- function(VarObj, rfe_lim){
+ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -49,17 +49,17 @@ ModEntrenamiento <- function(VarObj, rfe_lim){
   # Modelos disponibles y configuraciones
   modelos.lista <-c('C45'='J48', 'C50'='C5.0', 'RandomForest'='ranger', 'SVM'='svmLinear',
                     'xgbTree'='xgbTree','gbm'='gbm_h2o', 'glmnet'='glmnet','mlp'='mlp', 'svmRadial'='svmRadial')
-  tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=10, 'SVM'=5, 'xgbTree'=10, 'gbm_h2o'=3,
-                 'glmnet'=5,'mlp'=5, 'svmRadial'=10)
+  tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=20, 'SVM'=5, 'xgbTree'=20, 'gbm_h2o'=3,
+                 'glmnet'=5,'mlp'=5, 'svmRadial'=20)
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/rds/',str_replace(VarObj,'[.]','-'))
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.entrada, recursive = T, mode = "0777", showWarnings = F)
-  modelos.salida <- paste0(proyecto.directorio,'/modelos/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.salida <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.salida, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
@@ -110,11 +110,20 @@ ModEntrenamiento <- function(VarObj, rfe_lim){
       ## foreach or lapply would do this faster
       set.seed(40)
 
-      modelo.ajuste <- train(fm, data = train.data,
-      method=modelos.lista[modelo],
-      tuneLength = tuneLenght[modelo],
-      metric='Rsquared',
-      trControl = fitControl)
+      if (modelo == 'RandomForest'){
+        modelo.ajuste <- train(fm, data = train.data,
+        method=modelos.lista[modelo],
+        tuneLength = tuneLenght[modelo],
+        num.trees = 500,
+        metric='RMSE',
+        trControl = fitControl)
+      } else{
+        modelo.ajuste <- train(fm, data = train.data,
+        method=modelos.lista[modelo],
+        tuneLength = tuneLenght[modelo],
+        metric='RMSE',
+        trControl = fitControl)
+      }
 
       stopCluster(cl = cl)
 

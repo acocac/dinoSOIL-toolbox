@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModIncertidumbre <- function(VarObj, rfe_lim){
+ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -44,13 +44,17 @@ ModIncertidumbre <- function(VarObj, rfe_lim){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/rds/',str_replace(VarObj,'[.]','-'))
-  modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
+  modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
-  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
-  modelos.incertidumbre.figuras = paste0(proyecto.directorio,'/modelos/4_incertidumbre/figuras/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.incertidumbre.figuras = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/figuras/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.incertidumbre.figuras, recursive = T, mode = "0777", showWarnings = F)
+  modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/raster/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  dir.create(modelos.incertidumbre.raster, recursive = T, mode = "0777", showWarnings = F)
+  modelos.incertidumbre.modelo = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/modelo/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  dir.create(modelos.incertidumbre.modelo, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -102,27 +106,72 @@ ModIncertidumbre <- function(VarObj, rfe_lim){
   print(Metrics::rmse(pred,test.data$target))
   print(cor(pred,test.data$target))
 
-  pairplot <- ggplot(data.frame("target"=test.data$target, "pred"=pred), aes(target, pred)) +
-  geom_point() +
-  geom_abline(slope=1, intercept=0) +
-  scale_y_continuous(labels = scales::comma) +
-  scale_x_continuous(labels = scales::comma)
+  incertidumbre.grafico.pairplot <- paste0(modelos.incertidumbre.figuras,'/pairplot.png')
+  incertidumbre.grafico.residuales <- paste0(modelos.incertidumbre.figuras,'/residuales.png')
 
-  png(file = paste0(modelos.incertidumbre.figuras,'/pairplot.png'), width = 700, height = 600)
-  print(pairplot)
-  dev.off()
+  if (!file.exists(incertidumbre.grafico.pairplot)){
+    pairplot <- ggplot(data.frame("target"=test.data$target, "pred"=pred), aes(target, pred)) +
+    geom_point() +
+    geom_abline(slope=1, intercept=0, color = 'red', linetype = 'dashed', size = 0.6) +
+    labs(x = paste0('Observed ',VarObj), y = paste0('Predicted ',VarObj)) +
+    scale_y_continuous(labels = scales::comma) +
+    scale_x_continuous(labels = scales::comma) +
+    #xlim(0, 11) + ylim(0, 11) +
+    theme_bw() +
+    theme(text=element_text(size=18)) +
 
-  residuals <- ggplot(data.frame("target"=test.data$target, "residual"=test.data$target - pred),
-       aes(target, residual)) +
-  geom_point() +
-  geom_abline(slope=0, intercept=0) +
-  scale_y_continuous(labels = scales::comma) +
-  scale_x_continuous(labels = scales::comma)
+    png(file = incertidumbre.grafico.pairplot, width = 700, height = 600)
+    print(pairplot)
+    dev.off()
+  }
+  if (!file.exists(incertidumbre.grafico.residuales)){
+    residuals <- ggplot(data.frame("target"=test.data$target, "residual"=test.data$target - pred),
+         aes(target, residual)) +
+    geom_point() +
+    geom_abline(slope=0, intercept=0) +
+    labs(x = paste0('Observed ',VarObj), y = paste0('Residuals ',VarObj)) +
+    scale_y_continuous(labels = scales::comma) +
+    scale_x_continuous(labels = scales::comma) +
+    theme_bw()
 
-  png(file = paste0(modelos.incertidumbre.figuras,'/residuals.png'), width = 700, height = 600)
-  print(residuals)
-  dev.off()
+    png(file = incertidumbre.grafico.residuales, width = 700, height = 600)
+    print(residuals)
+    dev.off()
+  }
   #
+  ## Quantile regression forest
+
+  ##test
+  #limite_shp <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
+  #COV <- crop(COV,limite_shp)
+
+  # Mapa de incertidumbre #
+  no_cores <- detectCores() - 1
+  beginCluster(no_cores)
+  if (modelos.mejor == 'RandomForest'){
+    modelo.ajuste <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE, mtry=modelo.ajuste$bestTune$mtry)
+  } else{
+    modelo.ajuste <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE)
+  }
+  save(modelo.ajuste, file=modelo.archivo)
+  endCluster()
+
+  # Crear predicciones de la incertidumbre (desviación estandar y error medio)
+  incertidumbre.raster.unc <- paste0(modelos.incertidumbre.raster,'/incertidumbre_residuales_std.tif')
+  incertidumbre.raster.mean <- paste0(modelos.incertidumbre.raster,'/incertidumbre_residuales_media.tif')
+
+  if (!file.exists(incertidumbre.raster.unc) ){
+    beginCluster(no_cores)
+    unc <- clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=sd), filename = incertidumbre.raster.unc, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
+    endCluster()
+  }
+  if (!file.exists(incertidumbre.raster.mean) ){
+    beginCluster(no_cores)
+    mean <- clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=mean), filename = incertidumbre.raster.mean, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
+    endCluster()
+  }
+
+  # LIME
   #td.sort <- train.data[order(train.data$target),]
   #td.sort <- td.sort[,predictors(rfmodel)[c(1:rfe_lim)]]
   #explainer <- lime(td.sort, modelo.ajuste)
@@ -150,15 +199,6 @@ ModIncertidumbre <- function(VarObj, rfe_lim){
   #plot_explanations(explanation_ini)
   #plot_explanations(explanation_fin)
 
-  # Mapa de incertidumbre #
-  no_cores <- detectCores() - 1
-  beginCluster(no_cores)
-  model <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE)
-  #Estimate model uncertainty
-  unc <- clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=model,what=sd), filename = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/temp.dir/unc.tif')
-  endCluster()
-  #salvar el mapa de incertidumbre
-  plot(unc)
 
   #prediccion.archivo.geotiff <- paste0(datos.salida.geotiff,'/',str_replace(VarObj,'[.]','-'),'_PRED_',modelos.mejor,'.tif')
   #if (!file.exists(prediccion.archivo.geotiff)){

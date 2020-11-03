@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ExpRFE <- function(VarObj){
+ExpRFE <- function(VarObj, BaseDatos){
   ##
   ## src1:
   ## https://github.com/m2-rshiny/ProjetTut/blob/426fcff7642ffdd8f84743c88cc732e2bd617ca7/Archives/MLShiny2/analysis-UGA.R
@@ -54,11 +54,11 @@ ExpRFE <- function(VarObj){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  exploratorio.variables.rds = paste0(proyecto.directorio,'/exploratorio/rds/',str_replace(VarObj,'[.]','-'))
+  exploratorio.variables.rds = paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
   dir.create(exploratorio.variables.rds, recursive = T, mode = "0777", showWarnings = F)
-  exploratorio.variables.figuras = paste0(proyecto.directorio,'/exploratorio/figuras/',str_replace(VarObj,'[.]','-'))
+  exploratorio.variables.figuras = paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/figuras/',str_replace(VarObj,'[.]','-'))
   dir.create(exploratorio.variables.figuras, recursive = T, mode = "0777", showWarnings = F)
-  modelos.particion.datos = paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  modelos.particion.datos = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.particion.datos, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
@@ -71,6 +71,10 @@ ExpRFE <- function(VarObj){
 
   # Cargar matrix observaciones
   matriz <- read.csv(paste0(datos.entrada,'/0_matriz/MatrixDatos.csv'),sep=',')
+  if (BaseDatos != 'AMBAS'){
+    matriz = matriz[which(matriz$TIPO == BaseDatos),]
+  }
+  print(dim(matriz))
   covariables <- readRDS(paste0(datos.entrada,'/1_covariables/covariables.rds'))
 
   if (is(matriz[,VarObj],'numeric')){

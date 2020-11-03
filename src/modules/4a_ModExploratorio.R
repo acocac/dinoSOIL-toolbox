@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModExploracion <- function(VarObj, rfe_lim){
+ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -47,10 +47,10 @@ ModExploracion <- function(VarObj, rfe_lim){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/rds/',str_replace(VarObj,'[.]','-'))
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.entrada, recursive = T, mode = "0777", showWarnings = F)
-  modelos.salida <- paste0(proyecto.directorio,'/modelos/1_exploratorio/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.salida <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/1_exploratorio/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.salida, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
@@ -94,6 +94,7 @@ ModExploracion <- function(VarObj, rfe_lim){
 
     # covariables
     covars = predictors(rfmodel)[1:rfe_lim]
+    covars = gsub('_','-',covars)
 
     # directorios
     carpeta.correlacion = paste0(modelos.salida,'/correlacion')
@@ -116,12 +117,14 @@ ModExploracion <- function(VarObj, rfe_lim){
       # Graficos matrix de correlación
       for (j in lista.graficos.faltantes){
         if (j == 'train_correlationmatrix'){
+          covars = gsub('-','_',covars)
           png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
           chart.Correlation(data[data$particion == 'train', covars])
           par(xpd=TRUE)
           dev.off()
         }
         else if (j == 'test_correlationmatrix'){
+          covars = gsub('-','_',covars)
           png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
           chart.Correlation(data[data$particion == 'test', covars])
           par(xpd=TRUE)
@@ -133,6 +136,7 @@ ModExploracion <- function(VarObj, rfe_lim){
           clima.clases.grafica = as.vector(global_clima[which(names(global_clima) %in% clima.clases)])
 
           i = strsplit(j, "_")[[1]][1]
+          i = gsub('-','_',i)
 
           png(file = paste0(carpeta.dispersion.clima,'/',j,'.png'), width = 700, height = 400)
           p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","clima"))) +
@@ -142,7 +146,7 @@ ModExploracion <- function(VarObj, rfe_lim){
             ylab(VarObj) +
             theme(legend.position='top') +
             guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
-            theme_light()
+            theme_bw()
             print(p)
           dev.off()
         }
@@ -152,6 +156,7 @@ ModExploracion <- function(VarObj, rfe_lim){
           relieve.clases.grafica = as.vector(global_relieve[which(names(global_relieve) %in% relieve.clases)])
 
           i = strsplit(j, "_")[[1]][1]
+          i = gsub('-','_',i)
 
           png(file = paste0(carpeta.dispersion.relieve,'/',j,'.png'), width = 700, height = 400)
           p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","tipo_relieve"))) +
@@ -161,7 +166,7 @@ ModExploracion <- function(VarObj, rfe_lim){
             ylab(VarObj) +
             theme(legend.position='top') +
             guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
-            theme_light()
+            theme_bw()
             print(p)
           dev.off()
         }
@@ -171,6 +176,7 @@ ModExploracion <- function(VarObj, rfe_lim){
           clima.clases.grafica = as.vector(global_clima[which(names(global_clima) %in% clima.clases)])
 
           i = strsplit(j, "_")[[1]][1]
+          i = gsub('-','_',i)
 
           png(file = paste0(carpeta.boxplot.clima,'/',j,'.png'), width = 700, height = 400)
           p <- ggplot(data = data[data$particion == 'train', names(data)], aes_string(x=sprintf("factor(%s)",i), y='target', fill=sprintf("factor(%s)",i))) +
@@ -182,7 +188,7 @@ ModExploracion <- function(VarObj, rfe_lim){
                   axis.ticks.x=element_blank())
             theme(legend.position='top') +
             guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
-            theme_light()
+            theme_bw()
             print(p)
           dev.off()
         }
