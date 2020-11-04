@@ -14,7 +14,8 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Librerias
   pckg = c('caret','raster', 'sf', 'stringr', 'doParallel',
-           'Metrics', 'lime', 'quantregForest')
+           'Metrics', 'lime', 'quantregForest', 'hydroGOF',
+           'RColorBrewer', 'rasterVis', 'classInt', 'ggspatial')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -51,7 +52,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim){
   modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   modelos.incertidumbre.figuras = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/figuras/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.incertidumbre.figuras, recursive = T, mode = "0777", showWarnings = F)
-  modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/raster/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/geotiff/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.incertidumbre.raster, recursive = T, mode = "0777", showWarnings = F)
   modelos.incertidumbre.modelo = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/modelo/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(modelos.incertidumbre.modelo, recursive = T, mode = "0777", showWarnings = F)
@@ -99,12 +100,61 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim){
 
 
   pred <- predict(modelo.ajuste, test.data)
-  (AVE <- 1 - sum((pred-test.data$target)^2, na.rm=TRUE)/
-      sum((test.data$target - mean(test.data$target, na.rm = TRUE))^2,
-          na.rm = TRUE))
-  print(AVE)
-  print(Metrics::rmse(pred,test.data$target))
-  print(cor(pred,test.data$target))
+
+  table.results <- data.frame(obs=test.data$target,mod=pred)
+
+  ## Metrica
+  ## Fuente: https://github.com/davidcarslaw/ggopenair/blob/aa7c93487c4f0fdc84bbf6a7a0080f93fc39b395/R/modStats.R
+  # COE - Coefficient Of Efficiency
+  COE <- function(x, mod = "mod", obs = "obs") {
+      x <- na.omit(x[ , c(mod, obs)])
+      res <-  1 - sum(abs(x[[mod]] - x[[obs]])) / sum(abs(x[[obs]] - mean(x[[obs]])))
+      return(round(res, 2))
+  }
+  COE_val <- COE(table.results)
+  print(COE_val)
+
+  #IOA - Index of Agreement
+  IOA <- function(x, mod = "mod", obs = "obs"){
+    x <- na.omit(x[ , c(mod, obs)])
+    LHS <- sum(abs(x[[mod]] - x[[obs]]))
+    RHS <- 2 * sum(abs(x[[obs]] - mean(x[[obs]])))
+    if (LHS <= RHS) res <- 1 - LHS / RHS else res <- RHS / LHS - 1
+      return(round(res, 2))
+  }
+  IOA_val <- IOA(table.results)
+  print(IOA_val)
+
+  # AVE - Amount of Variance Explained
+  AVE <- function(x, mod = "mod", obs = "obs") {
+      x <- na.omit(x[ , c(mod, obs)])
+      res <-  1 - sum((x[[mod]]-x[[obs]])^2, na.rm=TRUE)/ sum((x[[obs]] - mean(x[[obs]], na.rm = TRUE))^2,  na.rm = TRUE)
+      return(round(res, 2))
+  }
+  AVE_val <- AVE(table.results)
+  print(AVE_val)
+
+  ## RMSE - Root Mean Square Error
+  RMSE <- function(x, mod = "mod", obs = "obs") {
+      x <- na.omit(x[ , c(mod, obs)])
+      res <- mean((x[[mod]] - x[[obs]]) ^ 2) ^ 0.5
+      return(round(res, 2))
+  }
+  RMSE_val <- RMSE(table.results)
+  print(RMSE_val)
+
+  RSR = hydroGOF::rsr(test.data$target,pred)
+  print(round(RSR, 2))
+
+  ##usando libreria hydroGOF
+  #IOA_val = hydroGOF::d(test.data$target,pred)
+  #print(round(IOA_val, 2))
+  #
+  #RMSE_val = hydroGOF::rmse(test.data$target,pred)
+  #print(round(RMSE_val, 2))
+  #
+  #RSR = hydroGOF::rsr(test.data$target,pred)
+  #print(round(RSR, 2))
 
   incertidumbre.grafico.pairplot <- paste0(modelos.incertidumbre.figuras,'/pairplot.png')
   incertidumbre.grafico.residuales <- paste0(modelos.incertidumbre.figuras,'/residuales.png')
@@ -118,7 +168,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim){
     scale_x_continuous(labels = scales::comma) +
     #xlim(0, 11) + ylim(0, 11) +
     theme_bw() +
-    theme(text=element_text(size=18)) +
+    theme(text=element_text(size=18))
 
     png(file = incertidumbre.grafico.pairplot, width = 700, height = 600)
     print(pairplot)
@@ -128,47 +178,90 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim){
     residuals <- ggplot(data.frame("target"=test.data$target, "residual"=test.data$target - pred),
          aes(target, residual)) +
     geom_point() +
-    geom_abline(slope=0, intercept=0) +
+    geom_abline(slope=0, intercept=0, color = 'red', linetype = 'dashed', size = 0.6) +
     labs(x = paste0('Observed ',VarObj), y = paste0('Residuals ',VarObj)) +
     scale_y_continuous(labels = scales::comma) +
     scale_x_continuous(labels = scales::comma) +
-    theme_bw()
+    theme_bw() +
+    theme(text=element_text(size=18))
 
     png(file = incertidumbre.grafico.residuales, width = 700, height = 600)
     print(residuals)
     dev.off()
   }
-  #
-  ## Quantile regression forest
 
+  ## Quantile regression forest
   ##test
   #limite_shp <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
   #COV <- crop(COV,limite_shp)
+  no_cores <- detectCores() - 1
 
   # Mapa de incertidumbre #
-  no_cores <- detectCores() - 1
-  beginCluster(no_cores)
-  if (modelos.mejor == 'RandomForest'){
-    modelo.ajuste <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE, mtry=modelo.ajuste$bestTune$mtry)
-  } else{
-    modelo.ajuste <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE)
+  modelo.archivo = paste0(modelos.incertidumbre.modelo,'/modelo.rds')
+  if (!file.exists(modelo.archivo) ){
+    beginCluster(no_cores)
+    if (modelos.mejor == 'RandomForest'){
+      modelo.ajuste <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE, mtry=modelo.ajuste$bestTune$mtry)
+    } else{
+      modelo.ajuste <- quantregForest(y=test.data$target - pred, x=test.data[,predictors(rfmodel)[1:rfe_lim]], ntree=500, keep.inbag=TRUE)
+    }
+    save(modelo.ajuste, file=modelo.archivo)
+    endCluster()
+  } else {
+    get(load(modelo.archivo))
   }
-  save(modelo.ajuste, file=modelo.archivo)
-  endCluster()
 
   # Crear predicciones de la incertidumbre (desviación estandar y error medio)
   incertidumbre.raster.unc <- paste0(modelos.incertidumbre.raster,'/incertidumbre_residuales_std.tif')
   incertidumbre.raster.mean <- paste0(modelos.incertidumbre.raster,'/incertidumbre_residuales_media.tif')
 
-  if (!file.exists(incertidumbre.raster.unc) ){
-    beginCluster(no_cores)
-    unc <- clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=sd), filename = incertidumbre.raster.unc, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
-    endCluster()
+  #if (!file.exists(incertidumbre.raster.unc) ){
+  #  beginCluster(no_cores)
+  #  clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=sd), filename = incertidumbre.raster.unc, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
+  #  endCluster()
+  #}
+  #if (!file.exists(incertidumbre.raster.mean) ){
+  #  beginCluster(no_cores)
+  #  clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=mean), filename = incertidumbre.raster.mean, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
+  #  endCluster()
+  #}
+
+  #plot viz 1
+  #https://github.com/paleolimbot/ggspatial
+  #plot viz 2
+  # https://stackoverflow.com/questions/49910270/r-plot-raster-colorscheme-not-full-range
+
+  incertidumbre.raster.unc.mapa <- paste0(modelos.incertidumbre.figuras,'/',gsub('.tif','.png',basename(incertidumbre.raster.unc)))
+  incertidumbre.raster.mean.mapa <- paste0(modelos.incertidumbre.figuras,'/',gsub('.tif','.png',basename(incertidumbre.raster.mean)))
+
+  if (!file.exists(incertidumbre.raster.unc.mapa) ){
+    r <- raster(incertidumbre.raster.unc)
+
+    p <- ggplot() +
+    annotation_map_tile(zoomin = -1) +
+    layer_spatial(r, aes(fill = stat(band1)), alpha = 0.7) +
+    scale_fill_viridis_c(name='SDE',na.value = NA, direction=-1, option="inferno", alpha = 0.7) +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+
+    png(file = incertidumbre.raster.unc.mapa, width = 700, height = 600)
+    print(p)
+    #print(plot(r, main = paste0('Incertidumbre (desviación estandar) - ',VarObj), col=pal))
+    dev.off()
   }
-  if (!file.exists(incertidumbre.raster.mean) ){
-    beginCluster(no_cores)
-    mean <- clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=mean), filename = incertidumbre.raster.mean, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
-    endCluster()
+  if (!file.exists(incertidumbre.raster.mean.mapa) ){
+    r <- raster(incertidumbre.raster.mean)
+    p <- ggplot() +
+    annotation_map_tile(zoomin = -1) +
+    layer_spatial(r, aes(fill = stat(band1)), alpha = 0.7) +
+    scale_fill_viridis_c(name='ME',na.value = NA, direction=-1, option="inferno", alpha = 0.7) +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+
+    png(file = incertidumbre.raster.mean.mapa, width = 700, height = 600)
+    print(p)
+    #print(plot(r, main = paste0('Incertidumbre (promedio) - ',VarObj), col=pal))
+    dev.off()
   }
 
   # LIME

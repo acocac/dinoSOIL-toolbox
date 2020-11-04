@@ -148,7 +148,7 @@ source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
 args_p4e <- prompt.user.part4e()
 
 #### ejecutar la funcion del modulo ###
-ModUso(args_p4e[[1]],args_p4e[[2]])
+ModUso(args_p4e[[1]],args_p4e[[2]],args_p4e[[3]])
 
 ###########################################################
 #####                    FINAL                        #####

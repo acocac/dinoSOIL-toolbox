@@ -8,12 +8,12 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModUso <- function(VarObj, rfe_lim){
+ModUso <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  pckg = c('caret','raster', 'sf', 'stringr', 'doParallel')
+  pckg = c('caret','raster', 'sf', 'stringr', 'doParallel', 'ggspatial')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -43,14 +43,14 @@ ModUso <- function(VarObj, rfe_lim){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/0_particion/',str_replace(VarObj,'[.]','-'))
+  modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
-  datos.salida.geotiff <- paste0(proyecto.directorio,'/prediccion/geotiff/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  datos.salida.geotiff <- paste0(proyecto.directorio,'/prediccion/',BaseDatos,'/geotiff/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(datos.salida.geotiff, recursive = T, mode = "0777", showWarnings = F)
-  datos.salida.figuras <- paste0(proyecto.directorio,'/prediccion/figuras/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  datos.salida.figuras <- paste0(proyecto.directorio,'/prediccion/',BaseDatos,'/figuras/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
   dir.create(datos.salida.figuras, recursive = T, mode = "0777", showWarnings = F)
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
-  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
+  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -105,9 +105,17 @@ ModUso <- function(VarObj, rfe_lim){
     cat(paste0('### RESULTADO 3 de 3: La figura de predicción de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.figuras,' ###','\n'))
     ##### end output messages ####
     pred <- raster(prediccion.archivo.geotiff)
-    plot(pred)
+
+    p <- ggplot() +
+    annotation_map_tile(zoomin = -1) +
+    layer_spatial(pred, aes(fill = stat(band1)), alpha = 0.7) +
+    scale_fill_viridis_c(name=str_replace(VarObj,'[.]','-'),na.value = NA, direction=-1, option="viridis", alpha = 0.7) +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+
     png(file = prediccion.archivo.figuras, width = 700, height = 600)
-    print(plot(pred, main = VarObj))
+    print(p)
+    #print(plot(pred, main = VarObj))
     dev.off()
   } else{
     ##### output messages ####

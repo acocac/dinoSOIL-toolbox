@@ -11,7 +11,7 @@ prediction.file<- 'pH-30_100_spline_PRED_RandomForest.tif'
 prediction.dir <- '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion'
 pred <- raster(paste0(prediction.dir,'/',prediction.file))
 
-figuras.dir <- '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/figuras'
+figuras.dir <- '/proyecto_cesarmagdalena/prediccion/AMBAS/figuras'
 png(file = paste0(figuras.dir,'/',str_replace(prediction.file,'.tif','.png')), width = 700, height = 600)
 plot(pred, main = 'pH (0-30cm)')
 dev.off()
@@ -96,8 +96,9 @@ require(raster)
 require(sf)
 limite_shp <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
 
-load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/0_particion/pH-0_30_spline/particion.RData')
-train.data <- as.data.frame(particion['test'])
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/pH-0_30_spline/particion.RData')
+train.data <- as.data.frame(particion['train'])
+dim(train.data)
 names(train.data) <- sub("test.", "", names(train.data))
 vars_modelos <- names(train.data)[which(names(train.data) != 'target')]
 z <- names(cov)[which(!names(cov) %in% vars_modelos)]
@@ -340,10 +341,10 @@ write.csv(test, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_m
 
 ##load rde
 require(caret)
-load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/rds/pH-30_100_spline/rfe.rds')
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/AMBAS/rds/pH-30_100_spline/rfe.rds')
 rfe_lim = 8
 covars = predictors(rfmodel)[c(1:rfe_lim)]
-paste(a, collapse=',')
+paste(covars, collapse=', ')
 
 z = c('train_correlationmatrix','test_correlationmatrix', a)
 e = 'train_correlationmatrix'
@@ -360,6 +361,9 @@ require(sf)
 cov <- terra::rast('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.tif')
 names(cov) <- readRDS('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/1_covariables/covariables.rds')
 get(load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/1_modelos/pH-0_30_spline/8_covariables/RandomForest.rds'))
+
+paste(names(cov), collapse=', ')
+length(names(cov))
 
 limite <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
 if (dim(limite)[1] > 1){
@@ -396,3 +400,31 @@ get(load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosue
 modelo.ajuste$bestTune$mtry
 
 
+##plot raster
+r <- raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/4_incertidumbre/geotiff/pH-0_30_spline/8_covariables/incertidumbre_residuales_media.tif')
+
+library(ggplot2)
+library(ggspatial)
+load_longlake_data()
+
+ggplot() +
+  # loads background map tiles from a tile source
+  annotation_map_tile(zoomin = -1) +
+
+  # annotation_spatial() layers don't train the scales, so data stays central
+  annotation_spatial(longlake_roadsdf, size = 2, col = "black") +
+  annotation_spatial(longlake_roadsdf, size = 1.6, col = "white") +
+
+  # raster layers train scales and get projected automatically
+  layer_spatial(longlake_depth_raster, aes(colour = stat(band1))) +
+  # make no data values transparent
+  scale_fill_viridis_c(na.value = NA, direction=-1, option="inferno") +
+
+  # layer_spatial trains the scales
+  layer_spatial(longlake_depthdf, aes(fill = DEPTH_M)) +
+
+  # spatial-aware automagic scale bar
+  annotation_scale(location = "tl") +
+
+  # spatial-aware automagic north arrow
+  annotation_north_arrow(location = "br", which_north = "true")
