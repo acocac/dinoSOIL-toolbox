@@ -13,16 +13,10 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  pckg = c('data.table','PerformanceAnalytics','GGally',
-           'caret','nnet','plyr')
-
-  usePackage <- function(p) {
-    if (!is.element(p, installed.packages()[,1]))
-      install.packages(p, dep = TRUE)
-    require(p, character.only = TRUE)
-  }
-  
-  lapply(pckg,usePackage)
+  #pckg = c('data.table','PerformanceAnalytics','GGally',
+  #         'caret','nnet','plyr')
+  suppressMessages(library(pacman))
+  suppressMessages(pacman::p_load(data.table, PerformanceAnalytics, caret, plyr))
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)

@@ -8,6 +8,19 @@
 # remarks 1     : ;
 ###############################################################################
 
+# ------------------------------------------------------- #
+# Librerias y funciones
+# ------------------------------------------------------- #
+pckg <- c('pacman')
+
+usePackage <- function(p) {
+  if (!is.element(p, installed.packages()[,1]))
+    install.packages(p, dep = TRUE)
+  require(p, character.only = TRUE)
+}
+
+lapply(pckg,usePackage)
+
 prompt.user.part1 <- function()#get arguments from user
 {
 
@@ -144,7 +157,7 @@ prompt.user.part4c <- function()#get arguments from user
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
-  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (up, down), caso contrario escriba ninguna:>>> ")
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (UP, DOWN), caso contrario que prefiera desbalanceado o la variable es continua escriba ORIGINAL:>>> ")
   d <- readLines(n = 1)
   d <- gsub("\\\\", "/", d)
 
@@ -206,6 +219,10 @@ prompt.user.part4e <- function()#get arguments from user
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
-  newlist = list(a, b, c)
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (UP, DOWN), caso contrario que prefiera desbalanceado o la variable es continua escriba ORIGINAL:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  newlist = list(a, b, c, d)
   return(newlist)
 }

@@ -440,6 +440,7 @@ matriz2 <- matriz[matriz$GRANGRUPO %in%  names(table(matriz$GRANGRUPO))[table(ma
 load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/AMBAS/rds/GRANGRUPO/rfe.rds')
 rfe_lim<-7
 predictors(rfmodel)[c(1:rfe_lim)]
+paste0(predictors(rfmodel)[c(1:rfe_lim)], collapse=", ")
 
 png('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/figuras/pH-0_30_spline/rfe.png', width = 700, height = 550)
 plot(rfmodel, type=c('g', 'o'), cex=2, metric = "Accuracy")
@@ -477,13 +478,218 @@ table(down_train$target)
 ##GRANGRUPO evaluacion
 load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
 
-sampling_strategy = 'ninguno'
+sampling_strategy = 'ORIGINAL'
 load(paste0('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/2_modelos/GRANGRUPO/7_covariables/',sampling_strategy,'/RandomForest.rds'))
 
 test = as.data.frame(particion['test'])
 names(test) <- sub("test.", "", names(test))
+write.csv(test, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/enviado/patricia/grangrupo/v1/evaluacion.csv', row.names = F)
+
+train = as.data.frame(particion['train'])
+names(train) <- sub("train.", "", names(train))
+write.csv(train, '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/enviado/patricia/grangrupo/v1/entrenamiento.csv', row.names = F)
 
 pred <- predict(modelo.ajuste, test)
-
+pred_prob <- predict(modelo.ajuste, test, type = "prob")
+dim(pred_prob)
 caret::confusionMatrix(pred,test$target)$overall["Accuracy"]
 caret::confusionMatrix(pred,test$target)$overall["Kappa"]
+
+## GRANGRUPO grafico
+devtools::install_github("thomasp85/scico")
+library(scico)
+#https://github.com/thomasp85/scico
+library(RColorBrewer)
+library(rasterVis)
+pred <- raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/AMBAS/geotiff/GRANGRUPO/7_covariables/ORIGINAL/GRANGRUPO_PRED_RandomForest.tif')
+levels(pred)
+pred$category
+r <- ratify(pred)
+rat <- levels(r)[[1]]
+
+rat$class <- levels(train[['target']])[rat$ID]
+
+levels(pred)
+library(pals)
+
+pred
+rat <- levels(pred)[[1]]
+rat$class <- levels(train[['target']])[rat$ID]
+levels(Predictions) <- rat
+
+my_rst <- deratify(pred, 'category')
+
+n<-length(levels(pred2)[[1]]$category)
+names <- levels(pred2)[[1]]$category
+if (levels(pred2)[[1]]$category[1] == ''){
+  n <- n -1
+  names <- names[-1]
+}
+cols <- pals::cols25(n)
+names(cols) <- names
+
+rasterVis::levelplot(pred2, col.regions = cols)
+
+pred2
+require(sf)
+limite_shp <- st_read('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/entrada/1_covariables/vector/limite/prueba')
+
+p <- ggplot() +
+    annotation_map_tile(zoomin = -1) +
+    layer_spatial(pred, aes(fill = stat(band1)), alpha = 0.7) +
+    scale_fill_discrete() +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+print(p)
+
+
+
+my_palette <- brewer.pal(n = length(levels(my_rst)[[1]]$category), name = "Dark2")
+my_palette <- c(my_palette,'red')
+levels(my_rst)
+as.character(levels(my_rst)[[1]]$category)
+names(my_palette) <- length(levels(my_rst)[[1]]$category)
+my_palette
+
+n<-length(levels(my_rst)[[1]]$category)
+cols <- pals::cols25(n)
+names(cols) <- levels(my_rst)[[1]]$category
+
+levels(my_rst)
+names(cols)[-1]
+p <- gplot(my_rst$category) +
+    annotation_map_tile(zoomin = -1) +
+    geom_raster(aes(fill=factor(value),interpolate=FALSE)) +
+    scale_fill_manual(na.translate=FALSE, values = cols,name= "My name", labels=names(cols)[-1])
+    #scale_fill_discrete("LC Class")
+    #layer_spatial(my_rst, aes(fill = factor(stat(band1))), alpha = 0.7) +
+    #scale_fill_manual(name='grangrupo',palette="nuuk",na.value="transparent") +
+print(p)
+
+p <- gplot(pred) +
+    annotation_map_tile(zoomin = -1) +
+    geom_raster(aes(fill=factor(value),interpolate=FALSE), alpha=0.7) +
+    scale_fill_discrete(na.translate=TRUE, na.value = "black", name= "Clases") +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+print(p)
+
+levels(pred)
+rat <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/AMBAS/geotiff/GRANGRUPO/7_covariables/ORIGINAL/GRANGRUPO_PRED_RandomForest.csv')
+n<-length(rat$class)
+cols <- pals::cols25(n)
+names(cols) <- rat$class
+pred2 <- deratify(pred,'category',overwrite=TRUE)
+pred2
+
+levels(pred2)
+unique(pred2)
+table(pred2)
+cellStats(pred2, 'sum')
+
+factorValues(pred2, pred2[c(3, 12)])
+
+p <- gplot(pred2) +
+    annotation_map_tile(zoomin = -1) +
+    geom_raster(aes(fill=factor(value),interpolate=FALSE), alpha=0.7) +
+    scale_fill_discrete(na.translate=TRUE, na.value = "black", name= "Clases") +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+print(p)
+
+n<-length(levels(pred2)[[1]]$category)
+cols <- pals::cols25(n)
+names(cols) <- levels(pred2)[[1]]$category
+
+p <- gplot(pred2) +
+    annotation_map_tile(zoomin = -1) +
+    geom_raster(aes(fill=factor(value),interpolate=FALSE), alpha=0.7) +
+    scale_fill_manual(na.translate=FALSE, values = cols,name= "My name", labels=names(cols)[-1]) +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+print(p)
+
+p <- gplot(pred2) +
+    annotation_map_tile(zoomin = -1) +
+    geom_raster(aes(fill=factor(value),interpolate=FALSE), alpha=0.7) +
+    scale_fill_manual(na.translate=FALSE, values = cols,name= "My name") +
+    annotation_scale(location = "tl") +
+    annotation_north_arrow(location = "br", which_north = "true")
+print(p)
+
+##capas incertidumbre
+inc <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/AMBAS/geotiff/GRANGRUPO/7_covariables/ORIGINAL/GRANGRUPO_INCERTIDUMBRE_RandomForest.tif')
+
+colr = viridis(100, direction=-1, begin = 0, end = 1)
+names(inc) <- c('Indice de Shannon', 'Indice de Confusión')
+plot(inc, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
+
+
+plot(inc[[2]])
+
+maxValue(inc)
+minValue(inc)
+
+rat <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/AMBAS/geotiff/GRANGRUPO/7_covariables/ORIGINAL/GRANGRUPO_PRED_RandomForest.csv')
+length(rat$class)
+prob <- stack('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/AMBAS/geotiff/GRANGRUPO/7_covariables/ORIGINAL/GRANGRUPO_PROB_RandomForest.tif')
+dim(prob)
+plot(prob[1])
+
+plot(prob[[1]])
+
+nlevels(train[['target']])
+unique()
+unique(names(table(train$target)))
+
+rNA <- sum(is.na(prob))
+
+target_df <- as.data.frame(prob[[1]], xy = TRUE)
+
+cols <- pals::coolwarm()
+colr = inferno(100, direction=-1, begin = 0, end = 1)
+
+dev.new(height=0.91*nrow(prob)/50, width=1.09*ncol(prob)/50)
+plot(prob, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, legend.args = list(text = 'Probabilidad', side = 4, font = 2, line = 2.5, cex = 0.5))
+plot(prob, zlim=c(-10,10), legend.only=T)
+
+legend("top", inset=.02, title="Probability",
+   c("0","1"), fill=cols, horiz=TRUE, cex=0.8)
+
+names(prob) <- levels(train$target)
+prob_plots <- list()
+for (i in 1:length(names(prob))){
+  target <- prob[[i]]
+  target_df <- as.data.frame(target, xy = TRUE)
+  p <- ggplot() +
+  geom_raster(data = target_df,
+              aes(x = x, y = y,
+                  fill = as.numeric(names(prob)[i]))) +
+  scale_fill_viridis_c(name='Probabilidad',na.value = NA, direction=-1, option="plasma", limits = c(0, 1)) +
+  theme_void() +
+  theme(legend.position = "none") +
+  ggtitle(names(prob)[i])
+
+  prob_plots[[i]] <- p
+
+  #p <- ggplot() +
+  #annotation_map_tile(zoomin = -1, alpha=0.7) +
+  #layer_spatial(prob[[i]], alpha = 0.7) +
+  #scale_fill_viridis_c(name='Probabilidad',na.value = NA, direction=-1, option="plasma", limits = c(0, 1), alpha = 0.7) +
+  #theme_void() +
+  #theme(legend.position = "none") +
+  #ggtitle(names(prob)[i])
+  #prob_plots[[i]] <- p
+}
+
+library(ggpubr)
+n <- length(prob_plots)
+nCol <- floor(sqrt(n))
+p2 <- do.call("ggarrange", c(prob_plots, ncol=nCol, common.legend = TRUE, legend="bottom"))
+annotate_figure(p2, top = text_grob("Main title", face = "bold", size = 16))
+
+p2 <- ggarrange(plotlist=prob_plots, ncol=nCol, common.legend = TRUE, legend="bottom")
+annotate_figure(p2, top = text_grob("Probabilidades por clase", face = "bold", size = 16))
+
+
+plotlist

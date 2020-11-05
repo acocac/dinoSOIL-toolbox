@@ -14,9 +14,9 @@
 ##############################################################################
 
 # ------------------------------------------------------- #
-# Limpiar espacio de trabajo
+# Limpiar espacio de trabajo y configurar opciones
 # ------------------------------------------------------- #
-rm(list = ls())
+rm(list = ls()); options(scipen = 999, warn = -1)
 
 # ------------------------------------------------------- #
 # Definir espacio y archivo de configuracion de trabajo
@@ -41,7 +41,7 @@ source(paste0(r.dir,'/functions/0a_UserArgs.R'))
 source(paste0(r.dir,'/modules/1_Preprocesamiento.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL, pregunta 4 COD_PERFIL
+#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL_old, pregunta 4 COD_PERFIL
 args_p1 <- prompt.user.part1()
 
 #### ejecutar la funcion del modulo ###
@@ -56,7 +56,7 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]],args_p1[[4]])
 source(paste0(r.dir,'/modules/2_Datos.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL, pregunta 4 COD_PERFIL
+#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL_old, pregunta 4 COD_PERFIL
 #args_p2 <- prompt.user.part2()
 
 #### ejecutar la funcion del modulo ###
@@ -97,6 +97,7 @@ ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]])
 #####PARTE 4b - Modelación: Ejecutar algoritmos     ####
 ########################################################
 #TODO mejorar https://github.com/gimelbrantlab/magic/blob/0a86af1d18bb7b13a556090fa0bbe0fd5d424770/src/scores_ml.R
+# https://github.com/CIAT-DAPA/sfs_project/blob/b679e418205054f0cce95cda19d0fb64f5c18eea/codes/01_2_SDrivers_process_input_data.R
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
 
@@ -127,6 +128,7 @@ ModMejorModelo(args_p4c[[1]],args_p4c[[2]],args_p4c[[3]], args_p4c[[4]])
 #####PARTE 4d - Modelación: Sensibilidad/Incertidumbre  ###
 ###########################################################
 #TODO implementar incertidumbre metodo MGuevara Kriging https://github.com/marioguevara/utilityCodes/tree/e1fab9411f58138382734875c7be393e664fb055/chapter_5
+#TODO implementar incertidumbre categoricas > https://github.com/samuel-rosa/qgis-r/blob/eb00ee202fc3c265acb3ae9cd3913c729837b463/rscripts/digital-soil-mapping.rsx
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
 
@@ -141,7 +143,7 @@ ModIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]], args_p4d[[4]])
 ###########################################################
 #####PARTE 4e - Modelacion: Uso del modelo               ##
 ###########################################################
-
+##TODO mejorar predicción usando libreria terra combinando con función de predicción como https://github.com/AusSoilsDSM/SLGA/blob/c407671f9b4c32bb86335098e8d8337c33e69746/SLGA/Production/NationalMaps/AustralianSoilClassification/Scripts/Miscellaneous/Darwin%20Area/ranger_categorical.R
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
 
@@ -149,7 +151,7 @@ source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
 args_p4e <- prompt.user.part4e()
 
 #### ejecutar la funcion del modulo ###
-ModUso(args_p4e[[1]],args_p4e[[2]],args_p4e[[3]])
+ModUso(args_p4e[[1]],args_p4e[[2]],args_p4e[[3]],args_p4e[[4]])
 
 ###########################################################
 #####                    FINAL                        #####
