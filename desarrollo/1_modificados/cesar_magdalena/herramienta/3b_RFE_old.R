@@ -138,7 +138,7 @@ ExpRFE <- function(VarObj){
     exploratorio.rfe.modelo <- paste0(exploratorio.rfe.rdata,'/',file_name)
     if (!file.exists(exploratorio.rfe.modelo)){
       cat(paste0('RFE para el modelo ',c,' NO existe','\n'))
-      # Set up a cluster
+      # Set UP a cluster
       no_cores <- detectCores() - 1
 
       cl <- makeCluster(no_cores, type = "SOCK")    #create a cluster

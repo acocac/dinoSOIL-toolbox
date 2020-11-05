@@ -74,63 +74,141 @@ ExpRFE <- function(VarObj, BaseDatos){
   if (BaseDatos != 'AMBAS'){
     matriz = matriz[which(matriz$TIPO == BaseDatos),]
   }
-  print(dim(matriz))
+
   covariables <- readRDS(paste0(datos.entrada,'/1_covariables/covariables.rds'))
 
-  if (is(matriz[,VarObj],'numeric')){
+  final_df <- data.frame(target=matriz[,VarObj], matriz[,which(names(matriz) %in% covariables)])
 
-    final_df <- data.frame(target=matriz[,VarObj], matriz[,which(names(matriz) %in% covariables)])
+  # identificar y remote outliers
+  gooddata = computeOutliers(matriz[,covariables], type = 'remove')
+  good_df_q95 = final_df[gooddata,]
 
-    # identificar y remote outliers
-    gooddata = computeOutliers(matriz[,covariables], type = 'remove')
-    good_df_q95 = final_df[gooddata,]
+  df_wnoise = good_df_q95
 
-    df_wnoise = good_df_q95
+  # Remover variables con cero variabilidad
+  df_wnoise[,nearZeroVar(df_wnoise)] = NULL
 
-    # Remover variables con cero variabilidad
-    df_wnoise[,nearZeroVar(df_wnoise)] = NULL
+  # Datos finales
+  data <- df_wnoise
 
-    # Datos finales
-    data <- df_wnoise
+  # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
+  data <- data[complete.cases(data), ]
 
-    # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
-    data <- data[complete.cases(data), ]
+  if (is(data$target,'character')){
+    # si la variable es categorica solo dejar clases con al menos de 5 observaciones
+    # As a rule of thumb, a class to be modelled should have at least 5 observations
+    # source: https://soilmapper.org/soilmapping-using-mla.html
+    data <- data[data$target %in%  names(table(data$target))[table(data$target) >= 5] , ]
+    data$target <- factor(data$target)
+    METRIC <- 'Accuracy'
+  } else {
+    METRIC <- 'RMSE'
+  }
 
-    ##Conjunto de datos para entrenamiento y para validacion
-    set.seed(225)
-    inTrain <- createDataPartition(y = data[,1], p = .70, list = FALSE)
-    train_data <- as.data.frame(data[inTrain,])
-    test_data <- as.data.frame(data[-inTrain,])
-    particion <- list(train=train_data,test=test_data)
-    save(particion, file=paste0(modelos.particion.datos,'/particion.RData'))
+  ##Conjunto de datos para entrenamiento y para validacion
+  set.seed(225)
+  inTrain <- createDataPartition(y = data[,1], p = .70, list = FALSE)
+  train_data <- as.data.frame(data[inTrain,])
+  test_data <- as.data.frame(data[-inTrain,])
+  particion <- list(train=train_data,test=test_data)
+  save(particion, file=paste0(modelos.particion.datos,'/particion.RData'))
 
+  #Definir muestras de entrenamiento
+  data <- train_data
+  ##Seleccion de variables --> RFE
+  file_name <- 'rfe.rds'
+  exploratorio.variables.rfe <- paste0(exploratorio.variables.rds,'/',file_name)
+  if (!file.exists(exploratorio.variables.rfe)){
+    cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE'),'\n','\n')
+    start <- Sys.time()
+    no_cores <- detectCores() - 1
+    cl <- makeCluster(no_cores, type = "SOCK")
+    registerDoParallel(cl)
+    set.seed(40)
+    control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=5, repeats=5) #number=10, repeats=10 de acuerdo FAO sin embargo MGuevara usa 5 https://github.com/DSM-LAC/MEXICO/search?q=rfe
+    search_limit <- round(dim(data[,-1])[2]/2)
+    search_diff <- round((dim(data[,-1])[2]-search_limit)/3)
+    search_regular <- seq(search_limit, dim(data[,-1])[2], search_diff)
+    if (search_regular[length(search_regular)] == dim(data[,-1])[2]){
+      subset = c(1:search_limit,search_regular[-1])
+    } else{
+      subset = c(1:search_limit,search_regular[-1], dim(data[,-1])[2])
+    }
+    print(subset)
+    (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=subset, rfeControl=control2)) #sizes se refiere al detalle de la curva,
+    stopCluster(cl = cl)
+    png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
+    print(plot(rfmodel, type=c("g", "o"), cex=2,cex.names = 2, metric = METRIC))
+    dev.off()
+    predictors(rfmodel)[1:10]
+    save(rfmodel, file=exploratorio.variables.rfe)
+    print(Sys.time() - start)
+  } else {
+    cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
+  }
+
+  file_name <- 'boruta.rds'
+  exploratorio.variables.boruta <- paste0(exploratorio.variables.rds,'/',file_name)
+  if (!file.exists(exploratorio.variables.boruta)){
+    cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta'),'\n','\n')
+    nCores <- detectCores() - 1
+    start <- Sys.time()
+    formula <- as.formula('target ~ .')
+    (bor <- Boruta(formula, data = data, doTrace = 0, num.threads = nCores, ntree = 30, maxRuns=500)) #se debe evaluar ntree (numero de arboles), maxRuns (cantidad de interacciones)
+    save(bor, file=exploratorio.variables.boruta)
+    png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
+    par(mar = c(18, 4, 1, 1))
+    plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
+    dev.off()
+    print(Sys.time() - start)
+  } else {
+    cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
+  }
+
+  if (is(data$target,'factor')){
+    #Definir muestras de entrenamiento
+    set.seed(123)
+    down_train <- downSample(x = train_data[, -ncol(train_data)],
+                         y = train_data$target)
+    down_train$Class <- NULL
+
+    data <- down_train
     ##Seleccion de variables --> RFE
-    file_name <- 'rfe.rds'
+    file_name <- 'rfe_down.rds'
     exploratorio.variables.rfe <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.rfe)){
-      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE'),'\n','\n')
+      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE con el dataset BALANCEADO'),'\n','\n')
       start <- Sys.time()
       no_cores <- detectCores() - 1
       cl <- makeCluster(no_cores, type = "SOCK")
       registerDoParallel(cl)
       set.seed(40)
       control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=5, repeats=5) #number=10, repeats=10 de acuerdo FAO sin embargo MGuevara usa 5 https://github.com/DSM-LAC/MEXICO/search?q=rfe
-      (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=c(1:10), rfeControl=control2)) #sizes se refiere al detalle de la curva,
+      search_limit <- round(dim(data[,-1])[2]/2)
+      search_diff <- round((dim(data[,-1])[2]-search_limit)/3)
+      search_regular <- seq(search_limit, dim(data[,-1])[2], search_diff)
+      if (search_regular[length(search_regular)] == dim(data[,-1])[2]){
+        subset = c(1:search_limit,search_regular[-1])
+      } else{
+        subset = c(1:search_limit,search_regular[-1], dim(data[,-1])[2])
+      }
+      print(subset)
+      (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=subset, rfeControl=control2)) #sizes se refiere al detalle de la curva,
       stopCluster(cl = cl)
       png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
-      print(plot(rfmodel, type=c("g", "o"), cex=2,cex.names = 2, metric = "RMSE"))
+      print(plot(rfmodel, type=c("g", "o"), cex=2,cex.names = 2, metric = METRIC))
       dev.off()
       predictors(rfmodel)[1:10]
       save(rfmodel, file=exploratorio.variables.rfe)
       print(Sys.time() - start)
     } else {
-      cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
+      cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
     }
 
-    file_name <- 'boruta.rds'
+    file_name <- 'boruta_down.rds'
     exploratorio.variables.boruta <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.boruta)){
-      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta'),'\n','\n')
+      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' con el dataset BALANCEADO usando el algoritmo Boruta'),'\n','\n')
       nCores <- detectCores() - 1
       start <- Sys.time()
       formula <- as.formula('target ~ .')
@@ -139,18 +217,10 @@ ExpRFE <- function(VarObj, BaseDatos){
       png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
       par(mar = c(18, 4, 1, 1))
       plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
-      #plot(bor, xlab = "", xaxt = "n")
-      #lz<-lapply(1:ncol(bor$ImpHistory),function(i)
-      #  bor$ImpHistory[is.finite(bor$ImpHistory[,i]),i])
-      #names(lz) <- colnames(bor$ImpHistory)
-      #Labels <- sort(sapply(lz,median))
-      #axis(side = 1,las=2,labels = names(Labels),
-      #     at = 1:ncol(bor$ImpHistory), cex.axis = 0.7)
       dev.off()
       print(Sys.time() - start)
     } else {
-      cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
+      cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,'  con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
     }
-
   }
 }

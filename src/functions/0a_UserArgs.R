@@ -144,7 +144,11 @@ prompt.user.part4c <- function()#get arguments from user
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
-  newlist = list(a, b, c)
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (up, down), caso contrario escriba ninguna:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  newlist = list(a, b, c, d)
 
   return(newlist)
 }

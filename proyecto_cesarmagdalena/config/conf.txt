@@ -13,7 +13,7 @@ path = /Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos
 #######################
 Variables objetivo
 #######################
-variables.categoricas = ORDEN
+variables.categoricas = GRANGRUPO
 variables.continuas = pH
 
 #######################
@@ -25,8 +25,8 @@ NDVI.fechas = 2019-01-01;2020-08-30
 #######################
 Aprendizaje de Maquinas
 #######################
-modelos.categoricas = C45;SVM
+modelos.categoricas = RandomForest;mlp
 modelos.continuas = RandomForest;xgbTree;svmRadial
-metrica.continuas = RMSE
+metrica.continuas = RMSE;
 
 ##################################################

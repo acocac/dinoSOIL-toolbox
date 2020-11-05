@@ -95,7 +95,8 @@ ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]])
 
 ########################################################
 #####PARTE 4b - Modelación: Ejecutar algoritmos     ####
-
+########################################################
+#TODO mejorar https://github.com/gimelbrantlab/magic/blob/0a86af1d18bb7b13a556090fa0bbe0fd5d424770/src/scores_ml.R
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
 
@@ -119,13 +120,13 @@ source(paste0(r.dir,'/modules/4c_ModMejor.R'))
 args_p4c <- prompt.user.part4c()
 
 #### ejecutar la funcion del modulo ###
-ModMejorModelo(args_p4c[[1]],args_p4c[[2]],args_p4c[[3]])
+ModMejorModelo(args_p4c[[1]],args_p4c[[2]],args_p4c[[3]], args_p4c[[4]])
 
 
 ###########################################################
 #####PARTE 4d - Modelación: Sensibilidad/Incertidumbre  ###
 ###########################################################
-
+#TODO implementar incertidumbre metodo MGuevara Kriging https://github.com/marioguevara/utilityCodes/tree/e1fab9411f58138382734875c7be393e664fb055/chapter_5
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
 
@@ -134,7 +135,7 @@ source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
 args_p4d <- prompt.user.part4d()
 
 #### ejecutar la funcion del modulo ###
-ModIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]])
+ModIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]], args_p4d[[4]])
 
 
 ###########################################################
@@ -153,3 +154,4 @@ ModUso(args_p4e[[1]],args_p4e[[2]],args_p4e[[3]])
 ###########################################################
 #####                    FINAL                        #####
 ###########################################################
+

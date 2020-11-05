@@ -65,7 +65,7 @@ perform_rfe <- function(response, base_learner = "ranger", type = "classificatio
       ctrl <- caret::trainControl(method = "repeatedcv",
                                   number = 10,
                                   rep = 1,
-                                  #sampling = ifelse(type == "classification", 'down', FALSE),
+                                  #sampling = ifelse(type == "classification", 'DOWN', FALSE),
                                   verbose = FALSE,
                                   allowParallel = TRUE,
                                   savePredictions = TRUE,
@@ -139,7 +139,7 @@ perform_rfe <- function(response, base_learner = "ranger", type = "classificatio
 
 #Create a tidy output
 tidy_rfe_output <- function(data, base_learner){
-  #tidy up list output
+  #tidy UP list output
   subsets <- data[[1]][[length(data[[1]])-1]]
   ranks <- lapply(data, "[[", 1) %>%
     Reduce(function(dtf1, dtf2) full_join(dtf1, dtf2, by = "var"), .) %>%

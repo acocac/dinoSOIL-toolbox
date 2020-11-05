@@ -428,3 +428,62 @@ ggplot() +
 
   # spatial-aware automagic north arrow
   annotation_north_arrow(location = "br", which_north = "true")
+
+##GRANGRUPO cantidad grupos
+matriz <- read.csv('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_matriz/MatrixDatos.csv')
+names(matriz)
+table(matriz$GRANGRUPO)
+
+matriz2 <- matriz[matriz$GRANGRUPO %in%  names(table(matriz$GRANGRUPO))[table(matriz$GRANGRUPO) >= 5] , ]
+
+##GRANGRUPO graficos RFE
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/AMBAS/rds/GRANGRUPO/rfe.rds')
+rfe_lim<-7
+predictors(rfmodel)[c(1:rfe_lim)]
+
+png('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/figuras/pH-0_30_spline/rfe.png', width = 700, height = 550)
+plot(rfmodel, type=c('g', 'o'), cex=2, metric = "Accuracy")
+dev.off()
+rfmodel
+png('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/exploratorio/figuras/pH-0_30_spline/boruta.png', width = 700, height = 550)
+par(mar = c(18, 4, 1, 1))
+plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
+dev.off()
+
+##check partition groups
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
+
+train = as.data.frame(particion['train'])
+test = as.data.frame(particion['test'])
+names(train) <- sub("train.", "", names(train))
+names(test) <- sub("test.", "", names(test))
+
+is(train[,'target'],'factor')
+
+table(train$target)
+table(test$target)
+
+names(table(train$target))
+names(table(test$target))
+
+down_train <- downSample(x = train[, -ncol(train)],
+                         y = train$target)
+down_train$Class <- NULL
+
+smote_train <- SMOTE(target ~ ., data  = train)
+
+table(down_train$target)
+
+##GRANGRUPO evaluacion
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
+
+sampling_strategy = 'ninguno'
+load(paste0('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/2_modelos/GRANGRUPO/7_covariables/',sampling_strategy,'/RandomForest.rds'))
+
+test = as.data.frame(particion['test'])
+names(test) <- sub("test.", "", names(test))
+
+pred <- predict(modelo.ajuste, test)
+
+caret::confusionMatrix(pred,test$target)$overall["Accuracy"]
+caret::confusionMatrix(pred,test$target)$overall["Kappa"]

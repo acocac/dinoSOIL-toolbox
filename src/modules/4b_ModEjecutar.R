@@ -17,7 +17,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
   #          'dismo', 'readxl', 'aqp', 'sp', 'randomForest', 'RWeka', 'rJava',
   #          'C50')
   pckg <- c('raster', 'rgdal', 'caret', 'doMC', 'plyr', 'doParallel',
-            'dismo', 'readxl', 'aqp', 'sp', 'ranger', 'stringr', 'h2o')
+            'dismo', 'readxl', 'aqp', 'sp', 'ranger', 'stringr', 'h2o', 'RWeka')
 
   usePackage <- function(p) {
     if (!is.element(p, installed.packages()[,1]))
@@ -47,7 +47,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
   proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
 
   # Modelos disponibles y configuraciones
-  modelos.lista <-c('C45'='J48', 'C50'='C5.0', 'RandomForest'='ranger', 'SVM'='svmLinear',
+  modelos.lista <-c('C45'='J48', 'C50'='C5.0', 'RandomForest'='ranger', 'svmLinear'='svmLinear',
                     'xgbTree'='xgbTree','gbm'='gbm_h2o', 'glmnet'='glmnet','mlp'='mlp', 'svmRadial'='svmRadial')
   tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=20, 'SVM'=5, 'xgbTree'=20, 'gbm_h2o'=3,
                  'glmnet'=5,'mlp'=5, 'svmRadial'=20)
@@ -122,6 +122,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
         method=modelos.lista[modelo],
         tuneLength = tuneLenght[modelo],
         metric='RMSE',
+        preProc = c("center", "scale"),
         trControl = fitControl)
       }
 
@@ -137,7 +138,87 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
       }
       }
   else if (is(train.data[,'target'],'factor')){
-      # As a rule of thumb, a class to be modelled should have at least 5 observations
-      # source: https://soilmapper.org/soilmapping-using-mla.html
+    # Determinar modelos objetivo segun listado en el archivo conf.txt y modelos disponibles por categoria
+    modelos.idx <- match(proyecto.modelos.categoricas, names(modelos.lista))
+    modelos.objetivo <- modelos.lista[modelos.idx]
+
+    # ------------------------------------------------------- #
+    # Modelos
+    # ------------------------------------------------------- #
+    # Crear formula
+    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
+    #fm <- as.formula(paste("Class~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
+
+      for (sampling_type in c('up','down','smote','original')){
+        modelos.salida.temp <- paste0(modelos.salida,'/',toupper(sampling_type))
+        dir.create(modelos.salida.temp, recursive = T, mode = "0777", showWarnings = F)
+
+        if (sampling_type != 'original') {
+          #Random grid search
+          fitControl <- trainControl(method = "cv", #verificar tecnicas repeatedcv
+                                number=10,
+                                classProbs = TRUE,
+                                summaryFunction = multiClassSummary,
+                                returnResamp = "all",
+                                savePredictions = TRUE,
+                                search = "random",
+                                verboseIter = FALSE,
+                                sampling = sampling_type
+          )
+        } else{
+          #Random grid search
+          print('sin sampling')
+          fitControl <- trainControl(method = "cv", #verificar tecnicas repeatedcv
+                                number=10,
+                                classProbs = TRUE,
+                                summaryFunction = multiClassSummary,
+                                returnResamp = "all",
+                                savePredictions = TRUE,
+                                search = "random",
+                                verboseIter = FALSE
+          )
+        }
+
+        #execute the algorithms
+        for (modelo in names(modelos.objetivo)){
+          modelo.archivo <- paste0(modelos.salida.temp,'/',modelo,'.rds')
+          if (!file.exists(modelo.archivo)){
+            cat(paste0('El modelo ',modelo,' con sampling ',toupper(sampling_type),' no existe, se requiere entrenarlo antes de su evaluacion','\n','\n'))
+
+            # Calculate the number of cores
+            no_cores <- detectCores() - 1
+            cl <- makeCluster(no_cores, type = "SOCK")    #create a cluster
+            registerDoParallel(cl)                #register the cluster
+
+            ## foreach or lapply would do this faster
+            set.seed(40)
+
+            if (modelo == 'RandomForest'){
+              modelo.ajuste <- train(fm, data = train.data,
+              method=modelos.lista[modelo],
+              tuneLength = tuneLenght[modelo],
+              num.trees = 500,
+              metric='Accuracy',
+              trControl = fitControl)
+            } else{
+              modelo.ajuste <- train(fm, data = train.data,
+              method=modelos.lista[modelo],
+              tuneLength = tuneLenght[modelo],
+              metric='Accuracy',
+              preProc = c("center", "scale"),
+              trControl = fitControl)
+            }
+
+            stopCluster(cl = cl)
+
+            if(modelo == 'C45'){
+              .jcache(modelo.ajuste$finalModel$classifier)
+            }
+              save(modelo.ajuste, file=modelo.archivo)
+            } else {
+              cat(paste0('El modelo ',modelo,' con sampling ',toupper(sampling_type),' existe, se ve a cargar para prediccion','\n','\n'))
+            }
+            }
+      }
   }
 }
