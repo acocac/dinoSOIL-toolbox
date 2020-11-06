@@ -40,41 +40,53 @@ PredictGeoTIFF = function(COV, fit.model, out.file, type, index, train.data)
   #names(cov) <- names(COV)
   #COV <- cov
 
-  # Make spatial predictions ----
+  ## Make spatial predictions ----
+  #no_cores <- detectCores() - 1
+  #raster::beginCluster(no_cores)
+  #prediction <-
+  #  raster::clusterR(
+  #    raster::stack(COV),
+  #    raster::predict,
+  #    args = list(model = fit.model, type = type, index = index)
+  #  )
+  #raster::endCluster()
+  #TODO parallel https://strimas.com/post/processing-large-rasters-in-r/
   no_cores <- detectCores() - 1
-  raster::beginCluster(no_cores)
-  prediction <-
-    raster::clusterR(
-      raster::stack(COV),
-      raster::predict,
-      args = list(model = fit.model, type = type, index = index)
-    )
-  raster::endCluster()
-
-  if (type == "prob") {
-    prob.file <- gsub('_PRED_','_PROB_',out.file)
-    incertidumbre.file <- gsub('_PRED_','_INCERTIDUMBRE_',out.file)
-
-    Predictions <- as.factor(calc(x = prediction, fun = nnet::which.is.max))
-    Predictions <- ratify(Predictions)
-    rat <- levels(Predictions)[[1]]
-    rat$class <- levels(train.data[['target']])[rat$ID]
-    levels(Predictions) <- rat
-
-    Uncertainty <-
-    brick(
-      calc(x = prediction, fun = entropy),
-      calc(x = prediction, fun = confusion)
-    )
-
-    writeRaster(prediction, prob.file, format = "GTiff", overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
-    writeRaster(Predictions, out.file, format = "GTiff", datatype="INT1U", RAT=TRUE, overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
-    writeRaster(Uncertainty, incertidumbre.file, format = "GTiff", overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
-    write.csv(rat, file=gsub('.tif$','.csv',out.file), row.names = F)
-  }
-  else if (type == "raw") {
-    writeRaster(prediction, out.file, format = "GTiff", overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
-  }
+  beginCluster(no_cores)
+  clusterR(COV, predict, args = list(fit.model, type = type, index = index),
+      filename = out.file, format = "GTiff",
+      #overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
+      overwrite = T, datatype='FLT4S', options='COMPRESS=YES')
+  endCluster()
+  #
+  #if (type == "prob") {
+  #  #prob.file <- gsub('_PRED_','_PROB_',out.file)
+  #  #incertidumbre.file <- gsub('_PRED_','_INCERTIDUMBRE_',out.file)
+  #  #
+  #  #Predictions <- as.factor(calc(x = prediction, fun = nnet::which.is.max))
+  #  #Predictions <- ratify(Predictions)
+  #  #rat <- levels(Predictions)[[1]]
+  #  #rat$class <- levels(train.data[['target']])[rat$ID]
+  #  #levels(Predictions) <- rat
+  #  #
+  #  #print('Atributos del raster creado')
+  #  #
+  #  #Uncertainty <-
+  #  #brick(
+  #  #  calc(x = prediction, fun = entropy),
+  #  #  calc(x = prediction, fun = confusion)
+  #  #)
+  #  #
+  #  #print('Capas de incertidumbre generadas')
+  #
+  #  writeRaster(prediction, prob.file, format = "GTiff", overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
+  #  #writeRaster(Predictions, out.file, format = "GTiff", datatype="INT1U", RAT=TRUE, overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
+  #  #writeRaster(Uncertainty, incertidumbre.file, format = "GTiff", overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
+  #  #write.csv(rat, file=gsub('.tif$','.csv',out.file), row.names = F)
+  #}
+  #else if (type == "raw") {
+  #  writeRaster(prediction, out.file, format = "GTiff", overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
+  #}
     #
   #no_cores <- detectCores() - 1
   #beginCluster(no_cores)
