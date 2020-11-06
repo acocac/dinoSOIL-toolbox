@@ -16,8 +16,8 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(caret, raster, sf, stringr, doParallel,
                                   Metrics, lime, quantregForest, hydroGOF,
-                                  RColorBrewer, rasterVis, classInt, ggspatial
-                                  ))
+                                  RColorBrewer, rasterVis, classInt, ggspatial, viridis,
+                                  sf, plyr, dplyr))
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
@@ -42,6 +42,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
   modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
+  in.geo.data <- paste0(proyecto.directorio,'/datos/entrada/1_covariables')
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
   modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
   modelos.incertidumbre.figuras = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/figuras/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
@@ -300,7 +301,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       print(Sys.time() - start)
 
     } else {
-      cat(paste0('### RESULTADO 3a de 5: El archivo GeoTIFF de entropia usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', incertidumbre.archivo.geotiff,' ###','\n'))
+      cat(paste0('### RESULTADO 3a de 5: El archivo GeoTIFF de entropia usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', entropia.archivo.geotiff,' ###','\n'))
     }
 
     confusion.archivo.geotiff <- gsub('_PROB_','_CONFUSION_',proba.archivo.geotiff)
@@ -355,11 +356,21 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       ##### end output messages ####
 
       r <- raster(entropia.archivo.geotiff)
-      colr = inferno(100, direction=-1, begin = 0, end = 1)
+
+      limite_shp <- st_read(paste0(in.geo.data,'/vector/limite'))
+      if (dim(limite_shp)[1] > 1){
+        limite_shp$id <- 0
+        limite_shp <- limite_shp %>% group_by(id) %>% summarize()
+      }
+
+      r_res <- crop(r,limite_shp)
+      r_res <- mask(r_res,limite_shp)
+
+      colr = viridis::inferno(100, direction=-1, begin = 0, end = 1)
 
       dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
       png(file = entropia.archivo.grafica, width = 1400, height = 900, res=150)
-      plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
+      plot(r_res, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
       dev.off()
     } else{
       ##### output messages ####
