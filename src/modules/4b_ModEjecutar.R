@@ -141,8 +141,8 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
     fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
     #fm <- as.formula(paste("Class~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
 
-      for (sampling_type in c('original')){
-      #for (sampling_type in c('up','down','original')){
+      #for (sampling_type in c('original')){
+      for (sampling_type in c('up','down','original')){
         modelos.salida.temp <- paste0(modelos.salida,'/',toupper(sampling_type))
         dir.create(modelos.salida.temp, recursive = T, mode = "0777", showWarnings = F)
 

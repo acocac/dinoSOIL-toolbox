@@ -79,6 +79,8 @@ ExpRFE <- function(VarObj, BaseDatos){
 
   final_df <- data.frame(target=matriz[,VarObj], matriz[,which(names(matriz) %in% covariables)])
 
+  print(dim(final_df))
+
   # identificar y remote outliers
   gooddata = computeOutliers(matriz[,covariables], type = 'remove')
   good_df_q95 = final_df[gooddata,]
@@ -93,13 +95,17 @@ ExpRFE <- function(VarObj, BaseDatos){
 
   # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
   data <- data[complete.cases(data), ]
+  print(dim(data))
 
   if (is(data$target,'character')){
     # si la variable es categorica solo dejar clases con al menos de 5 observaciones
     # As a rule of thumb, a class to be modelled should have at least 5 observations
     # source: https://soilmapper.org/soilmapping-using-mla.html
+    original <- unique(data$target)
     data <- data[data$target %in%  names(table(data$target))[table(data$target) >= 5] , ]
     data$target <- factor(data$target)
+    final <- unique(data$target)
+    print(paste0(original[!(original %in% final)], collapse=', '))
     METRIC <- 'Accuracy'
   } else {
     METRIC <- 'RMSE'

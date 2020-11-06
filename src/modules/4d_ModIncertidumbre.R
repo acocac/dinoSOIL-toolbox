@@ -340,8 +340,8 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       names(r) <- levels(train.data$target)
 
       dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      png(file = proba.archivo.grafica, width = 1400, height = 1400, res=150)
-      plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, legend.args = list(text = 'Probabilidad', side = 4, font = 2, line = 2.5, cex = 0.5), nc=5, maxnl=length(names(r)))
+      png(file = proba.archivo.grafica, width = 1400, height = 600, res=150)
+      plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, legend.args = list(text = 'Probabilidad', side = 4, font = 2, line = 2.5, cex = 0.5), nc=7, maxnl=length(names(r)))
       dev.off()
     } else{
       ##### output messages ####

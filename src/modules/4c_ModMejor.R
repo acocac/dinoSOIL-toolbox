@@ -115,13 +115,13 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   cat(paste('### RESULTADO 2 de 3: The best models statistics of perfomance results were generated and store as tabular data in the model (tabular) folder! ###','\n'))
   ##### end output messages ####
 
-  scales <- list(x=list(relation="free"), y=list(relation="free"))
-  #scales <- list(y=list(relation="free"))
+  scales <- list(tck=c(1,0), x=list(cex=1.5), y=list(cex=1.5))
+  #scales <- list(x=list(relation="free"), y=list(relation="free"), tck=c(1,0), x=list(cex=2), y=list(cex=2))
 
   if (is(train.data[,'target'],'numeric')){
     #boxplots charts
     png(file = paste0(modelos.analisis.figuras,'/boxplots_modelos.png'), width = 700, height = 600)
-    print(bwplot(resamps, scales=scales, metric=c('RMSE','Rsquared'), layout = c(2, 1), box.ratio = 1, auto.key = T, scales=list(tck=c(1,0), x=list(cex=1.5), y=list(cex=1.5))))
+    print(bwplot(resamps, scales=scales, metric=c('RMSE','Rsquared'), layout = c(2, 1), box.ratio = 1, auto.key = T))
     dev.off()
   } else if (is(train.data[,'target'],'factor')){
     png(file = paste0(modelos.analisis.figuras,'/boxplots_modelos.png'), width = 700, height = 600)
