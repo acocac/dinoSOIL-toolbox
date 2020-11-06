@@ -45,6 +45,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   dir.create(datos.salida.figuras, recursive = T, mode = "0777", showWarnings = F)
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
   modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
+  modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/geotiff/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -88,9 +89,25 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
     ##### output messages ####
     cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de predicción usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
     ##### end output messages ####
-    start <- Sys.time()
-    PredictGeoTIFF(COV, modelo.ajuste, prediccion.archivo.geotiff, type, index, train.data)
-    print(Sys.time() - start)
+    if (is(train.data[,'target'],'numeric')){
+      start <- Sys.time()
+      PredictGeoTIFF(COV, modelo.ajuste, prediccion.archivo.geotiff, type, index, train.data)
+      print(Sys.time() - start)
+    } else if (is(train.data[,'target'],'factor')){
+      proba.archivo.geotiff <- paste0(modelos.incertidumbre.raster,'/',str_replace(VarObj,'[.]','-'),'_PROB_',modelos.mejor,'.tif')
+      prediction_prob <- stack(proba.archivo.geotiff)
+
+      start <- Sys.time()
+      no_cores <- detectCores() - 1
+      beginCluster(no_cores)
+      clusterR(prediction_prob, fun = calc, args = list(fun = nnet::which.is.max),
+                            filename = prediccion.archivo.geotiff, format = "GTiff",
+                            overwrite = T, datatype='INT1U', options='COMPRESS=YES')
+      endCluster()
+      print(Sys.time() - start)
+
+    }
+
   } else{
     ##### output messages ####
     cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de predicción usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
@@ -113,13 +130,18 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       annotation_north_arrow(location = "br", which_north = "true")
     } else if (is(train.data[,'target'],'factor')){
 
-      pred2 <- deratify(pred, 'category')
+      pred <- ratify(pred)
+      rat <- levels(pred)[[1]]
+      rat$class <- levels(train.data[['target']])[rat$ID]
+      levels(pred) <- rat
 
-      n<-length(levels(pred2)[[1]]$category)
+      pred2 <- deratify(pred, 'class')
+
+      n<-length(levels(pred2)[[1]]$class)
 
       cols <- pals::cols25(n)
 
-      p <- rasterVis::levelplot(pred2, col.regions = cols, par.settings = list(axis.line = list(col = 'transparent'),
+      p <- rasterVis::levelplot(pred2, maxpixels = ncell(pred2), col.regions = cols, par.settings = list(axis.line = list(col = 'transparent'),
           strip.background = list(col = 'transparent'),
           strip.border = list(col = 'transparent')),
           scales = list(col = 'transparent'))
@@ -138,50 +160,6 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
     ##### output messages ####
     cat(paste0('### RESULTADO 3 de 3: La figura de predicción de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo.figuras,' ###','\n'))
     ##### end output messages ####
-  }
-
-  if (is(train.data[,'target'],'factor')){
-    prob.file.in <- gsub('_PRED_','_PROB_',prediccion.archivo.geotiff)
-    prob.file.out <- gsub('_PRED_','_PROB_',prediccion.archivo.figuras)
-    if (!file.exists(prob.file.out)){
-      ##### output messages ####
-      cat(paste0('### RESULTADO 3b de 3b: La figura de probabilidades de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prob.file.out,' ###','\n'))
-      ##### end output messages ####
-      r <- stack(prob.file.in)
-
-      colr = viridis::viridis(100, direction=-1, begin = 0, end = 1)
-      names(r) <- levels(train.data$target)
-
-      dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      png(file = prob.file.out, width = 1400, height = 1400, res=150)
-      plot(prob, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, legend.args = list(text = 'Probabilidad', side = 4, font = 2, line = 2.5, cex = 0.5))
-      dev.off()
-    } else{
-      ##### output messages ####
-      cat(paste0('### RESULTADO 3b de 3b: La figura de probabilidades de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prob.file.out,' ###','\n'))
-      ##### end output messages ####
-    }
-
-    incertidumbre.file.in <- gsub('_PRED_','_INCERTIDUMBRE_',prediccion.archivo.geotiff)
-    incertidumbre.file.out <- gsub('_PRED_','_INCERTIDUMBRE_',prediccion.archivo.figuras)
-    if (!file.exists(incertidumbre.file.out)){
-      ##### output messages ####
-      cat(paste0('### RESULTADO 3c de 3c: La figura de incertidumbre de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', incertidumbre.file.out,' ###','\n'))
-      ##### end output messages ####
-
-      r <- stack(incertidumbre.file.in)
-      colr = inferno(100, direction=-1, begin = 0, end = 1)
-      names(r) <- c('Indice de Shannon', 'Indice de Confusión')
-
-      dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      png(file = incertidumbre.file.out, width = 1400, height = 700, res=150)
-      plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
-      dev.off()
-    } else{
-      ##### output messages ####
-      cat(paste0('### RESULTADO 3c de 3c: La figura de incertidumbre de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', incertidumbre.file.out,' ###','\n'))
-      ##### end output messages ####
-    }
   }
 
 }

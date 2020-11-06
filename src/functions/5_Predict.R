@@ -51,12 +51,18 @@ PredictGeoTIFF = function(COV, fit.model, out.file, type, index, train.data)
   #  )
   #raster::endCluster()
   #TODO parallel https://strimas.com/post/processing-large-rasters-in-r/
+  if (type == "prob") {
+    data_type = 'FLT4S'
+  } else{
+    data_type = 'INT1U'
+  }
+
   no_cores <- detectCores() - 1
   beginCluster(no_cores)
   clusterR(COV, predict, args = list(fit.model, type = type, index = index),
       filename = out.file, format = "GTiff",
       #overwrite = T, options=c("COMPRESS=DEFLATE", "TFW=YES"))
-      overwrite = T, datatype='FLT4S', options='COMPRESS=YES')
+      overwrite = T, datatype=data_type, options='COMPRESS=YES')
   endCluster()
   #
   #if (type == "prob") {

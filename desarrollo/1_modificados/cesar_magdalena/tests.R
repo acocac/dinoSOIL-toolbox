@@ -691,5 +691,15 @@ annotate_figure(p2, top = text_grob("Main title", face = "bold", size = 16))
 p2 <- ggarrange(plotlist=prob_plots, ncol=nCol, common.legend = TRUE, legend="bottom")
 annotate_figure(p2, top = text_grob("Probabilidades por clase", face = "bold", size = 16))
 
+## verificar prediccion categoricas
+load('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
 
-plotlist
+train.data = as.data.frame(particion['train'])
+names(train.data) <- sub("train.", "", names(train))
+
+pred <- raster('/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena/prediccion/AMBAS/geotiff/GRANGRUPO/7_covariables/ORIGINAL/GRANGRUPO_PRED_RandomForest.tif')
+maxpixels = ncell(pred)
+pred <- ratify(pred)
+rat <- levels(pred)[[1]]
+rat$class <- levels(train.data[['target']])[rat$ID]
+levels(pred) <- rat
