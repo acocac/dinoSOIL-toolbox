@@ -103,6 +103,11 @@ ExpRFE <- function(VarObj, BaseDatos){
     # source: https://soilmapper.org/soilmapping-using-mla.html
     original <- unique(data$target)
     data <- data[data$target %in%  names(table(data$target))[table(data$target) >= 5] , ]
+    remove_all_ws<- function(string){
+      return(gsub(" ", "_", str_squish(string)))
+    }
+    data <- data %>%
+      mutate_if(is.character, remove_all_ws)
     data$target <- factor(data$target)
     final <- unique(data$target)
     print(paste0(original[!(original %in% final)], collapse=', '))

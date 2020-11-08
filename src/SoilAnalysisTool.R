@@ -22,11 +22,11 @@ rm(list = ls()); options(scipen = 999, warn = -1)
 # Definir espacio y archivo de configuracion de trabajo
 # ------------------------------------------------------- #
 ### Directorio de los codigos R  ### #copiar la ruta completa donde estan los codigos (carpeta src)
-r.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/src'
+r.dir = 'F:/IDI_MDS_Agrologia/script/soil-toolbox/src'
 
 ### Directorio del proyecto ### #copiar la ruta completa donde se aloja el proyecto (carpeta proyecto)
 # Indicar la ruta al proyecto
-proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena'
+proyecto.dir = 'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena'
 # Cargar el archivo de configuracion
 conf.file = paste0(proyecto.dir,'/config/conf.txt')
 # Cargar funciones de interaccion con el usuario
@@ -62,7 +62,6 @@ source(paste0(r.dir,'/modules/2_Datos.R'))
 #### ejecutar la funcion del modulo ###
 Datos()
 
-
 ########################################################
 #####PARTE 3 - Selección variables                ######
 ########################################################
@@ -90,7 +89,7 @@ source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 args_p4a <- prompt.user.part4a()
 
 #### ejecutar la funcion del modulo ###
-ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]])
+ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]], args_p4a[[4]])
 
 
 ########################################################
@@ -106,7 +105,7 @@ source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
 args_p4b <- prompt.user.part4b()
 
 #### ejecutar la funcion del modulo ###
-ModEntrenamiento(args_p4b[[1]],args_p4b[[2]],args_p4b[[3]])
+ModEntrenamiento(args_p4b[[1]],args_p4b[[2]],args_p4b[[3]],args_p4b[[4]])
 
 
 ###########################################################

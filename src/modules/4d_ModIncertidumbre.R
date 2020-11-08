@@ -335,14 +335,45 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       cat(paste0('### RESULTADO 4 de 5: La figura de probabilidades de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', proba.archivo.grafica,' ###','\n'))
       ##### end output messages ####
       r <- stack(proba.archivo.geotiff)
-
-      colr = viridis::viridis(100, direction=-1, begin = 0, end = 1)
+      
+      n<-100
+      
+      colr = viridis::viridis(n, direction=-1, begin = 0, end = 1)
       names(r) <- levels(train.data$target)
-
+      titles <- gsub('_','\n',levels(train.data$target))
+      #titles <- gsub("\\b([A-Z])(\\w+)", "\\1\\L\\2", titles, perl = TRUE)
+      #print(titles)
+      
       dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      png(file = proba.archivo.grafica, width = 1400, height = 600, res=150)
-      plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, legend.args = list(text = 'Probabilidad', side = 4, font = 2, line = 2.5, cex = 0.5), nc=7, maxnl=length(names(r)))
+      png(file = proba.archivo.grafica, width = 1200, height = 900, res=150)
+      p <- levelplot(r, panel=panel.levelplot.raster, margin=T, layout=c(8, 3), names.attr=titles, 
+                at=seq(0, 1, length.out=n), col.regions = colr,
+                par.strip.text=list(font=2, cex=0.5, lines=6), 
+                par.settings = list(axis.line = list(col = 'transparent'),
+                                    strip.background = list(col = 'transparent'),
+                                    strip.border = list(col = 'transparent')),
+                scales = list(col = 'transparent'), colorkey=list(space="bottom",  height = 1, width = 1))
+      print(p)
+      #grid::grid.text('Probabilidad', rot=0, y=unit(0.1, "npc"), x=unit(0.5, "npc"))
       dev.off()
+      
+      # dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
+      # png(file = proba.archivo.grafica, width = 1400, height = 600, res=150)
+      # plot(r, cex.main=0.5,  legend=FALSE, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, bty='L', nc=7, maxnl=length(names(r)))
+      # #plot(r, cex.main=0.6, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE, legend.args = list(text = 'Probabilidad', side = 4, font = 2, line = 2.5, cex = 0.5), nc=7, maxnl=length(names(r)))
+      # #legend(0.03, 0.025,c("-50","-25","0","50","100"), lty=c(6,6,1,1,1),lwd=6,col=colr,cex=2,title=expression(paste(4,N,'s',sep="")),bty="n")
+      # #plot(r, legend.only=TRUE, col=colr, legend.width=5, legend.shrink=1,legend.args=list(text='Probabilidad', side=2, font=1, line=8, cex=1), axis.args=list(cex.axis=1))
+      # #plot(r, col=colr, horizontal=TRUE, breaks=seq(0,1,length.out=100), legend.only=TRUE, legend.shrink = 1, legend.width = 3, axis.args = list(at=pretty(0:1), labels=pretty(0:1), cex.axis=0.2), legend.args= list(text='Probabilidad', side=1, font=3, line = 2, cex=1))
+      # #legend(0.03, 0.025, legend = unique(rfp.dt$climate), fill = colr, cex = 0.8, lwd = 1, lty = 1)
+      # dev.off()
+      # 
+      # proba.archivo.grafica.leyenda <- paste0(modelos.incertidumbre.figuras,'/',gsub('.tif$','_leyenda.png',basename(proba.archivo.geotiff)))
+      # png(file = proba.archivo.grafica.leyenda, width = 300, height = 50, res=150)
+      # plot(r,legend.only=TRUE, horizontal=TRUE, legend.shrink=1, legend.width=1, zlim=c(0, 1),
+      #      axis.args=list(at=pretty(0:1), labels=pretty(0:1)),
+      #      legend.args=list(text='Probabilidad', font=2, side=1))
+      # dev.off()
+      
     } else{
       ##### output messages ####
       cat(paste0('### RESULTADO 4 de 5: La figura de probabilidades de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', proba.archivo.grafica,' ###','\n'))
@@ -359,19 +390,32 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
 
       limite_shp <- st_read(paste0(in.geo.data,'/vector/limite'))
       if (dim(limite_shp)[1] > 1){
-        limite_shp$id <- 0
-        limite_shp <- limite_shp %>% group_by(id) %>% summarize()
+         limite_shp$id <- 0
+         limite_shp <- limite_shp %>% group_by(id) %>% summarize()
       }
-
+      
       r_res <- crop(r,limite_shp)
       r_res <- mask(r_res,limite_shp)
 
-      colr = viridis::inferno(100, direction=-1, begin = 0, end = 1)
-
-      dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      png(file = entropia.archivo.grafica, width = 1400, height = 900, res=150)
-      plot(r_res, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
+      r <- r_res
+      p <- ggplot() +
+        annotation_map_tile(zoomin = -1) +
+        layer_spatial(r, aes(fill = stat(band1)), alpha = 0.7) +
+        scale_fill_viridis_c(name='Entropia',na.value = NA, direction=-1, option="inferno", alpha = 0.7,  limits = c(0, 1)) +
+        annotation_scale(location = "tl") +
+        annotation_north_arrow(location = "br", which_north = "true")
+      
+      png(file = entropia.archivo.grafica, width = 700, height = 600, res=150)
+      print(p)
+      #print(plot(r, main = paste0('Incertidumbre (promedio) - ',VarObj), col=pal))
       dev.off()
+      # 
+      
+      # colr = viridis::inferno(100, direction=-1, begin = 0, end = 1)
+      # dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
+      # png(file = entropia.archivo.grafica, width = 1400, height = 900, res=150)
+      # plot(r_res, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
+      # dev.off()
     } else{
       ##### output messages ####
       cat(paste0('### RESULTADO 5a de 5: La figura de entropia de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', entropia.archivo.grafica,' ###','\n'))
@@ -385,12 +429,25 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       ##### end output messages ####
 
       r <- raster(confusion.archivo.geotiff)
-      colr = inferno(100, direction=-1, begin = 0, end = 1)
-
-      dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      png(file = confusion.archivo.grafica, width = 1400, height = 900, res=150)
-      plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
+      
+      p <- ggplot() +
+        annotation_map_tile(zoomin = -1) +
+        layer_spatial(r, aes(fill = stat(band1)), alpha = 0.7) +
+        scale_fill_viridis_c(name='Confusi�n',na.value = NA, direction=-1, option="inferno", alpha = 0.7, limits = c(0, 1)) +
+        annotation_scale(location = "tl") +
+        annotation_north_arrow(location = "br", which_north = "true")
+      
+      png(file = confusion.archivo.grafica, width = 700, height = 600, res=150)
+      print(p)
+      #print(plot(r, main = paste0('Incertidumbre (promedio) - ',VarObj), col=pal))
       dev.off()
+      # 
+      # colr = inferno(100, direction=-1, begin = 0, end = 1)
+      # 
+      # dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
+      # png(file = confusion.archivo.grafica, width = 1400, height = 900, res=150)
+      # plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
+      # dev.off()
     } else{
       ##### output messages ####
       cat(paste0('### RESULTADO 5a de 5a: La figura del índice de confusión de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', confusion.archivo.grafica,' ###','\n'))

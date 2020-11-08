@@ -153,7 +153,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
       #annotation_scale(location = "tl") +
       #annotation_north_arrow(location = "br", which_north = "true")
     }
-    png(file = prediccion.archivo.figuras, width = 1400, height = 900, res=150)
+    png(file = prediccion.archivo.figuras, width = 1400, height = 900, res=150, bg = "transparent")
     print(p)
     dev.off()
   } else{

@@ -8,7 +8,7 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
+ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -142,7 +142,10 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
     #fm <- as.formula(paste("Class~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
 
       #for (sampling_type in c('original')){
-      for (sampling_type in c('up','down','original')){
+      if (tolower(Muestreo) %in% c('up','down','original')){
+        
+        sampling_type <- tolower(Muestreo) 
+      
         modelos.salida.temp <- paste0(modelos.salida,'/',toupper(sampling_type))
         dir.create(modelos.salida.temp, recursive = T, mode = "0777", showWarnings = F)
 
@@ -211,6 +214,8 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim){
               cat(paste0('El modelo ',modelo,' con sampling ',toupper(sampling_type),' existe, se ve a cargar para prediccion','\n','\n'))
             }
             }
+      } else {
+        print('no esta')
       }
   }
 }

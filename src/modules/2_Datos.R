@@ -74,7 +74,7 @@ Datos <- function(){
       limite_shp <- st_read(paste0(in.geo.data,'/vector/limite'))
       if (dim(limite_shp)[1] > 1){
         limite_shp$id <- 0
-        limite_shp <- limite_shp %>% group_by(id) %>% summarize()
+        limite_shp <- limite_shp %>% dplyr::group_by(id) %>% dplyr::summarize()
       }
 
       # Cargar DEM (referencia de la resolución espacial)
@@ -88,7 +88,7 @@ Datos <- function(){
         covariable.archivo <- paste0(out.dir,'/dem_cov.tif')
         if (!file.exists(covariable.archivo)){
           cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados no existe, se requiere generarlo','\n','\n'))
-          DEM_derivado <- stack(list.files(path=paste0(in.geo.data,'/raster/separados/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
+          DEM_derivado <- stack(list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
           DEM_rast_res <- stack(dem, DEM_derivado)
           names(DEM_rast_res)[1] <- 'dem'
           DEM_rast_res <- crop(DEM_rast_res,limite_shp)
@@ -109,10 +109,9 @@ Datos <- function(){
         covariable.archivo <- paste0(out.dir,'/ndvi.tif')
         if (!file.exists(covariable.archivo)){
           cat(paste0('El archivo geoTIFF de la variable NDVI no existe, se requiere generarlo','\n','\n'))
-          remotes::install_github("r-spatial/rgee")
 
           # # Load libraries
-          pckg <- c('reticulate', 'remotes', 'rgee', 'mapview',
+          pckg <- c('reticulate', 'remotes', 'mapview',
                     'sf', 'geojsonio', 'googledrive')
 
           usePackage <- function(p) {
@@ -123,10 +122,19 @@ Datos <- function(){
 
           lapply(pckg,usePackage)
 
+          #remotes::install_github("r-spatial/rgee")
+          require(rgee)
+          
           ## It is necessary just once
           #ee_install()
           ##if Error in reticulate::py_discover_config()
-          ##ee_install_upgrade(version = "0.1.224")
+          #ee_install_upgrade(version = "0.1.224")
+          ##if Error in path.expand(path) : invalid 'path' argument (windows OS)
+          # Sys.setenv(RETICULATE_PYTHON = "x") donde x es la ruta donde esta miniconda ambiente r-reticulate por ejemplo "C:/Users/alejandro.coca/AppData/Local/r-miniconda/envs/r-reticulate"
+          # despues de instalar reiniciar R, para qeu se configura el nuevo ambiente si no cambiar como
+          # Sys.setenv(RETICULATE_PYTHON = "x") donde x es la ruta donde esta miniconda ambiente rgee por ejemplo "C:/Users/alejandro.coca/AppData/Local/r-miniconda/envs/rgee"
+        
+          
           # Initialize Earth Engine!
           ee_Initialize()
 
@@ -141,7 +149,7 @@ Datos <- function(){
 
           #### Criterios de busqueda ####
           shp <- limite_shp %>% sf_as_ee()
-
+          
           collection <- ee$ImageCollection("LANDSAT/LC08/C01/T1")
           start <- ee$Date("2019-01-01")
           finish <- ee$Date("2020-08-30")
@@ -263,7 +271,7 @@ Datos <- function(){
       names(covariables) <- covariables.nombres
 
       # Pasar valores columnas NAs como 0 (evita problema en prediccion)
-      cov$ClosedDepressions <- 0
+      #covariables$ClosedDepressions <- 0
 
       # Exportar GeoTIFF covariables
       writeRaster(covariables,covariables.archivo.stack, drivers = 'GeoTIFF', overwrite=TRUE)
