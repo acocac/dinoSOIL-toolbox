@@ -1,10 +1,10 @@
 #############################################################################
-# titulo        : Exploración de los datos de entrada;
-# proposito     : Explorar los datos de entrada, entrenamiento y evaluación;
-# autor(es)     : Preparado por Andrés Lopez (AL) y Patricia Escudero (PE), IGAC-CIAF; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado ACC en Bogotá, Colombia;
-# entrada       : Particición Datos de Entrenamiento y Evaluación;
-# salida        : Gráficas indicando relación datos con la variable objetivo;
+# titulo        : Exploracion de los datos de entrada;
+# proposito     : Explorar los datos de entrada, entrenamiento y evaluacion;
+# autor(es)     : Preparado por Andres Lopez (AL) y Patricia Escudero (PE), IGAC-CIAF; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
+# actualizacion : Creado ACC en Bogota�, Colombia;
+# entrada       : Particicion Datos de Entrenamiento y Evaluacion;
+# salida        : Graficas indicando relacion datos con la variable objetivo;
 # observaciones : ninguna;
 ##############################################################################
 
@@ -13,17 +13,10 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  pckg <- c('ggplot2', 'tidyr', 'PerformanceAnalytics',
-            'stringr', 'caret')
-
-  usePackage <- function(p) {
-    if (!is.element(p, installed.packages()[,1]))
-      install.packages(p, dep = TRUE)
-    require(p, character.only = TRUE)
-  }
-
-  lapply(pckg,usePackage)
-
+  suppressMessages(library(pacman))
+  suppressMessages(pacman::p_load(ggplot2, tidyr, PerformanceAnalytics, stringr, caret,
+                                  pals, psych))
+  
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
   source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
@@ -38,10 +31,6 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
   project.name <- sapply(strsplit(proyecto.directorio, '_'), tail, 1)
-  proyecto.modelos.categoricas <- conf.args[[5]]
-  proyecto.modelos.categoricas = unlist(strsplit(proyecto.modelos.categoricas,';'))
-  proyecto.modelos.continuas <- conf.args[[6]]
-  proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
@@ -94,8 +83,9 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
 
     # covariables
     covars = predictors(rfmodel)[1:rfe_lim]
-    covars = gsub('_','-',covars)
 
+    covars = gsub('_','-',covars)
+    
     # directorios
     carpeta.correlacion = paste0(modelos.salida,'/correlacion')
     dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
@@ -200,5 +190,49 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   else if (is(train.data[,'target'],'factor')){
       # As a rule of thumb, a class to be modelled should have at least 5 observations
       # source: https://soilmapper.org/soilmapping-using-mla.html
+    # covariables
+    covars = predictors(rfmodel)[1:rfe_lim]
+    covars = gsub('_','-',covars)
+    print(paste0(covars, collapse=', '))
+    
+    # directorios
+    carpeta.correlacion = paste0(modelos.salida,'/correlacion')
+    dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
+
+    # lista de graficos
+    lista.graficos = c('train_correlationmatrix','test_correlationmatrix')
+    lista.graficos.procesados = gsub("\\.png$", "", basename(list.files(path= modelos.salida, pattern = "\\.png$", recursive = T)))
+    
+    lista.graficos.faltantes <- setdiff(lista.graficos,lista.graficos.procesados)
+    
+    if (length(lista.graficos.faltantes) > 0){
+      # Graficos matrix de correlación
+      for (j in lista.graficos.faltantes){
+        if (j == 'train_correlationmatrix'){
+          
+          covars = gsub('-','_',covars)
+          
+          n<-length(levels(as.factor(data[data$particion == 'train', 'target'])))
+          
+          cols <- pals::cols25(n)
+          
+          png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
+          chart.Correlation(data[data$particion == 'train', covars])
+          #pairs.panels(data[data$particion == 'train', covars],bg=cols[data[data$particion == 'train', 'target']],
+          #             pch=21,main="Covariables por Grupo",hist.col="blue")
+          
+          #chart.Correlation(data[data$particion == 'train', covars], bg=as.factor(data[data$particion == 'train', 'target']), pch=3)
+          #par(xpd=TRUE)
+          #legend(0, 1, as.vector(unique(data[data$particion == 'train', 'target'])), fill=seq(1:length(unique(data[data$particion == 'train', 'target']))))
+          dev.off()
+        }
+        else if (j == 'test_correlationmatrix'){
+          covars = gsub('-','_',covars)
+          png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
+          chart.Correlation(data[data$particion == 'test', covars])
+          dev.off()
+        }
+      }
+    }
   }
 }

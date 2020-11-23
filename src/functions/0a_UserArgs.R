@@ -132,7 +132,11 @@ prompt.user.part4b <- function()#get arguments from user
   d <- readLines(n = 1)
   d <- gsub("\\\\", "/", d)
   
-  newlist = list(a, b, c, d)
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+  
+  newlist = list(a, b, c, d, e)
 }
 
 prompt.user.part4c <- function()#get arguments from user
@@ -163,7 +167,11 @@ prompt.user.part4c <- function()#get arguments from user
   d <- readLines(n = 1)
   d <- gsub("\\\\", "/", d)
 
-  newlist = list(a, b, c, d)
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+  
+  newlist = list(a, b, c, d, e)
 
   return(newlist)
 }
@@ -196,7 +204,11 @@ prompt.user.part4d <- function()#get arguments from user
   d <- readLines(n = 1)
   d <- gsub("\\\\", "/", d)
 
-  newlist = list(a, b, c, d)
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+  
+  newlist = list(a, b, c, d, e)
 
   return(newlist)
 }
@@ -229,6 +241,11 @@ prompt.user.part4e <- function()#get arguments from user
   d <- readLines(n = 1)
   d <- gsub("\\\\", "/", d)
 
-  newlist = list(a, b, c, d)
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+  
+  newlist = list(a, b, c, d, e)
+  
   return(newlist)
 }

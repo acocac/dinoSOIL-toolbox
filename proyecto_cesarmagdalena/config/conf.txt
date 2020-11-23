@@ -1,5 +1,5 @@
 ################################################
-Configuracion del proyecto Cesar Magdalena
+Configuracion del proyecto PT Cesar-Magdalena
 ################################################
 Por: Alejandro Coca-Castro
 Bogota; Septiembre 2020
@@ -8,12 +8,12 @@ Bogota; Septiembre 2020
 #######################
 Rutas
 #######################
-path = /Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/soil-toolbox/proyecto_cesarmagdalena
+path = F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena
 
 #######################
 Variables objetivo
 #######################
-variables.categoricas = GRANGRUPO
+variables.categoricas = FAMILIA_TE;GRANGRUPO
 variables.continuas = pH
 
 #######################
@@ -25,8 +25,9 @@ NDVI.fechas = 2019-01-01;2020-08-30
 #######################
 Aprendizaje de Maquinas
 #######################
-modelos.categoricas = RandomForest;mlp;xgbTree
-modelos.continuas = RandomForest;xgbTree;svmRadial
-metrica.continuas = RMSE;
+modelos.categoricas = ranger;mlp;xgbTree;glmnet;multinom
+modelos.continuas = ranger;xgbTree;svmRadial;cubist;glmnet
+metricas.categoricas = Accuracy;Kappa
+metricas.continuas = RMSE;Rsquared
 
 ##################################################

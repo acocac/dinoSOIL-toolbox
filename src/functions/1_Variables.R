@@ -24,7 +24,12 @@ VariablesObjectivo = function()
 
   carpeta.entrada <- paste0(project.folder,'/datos/salida/0_matriz')
   datos.entrada <- read.csv(paste0(carpeta.entrada,'/MatrixDatos.csv'),sep=',')
+  
+  project.vars.categoricas <- paste(project.vars.categoricas, collapse='|')
+  project.vars.continuas <- paste(project.vars.continuas, collapse='|')
 
-  columnas.matriz <- names(datos.entrada[which(startsWith(colnames(datos.entrada),project.vars.categoricas) |  startsWith(colnames(datos.entrada),project.vars.continuas))])
-return(columnas.matriz)
+  #columnas.matriz <- names(datos.entrada[which(grepl(project.vars.categoricas,colnames(datos.entrada)) |  startsWith(colnames(datos.entrada),project.vars.continuas))])
+  columnas.matriz <- names(datos.entrada[which(grepl(project.vars.categoricas,colnames(datos.entrada)) |  grepl(project.vars.continuas,colnames(datos.entrada)))])
+  
+  return(columnas.matriz)
 }

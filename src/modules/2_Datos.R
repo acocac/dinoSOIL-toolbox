@@ -48,6 +48,9 @@ Datos <- function(){
   project.covars.list <- conf.args[[4]]
   project.covars.list <- unlist(strsplit(project.covars.list,';'))
 
+  fechas.ndvi.list <- conf.args[[5]]
+  fechas.ndvi.list <- unlist(strsplit(fechas.ndvi.list,';'))
+  
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
@@ -102,11 +105,11 @@ Datos <- function(){
         }
       }
 
-      # Vegetación #TODO Adicionar fechas de covariable
+      # Vegetacion 
       if ('NDVI' %in% project.covars.list){
         out.dir <- paste0(in.geo.data,'/raster/ndvi')
         dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-        covariable.archivo <- paste0(out.dir,'/ndvi.tif')
+        covariable.archivo <- paste0(out.dir,'/ndvi',fechas.ndvi.list[1],'_',fechas.ndvi.list[2],'.tif')
         if (!file.exists(covariable.archivo)){
           cat(paste0('El archivo geoTIFF de la variable NDVI no existe, se requiere generarlo','\n','\n'))
 
@@ -151,8 +154,8 @@ Datos <- function(){
           shp <- limite_shp %>% sf_as_ee()
           
           collection <- ee$ImageCollection("LANDSAT/LC08/C01/T1")
-          start <- ee$Date("2019-01-01")
-          finish <- ee$Date("2020-08-30")
+          start <- ee$Date(fechas.ndvi.list[1])
+          finish <- ee$Date(fechas.ndvi.list[2])
 
           #### Busqueda en la coleccion L8 ####
           filteredCollection <- ee$ImageCollection("LANDSAT/LC08/C01/T1_SR")$
@@ -370,17 +373,6 @@ Datos <- function(){
     proyeccion <- CRS("+proj=longlat +datum=WGS84")
     st_crs(datos_sp) <- proyeccion
     datos_sp_cov <- st_transform(datos_sp, projection(dem))
-
-    ###prueba areas pequeñas
-    ## Cargar area limite
-    #limite_shp <- st_read(paste0(in.geo.data,'/vector/limite/prueba'))
-    #if (dim(limite_shp)[1] > 1){
-    #  limite_shp$id <- 0
-    #  limite_shp <- limite_shp %>% group_by(id) %>% summarize()
-    #}
-    #aoi <- st_transform(limite_shp, projection(dem))
-    #out_cov <- st_intersection(datos_sp_cov, aoi)
-    #out_cov <- as(out_cov, "Spatial")
 
     # Extraer valores metodo normal raster
     start <- Sys.time()

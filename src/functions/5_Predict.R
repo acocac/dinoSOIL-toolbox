@@ -51,7 +51,7 @@ PredictGeoTIFF = function(COV, fit.model, out.file, type, index, train.data)
   #  )
   #raster::endCluster()
   #TODO parallel https://strimas.com/post/processing-large-rasters-in-r/
-  if (type == "prob") {
+  if (type %in% c('prob','raw')){
     data_type = 'FLT4S'
   } else{
     data_type = 'INT1U'

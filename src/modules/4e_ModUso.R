@@ -8,14 +8,14 @@
 # observaciones : ninguna;
 ##############################################################################
 
-ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
+ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
   #pckg = c('caret','raster', 'sf', 'stringr', 'doParallel', 'ggspatial')
   suppressMessages(library(pacman))
-  suppressMessages(pacman::p_load(caret, raster, sf, stringr, doParallel, ggspatial, pals, gridExtra, viridis))
+  suppressMessages(pacman::p_load(caret, raster, sf, stringr, doParallel, ggspatial, pals, gridExtra, viridis, purrr))
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
@@ -32,20 +32,24 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   proyecto.directorio <- conf.args[[1]]
   modelos.proyecto <- conf.args[[2]]
   modelos.proyecto <- sort(unlist(strsplit(modelos.proyecto,';')))
-
+  proyecto.metricas.categoricas <- conf.args[[8]]
+  proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
+  proyecto.metricas.continuas <- conf.args[[9]]
+  proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
+  
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
   modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
-  datos.salida.geotiff <- paste0(proyecto.directorio,'/prediccion/',BaseDatos,'/geotiff/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
+  datos.salida.geotiff <- paste0(proyecto.directorio,'/prediccion/',BaseDatos,'/geotiff/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
   dir.create(datos.salida.geotiff, recursive = T, mode = "0777", showWarnings = F)
-  datos.salida.figuras <- paste0(proyecto.directorio,'/prediccion/',BaseDatos,'/figuras/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
+  datos.salida.figuras <- paste0(proyecto.directorio,'/prediccion/',BaseDatos,'/figuras/', str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
   dir.create(datos.salida.figuras, recursive = T, mode = "0777", showWarnings = F)
-  modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
-  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
-  modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/geotiff/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo)
+  modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
+  modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
+  modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/geotiff/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -54,6 +58,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
   # Cargar particición
+  print(modelos.datos.entrada)
   load(paste0(modelos.datos.entrada,'/particion.RData'))
   train.data <- as.data.frame(particion['train'])
   names(train.data) <- sub("train.", "", names(train.data))
@@ -66,18 +71,20 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo){
   COV <- dropLayer(COV, capas.eliminar)
 
   #identificar mejor modelo
-  modelos.resultado <- read.csv(file = paste0(modelos.analisis.tabular,'/mejoresmodelos_parametros.csv'))
-
+  modelos.resultado <- read.csv(file = paste0(modelos.analisis.tabular,'/mejoresmodelos_metricas.csv'))
+  
   if (is(train.data[,'target'],'numeric')){
-    modelos.mejor <- modelos.resultado[modelos.resultado$RMSE == min(modelos.resultado$RMSE), 'modelo']
+    metrica <- paste0(proyecto.metricas.continuas[1],'.Median')
+    modelos.mejor <- modelos.resultado[modelos.resultado[,metrica] == min(modelos.resultado[,metrica]), 'modelos']
     index <- 1
     type <- 'raw'
   } else if (is(train.data[,'target'],'factor')){
-    modelos.mejor <- modelos.resultado[modelos.resultado$Accuracy == max(modelos.resultado$Accuracy), 'modelo']
+    metrica <- paste0(proyecto.metricas.categoricas[1],'.Median')
+    modelos.mejor <- modelos.resultado[modelos.resultado[,metrica] == max(modelos.resultado[,metrica]), 'modelos']
     index <- 1:nlevels(train.data[['target']])
     type <- 'prob'
   }
-
+  
   ##### output messages ####
   cat(paste0('### RESULTADO 1 de 3: El mejor modelo es ',modelos.mejor,' y se comprueba si ya existe archivo GeoTIFF de prediccion ###','\n'))
   ##### end output messages ####

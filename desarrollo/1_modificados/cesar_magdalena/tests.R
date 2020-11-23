@@ -703,3 +703,252 @@ pred <- ratify(pred)
 rat <- levels(pred)[[1]]
 rat$class <- levels(train.data[['target']])[rat$ID]
 levels(pred) <- rat
+
+#matriz confusion
+require(ggplot2)
+require(caret)
+##check partition groups
+load('F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
+
+train = as.data.frame(particion['train'])
+test = as.data.frame(particion['test'])
+names(test) <- sub("test.", "", names(test))
+
+load(paste0('F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/2_modelos/GRANGRUPO/7_covariables/ORIGINAL/RandomForest.rds'))
+
+pred <- predict(modelo.ajuste, test)
+pred_prob <- predict(modelo.ajuste, test, type = "prob")
+dim(pred_prob)
+caret::confusionMatrix(pred,test$target)$overall["Accuracy"]
+caret::confusionMatrix(pred,test$target)$overall["Kappa"]
+caret::confusionMatrix(pred,test$target)$overall
+
+autoplot(cm, type = "heatmap") +
+  scale_fill_gradient(low="#D6EAF8",high = "#2E86C1")
+
+test$target
+cm <- confusionMatrix(factor(pred), factor(test$target), dnn = c("Prediction", "Reference"))
+
+# extract the confusion matrix values as data.frame
+cm_d <- as.data.frame(cm$table)
+# confusion matrix statistics as data.frame
+cm_st <-data.frame(cm$overall)
+# round the values
+cm_st$cm.overall <- round(cm_st$cm.overall,2)
+
+# here we also have the rounded percentage values
+cm_p <- as.data.frame(prop.table(cm$table))
+cm_d$Perc <- round(cm_p$Freq*100,2)
+
+
+library(ggplot2)     # to plot
+library(gridExtra)   # to put more
+library(grid)        # plot together
+
+# plotting the matrix
+p <- cm_d_p <-  ggplot(data = cm_d, aes(x = Prediction , y =  sort(Reference,decreasing = T), fill = Freq))+
+  geom_tile() +
+  geom_text(aes(label = paste(Perc,"%")), color = 'black', size = 3) +
+  scale_fill_gradient(low="#cbf6ff", high="#0979bb") +
+  scale_x_discrete(labels=levels(pred)) +
+  scale_y_discrete(labels=rev(levels(pred))) +
+  theme_light() +
+  guides(fill=FALSE) 
+p + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+library(ggplot2)
+library(scales)
+
+ggplotConfusionMatrix <- function(m){
+  mytitle <- paste("Accuracy", percent_format()(m$overall[1]),
+                   "Kappa", percent_format()(m$overall[2]))
+  p <-
+    ggplot(data = as.data.frame(m$table) ,
+           aes(x = Reference, y = Prediction)) +
+    geom_tile(aes(fill = log(Freq)), colour = "white") +
+    scale_fill_gradient(low = "white", high = "steelblue") +
+    scale_x_discrete(labels=levels(pred)) +
+    scale_y_discrete(labels=rev(levels(pred))) +
+    geom_text(aes(x = Reference, y = Prediction, label = Freq)) +
+    theme(legend.position = "none") +
+    ggtitle(mytitle) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  return(p)
+}
+
+ggplotConfusionMatrix(cm)
+
+cm_d_p
+# plotting the stats
+cm_st_p <-  tableGrob(cm_st)
+
+# all together
+grid.arrange(cm_d_p, cm_st_p,nrow = 1, ncol = 2, 
+             top=textGrob("Confusion Matrix and Statistics",gp=gpar(fontsize=25,font=1)))
+
+q <- ggplot(as.data.frame(cm$table), aes(Prediction,sort(Reference,decreasing = T), fill= Freq)) +
+  geom_tile(aes(fill = log(Freq)), colour = "white") + 
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  labs(x = "Reference",y = "Prediction") +
+  scale_x_discrete(labels=levels(pred)) +
+  scale_y_discrete(labels=rev(levels(pred))) +
+  geom_text(aes(x = Prediction, y = Reference, label = Freq)) 
+  
+q + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggplotConfusionMatrix2 <- function(m){
+  mytitle <- paste("Accuracy", percent_format()(m$overall[1]),
+                   "Kappa", percent_format()(m$overall[2]))
+  p <-
+    ggplot(data = as.data.frame(m$table) ,
+           aes(x = Prediction, y = sort(Reference,decreasing = T))) +
+    geom_tile(aes(fill = log(Freq)), colour = "white") +
+    scale_fill_gradient(low = "white", high = "steelblue") +
+    scale_x_discrete(labels=levels(pred)) +
+    scale_y_discrete(labels=rev(levels(pred))) +
+    geom_text(aes(x = Prediction, y = rev(Reference), label = Freq)) +
+    labs(x='Predicción', y='Observado') +
+    theme(legend.position = "none") +
+    ggtitle(mytitle) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  return(p)
+}
+
+ggplotConfusionMatrix2(cm)
+require(mltest)
+classifier_metrics <- ml_test(pred, test$target, output.as.table = TRUE)
+
+##create coordinates file
+tex <- read.csv('F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/datos/salida/0_matriz/MatrixDatos.csv')
+names(tex)
+
+load('F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
+
+train = as.data.frame(particion['train'])
+test = as.data.frame(particion['test'])
+names(train) <- sub("train.", "", names(train))
+names(test) <- sub("test.", "", names(test))
+
+##GRANGRUPO graficos RFE
+load('F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/exploratorio/AMBAS/rds/FAMILIA_TE/rfe.rds')
+rfe_lim<-5
+predictors(rfmodel)[c(1:rfe_lim)]
+paste0(predictors(rfmodel)[c(1:rfe_lim)], collapse=", ")
+
+##Importancia variables 
+modelo<-'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/2_modelos/GRANGRUPO/7_covariables/ORIGINAL/mlp.rds'
+modelo<-'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/2_modelos/pH-30_100_spline/8_covariables/ORIGINAL/DEFECTO/ranger.rds'
+
+get(load(modelo))
+model_rf <- modelo.ajuste$finalModel
+
+varImp(modelo.ajuste)$importance %>% 
+  as.data.frame() %>%
+  rownames_to_column() %>%
+  arrange(Overall) %>%
+  ggplot()+
+  geom_col(aes(x = rowname, y = Overall))+
+  coord_flip()+
+  theme_bw()
+
+model_rf <- modelo.ajuste$finalModel
+model_rf
+
+varImp(model_rf)
+model_rf$importance
+
+imp <-as.vector(model_rf$variable.importance)
+variable <- names(model_rf$variable.importance)
+r <-data.frame(variable=variable,importance=imp)
+
+ggplot(r, aes(x=reorder(variable,importance), y=importance,fill=importance))+ 
+  geom_bar(stat="identity", position="dodge")+ coord_flip()+
+  ylab("Variable Importance")+
+  xlab("")+
+  ggtitle("Information Value Summary")+
+  guides(fill=F)+
+  scale_fill_gradient(low="red", high="blue")
+
+varImp(modelo.ajuste)
+varImpPlot(modelo.ajuste$finalModel, cex.axis = .7, cex.main = .7, cex.lab = .7)
+
+##Importancia variables defecto
+modelo<-'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/2_modelos/GRANGRUPO/7_covariables/ORIGINAL/CONFIG/ranger.rds'
+
+a <- get(load(modelo))
+bestTuneIndex <- as.numeric(rownames(modelo.ajuste$bestTune)[1])
+modelo.mejor <- modelo.ajuste$results[bestTuneIndex, 1:dim(modelo.ajuste$results)[2]]
+
+model_rf <- modelo.ajuste$finalModel
+model_rf
+
+varImp(model_rf)
+model_rf$importance
+
+imp <-as.vector(model_rf$variable.importance)
+variable <- names(model_rf$variable.importance)
+r <-data.frame(variable=variable,importance=imp)
+
+ggplot(r, aes(x=reorder(variable,importance), y=importance,fill=importance))+ 
+  geom_bar(stat="identity", position="dodge")+ coord_flip()+
+  ylab("Variable Importance")+
+  xlab("")+
+  ggtitle("Information Value Summary")+
+  guides(fill=F)+
+  scale_fill_gradient(low="red", high="blue")
+
+varImp(modelo.ajuste)
+varImpPlot(modelo.ajuste$finalModel, cex.axis = .7, cex.main = .7, cex.lab = .7)
+
+##enviado victoria > equivalencias clases
+load('F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/modelos/AMBAS/0_particion/GRANGRUPO/particion.RData')
+
+train = as.data.frame(particion['train'])
+names(train) <- sub("train.", "", names(train))
+
+a = unique(train[['target']])
+
+tabla_FT = data.frame(ID=1:length(a),clase=sort(a))
+write.csv(tabla_FT,'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/ID_GRANGRUPO.csv',row.names = FALSE)
+
+
+test = as.data.frame(particion['test'])
+names(test) <- sub("test.", "", names(test))
+
+##list models
+regression.models <- map(getModelInfo(), "type") %>% 
+  map_lgl(function(x) {
+    any(x == "Regression")
+  }) %>% 
+  {.[.]} %>% 
+  names() %>% 
+  sort()
+
+clasification.models <- map(getModelInfo(), "type") %>% 
+  map_lgl(function(x) {
+    any(x == "Classification")
+  }) %>% 
+  {.[.]} %>% 
+  names() %>% 
+  sort()
+
+
+listmodels.varImp <- as.character(methods(varImp))
+listmodels.varImp <- gsub('^varImp.','', listmodels.varImp)
+
+classification.list <- clasification.models[which(clasification.models %in% listmodels.varImp)]
+regresion.list <- regression.models[which(regression.models %in% listmodels.varImp)]
+
+classification.list <- c(classification.list,'ranger')
+
+tuneLenght <- rep(5, length(classification.list))
+
+rep(5,3)
+dict <- new.env(hash = TRUE)
+Add <- function(key, val) dict[[key]] <- val
+
+c = mapply(Add, classification.list, classification.list)
+d = mapply(Add, regresion.list, regresion.list)
+
+e <- tuneLenght <-c('C45'=5, 'C50'=5, 'RandomForest'=20, 'SVM'=5, 'xgbTree'=20, 'gbm_h2o'=3,
+               'glmnet'=5,'mlp'=5, 'svmRadial'=20)
