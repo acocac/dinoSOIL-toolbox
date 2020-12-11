@@ -77,7 +77,6 @@ ExpRFE(args_p3[[1]], args_p3[[2]])
 ########################################################
 #####PARTE 4a - Modelacion: Exploracion datos         ##
 ########################################################
-##TODO: Boxplots y Variables Cualitativas
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 
@@ -92,10 +91,6 @@ ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]])
 ########################################################
 #####PARTE 4b - Modelacion: Ejecutar algoritmos     ####
 ########################################################
-#TODO mejorar https://github.com/gimelbrantlab/magic/blob/0a86af1d18bb7b13a556090fa0bbe0fd5d424770/src/scores_ml.R
-# https://github.com/CIAT-DAPA/sfs_project/blob/b679e418205054f0cce95cda19d0fb64f5c18eea/codes/01_2_SDrivers_process_input_data.R
-
-##TODO: terminar entrenamiento por defecto o manual 
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
 
@@ -124,8 +119,6 @@ ModMejorModelo(args_p4c[[1]],args_p4c[[2]],args_p4c[[3]], args_p4c[[4]], args_p4
 ###########################################################
 #####PARTE 4d - Modelacion: Sensibilidad/Incertidumbre  ###
 ###########################################################
-#TODO implementar incertidumbre metodo MGuevara Kriging https://github.com/marioguevara/utilityCodes/tree/e1fab9411f58138382734875c7be393e664fb055/chapter_5
-#TODO implementar incertidumbre categoricas > https://github.com/samuel-rosa/qgis-r/blob/eb00ee202fc3c265acb3ae9cd3913c729837b463/rscripts/digital-soil-mapping.rsx
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
 
@@ -140,7 +133,6 @@ ModIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]], args_p4d[[4]], args_
 ###########################################################
 #####PARTE 4e - Modelacion: Uso del modelo               ##
 ###########################################################
-##TODO mejorar prediccion usando libreria terra combinando con funcion de prediccion como https://github.com/AusSoilsDSM/SLGA/blob/c407671f9b4c32bb86335098e8d8337c33e69746/SLGA/Production/NationalMaps/AustralianSoilClassification/Scripts/Miscellaneous/Darwin%20Area/ranger_categorical.R
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
 
@@ -154,3 +146,14 @@ ModUso(args_p4e[[1]], args_p4e[[2]], args_p4e[[3]], args_p4e[[4]], args_p4e[[5]]
 #####                    FINAL                        #####
 ###########################################################
 
+##TRABAJO FUTURO
+# Modelado
+#TODO mejorar https://github.com/gimelbrantlab/magic/blob/0a86af1d18bb7b13a556090fa0bbe0fd5d424770/src/scores_ml.R
+# https://github.com/CIAT-DAPA/sfs_project/blob/b679e418205054f0cce95cda19d0fb64f5c18eea/codes/01_2_SDrivers_process_input_data.R
+
+# Incertidumbre
+#TODO implementar incertidumbre metodo MGuevara Kriging https://github.com/marioguevara/utilityCodes/tree/e1fab9411f58138382734875c7be393e664fb055/chapter_5
+#TODO implementar incertidumbre categoricas > https://github.com/samuel-rosa/qgis-r/blob/eb00ee202fc3c265acb3ae9cd3913c729837b463/rscripts/digital-soil-mapping.rsx
+
+# Prediccion
+##TODO mejorar prediccion usando libreria terra combinando con funcion de prediccion como: https://github.com/rspatial/terra/issues/96#issuecomment-714620611 o https://github.com/AusSoilsDSM/SLGA/blob/c407671f9b4c32bb86335098e8d8337c33e69746/SLGA/Production/NationalMaps/AustralianSoilClassification/Scripts/Miscellaneous/Darwin%20Area/ranger_categorical.R
