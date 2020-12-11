@@ -109,12 +109,15 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
       }
 
       # Cargar DEM (referencia de la resolución espacial)
-      DEM_rast_res <- raster(paste0(in.geo.data,'/raster/dem/original/DEM_PT_2020.tif'))
+      DEM_rast_res <- raster(paste0(in.geo.data,'/raster/dem/original/dem.tif'))
       names(DEM_rast_res) <- 'dem'
+      resolucion_dem = res(DEM_rast_res)[1]
 
       # Crear stack de derivados del DEM
-      DEMderivados_rast_res <- stack(list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
-      #DEMderivados_rast_res <- crop(DEM_derivado,limite_shp)
+      DEMderivados_lista <- list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
+      if (length(DEMderivados_lista) > 0){
+        DEMderivados_rast_res <- stack(DEMderivados_lista)
+      }
 
       ## Procesar datos espaciales #
       ## Derivados DEM
@@ -204,7 +207,13 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
           }
           ndvi <- getNDVI(median)
 
-          resolution = filteredCollection$first()$select('B5')$projection()$nominalScale()$getInfo()
+          resolucion_ndvi = filteredCollection$first()$select('B5')$projection()$nominalScale()$getInfo()
+
+          if (resolucion_dem > resolucion_ndvi){
+            resolucion <- resolucion_dem
+          } else{
+            resolucion <- resolucion_ndvi
+          }
 
           #### Exportar drive ####
           task_img <- ee_image_to_drive(
@@ -213,7 +222,7 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
             fileNamePrefix = project.name,
             folder = project.name,
             region = shp$geometry(),
-            scale = resolution
+            scale = resolucion
           )
 
           task_img$start()
@@ -407,7 +416,7 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
     columnas_factores <- c('EPIPEDON', 'ENDOPEDON', 'ORDEN', 'SUBORDEN', 'SUBGRUPO', 'GRANGRUPO', 'FAMILIA_TE')
     datos_final <- datos_final %<>% mutate_at(columnas_factores, funs(factor(.)))
 
-    dem <- raster(paste0(in.geo.data,'/raster/dem/original/DEM_PT_2020.tif'))
+    dem <- raster(paste0(in.geo.data,'/raster/dem/original/dem.tif'))
 
     datos_sp <-st_as_sf(datos_final, coords=c("LONGITUD","LATITUD"))
     proyeccion <- CRS("+proj=longlat +datum=WGS84")

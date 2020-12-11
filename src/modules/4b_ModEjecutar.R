@@ -8,6 +8,43 @@
 # observaciones :glmnet ninguna;
 ##############################################################################
 
+
+prompt.user.part4b <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el tipo de base de datos para modelar (AMBAS, PERFIL, OBSERVACION):>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", c)
+
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (UP, DOWN), caso contrario que prefiera desbalanceado o la variable es continua escriba ORIGINAL:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+
+  newlist = list(a, b, c, d, e)
+}
+
+
 ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # ------------------------------------------------------- #
   # Librerias y funciones
@@ -17,8 +54,8 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
-  source(paste0(r.dir,'/functions/3b_modelsettings.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/4b_modelsettings.R'))
 
   # ------------------------------------------------------- #
   # Cargar archivo de configuracion y componentes

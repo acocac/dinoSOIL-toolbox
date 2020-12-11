@@ -2,11 +2,39 @@
 # titulo        : Exploracion de los datos de entrada;
 # proposito     : Explorar los datos de entrada, entrenamiento y evaluacion;
 # autor(es)     : Preparado por Andres Lopez (AL) y Patricia Escudero (PE), IGAC-CIAF; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado ACC en Bogota�, Colombia;
+# actualizacion : Creado ACC en Bogota�, Colombia;
 # entrada       : Particicion Datos de Entrenamiento y Evaluacion;
 # salida        : Graficas indicando relacion datos con la variable objetivo;
 # observaciones : ninguna;
 ##############################################################################
+
+prompt.user.part4a <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el tipo de base de datos para modelar (AMBAS, PERFIL, OBSERVACION):>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", c)
+
+  newlist = list(a, b, c)
+}
+
 
 ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
@@ -19,7 +47,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
   source(paste0(r.dir,'/functions/5_Predict.R'))
 
   # ------------------------------------------------------- #
@@ -44,6 +72,8 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
+
+  start_time <- Sys.time()
 
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
@@ -142,14 +172,14 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
         }
         else if (endsWith(j, 'dispersion_relieve')){
           ## Graficos comparaciones
-          relieve.clases = factor(data[data$particion == 'train', 'tipo_relieve'])
+          relieve.clases = factor(data[data$particion == 'train', 'relieve'])
           relieve.clases.grafica = as.vector(global_relieve[which(names(global_relieve) %in% relieve.clases)])
 
           i = strsplit(j, "_")[[1]][1]
           i = gsub('-','_',i)
 
           png(file = paste0(carpeta.dispersion.relieve,'/',j,'.png'), width = 700, height = 400)
-          p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","tipo_relieve"))) +
+          p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","relieve"))) +
             geom_point(alpha = 0.4) +
             scale_color_discrete(name='Relieve', labels=relieve.clases.grafica) +
             xlab(i) +
@@ -235,4 +265,8 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
       }
     }
   }
+
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
+
 }

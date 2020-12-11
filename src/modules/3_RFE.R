@@ -8,6 +8,29 @@
 # observaciones : ninguna;
 ##############################################################################
 
+prompt.user.part3 <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el tipo de base de datos para modelar (AMBAS, PERFIL, OBSERVACION):>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  newlist = list(a, b)
+  return(newlist)
+}
+
 ExpRFE <- function(VarObj, BaseDatos){
   ##
   ## src1:
@@ -29,7 +52,7 @@ ExpRFE <- function(VarObj, BaseDatos){
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
   source(paste0(r.dir,'/functions/3a_Outliers.R'))
   source(paste0(r.dir,'/functions/3b_Boxplot.R'))
   source(paste0(r.dir,'/functions/3c_RFE.R'))
