@@ -1,35 +1,48 @@
 #############################################################################
-# titulo        : Datos de entrada (matriz) y predicción (GeoTIFF;
-# proposito     : Generar datos de (matriz) y predicción (GeoTIFF);
+# titulo        : Datos de entrada (matriz) y covariables ambientales (GeoTIFF);
+# proposito     : Generar datos de entrada (matriz) y raster multibanda con las covariables ambientales (GeoTIFF);
 # autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
 # actualizacion : Creado SG en Bogotá, Colombia / Actualizado por ACC en Octubre 2020;;
 # entrada       : Base de datos verticalizada;
-# salida        : Datos de entrada y GeoTIFF para predicción;
+# salida        : Datos de entrada y GeoTIFF con las covariables ambientales para su uso en la predicción;
 # observaciones : ninguna;
 ##############################################################################
 
-Datos <- function(){
+prompt.user.part2 <- function()#get arguments from user
+{
+  message(prompt="Indique el nombre del archivo EXCEL con las variables categoricas y coordenadas:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el nombre de la pestana del archivo EXCEL con las variables categoricas y coordenadas:>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el nombre de la columna que tiene el ID de los perfiles del archivo EXCEL las variables categoricas y coordenadas:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", c)
+
+  message(prompt="Indique el nombre de la carpeta con el limite a usar dentro del directorio de entrada/2_limite:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  newlist = list(a, b, c, d)
+  return(newlist)
+}
+
+Datos <- function(filename, hoja, columna, limite.carpeta){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  pckg <- c('readxl', 'tidyr', 'raster', 'GSIF',
-            'aqp', 'plyr', 'sf', 'dplyr', 'rgdal',
-            'smoothr', 'gdalUtilities', 'magrittr',
-            'stringr')
-
-  usePackage <- function(p) {
-    if (!is.element(p, installed.packages()[,1]))
-      install.packages(p, dep = TRUE)
-    require(p, character.only = TRUE)
-  }
-  
-  lapply(pckg,usePackage)
+  suppressMessages(library(pacman))
+  suppressMessages(pacman::p_load(readxl, tidyr, plyr, dplyr, raster, GSIF, aqp, sf, rgdal,
+                                  smoothr, gdalUtilities, magrittr, stringr, caret))
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
-  source(paste0(r.dir,'/functions/2a_phPonderado.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/2_Ponderado.R'))
 
   # ------------------------------------------------------- #
   # Cargar archivo de configuracion y componentes
@@ -38,17 +51,26 @@ Datos <- function(){
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  project.folder <- conf.args[[1]]
+  project.folder <- conf.args[['proyecto.carpeta']]
   project.name <- sapply(strsplit(project.folder, '_'), tail, 1)
-  project.vars.categoricas <- conf.args[[2]]
+  project.vars.categoricas <- conf.args[['vars.categoricas']]
   project.vars.categoricas = unlist(strsplit(project.vars.categoricas,';'))
-  project.vars.continuas <- conf.args[[3]]
+  project.vars.continuas <- conf.args[['vars.continuas']]
   project.vars.continuas <- unlist(strsplit(project.vars.continuas,';'))
   project.vars.all <- c(project.vars.categoricas, project.vars.continuas)
-  project.covars.list <- conf.args[[4]]
-  project.covars.list <- unlist(strsplit(project.covars.list,';'))
 
-  fechas.ndvi.list <- conf.args[[5]]
+  project.covars.vector <- conf.args[['covariables.vector']]
+  project.covars.vector <- unlist(strsplit(project.covars.vector,';'))
+  project.covars.raster <- conf.args[['covariables.raster']]
+  project.covars.raster <- unlist(strsplit(project.covars.raster,';'))
+  project.covars.list <- c(project.covars.vector, project.covars.raster)
+
+  #configurar los atributos de los archivos vectoriales
+  project.vector.atributos <- conf.args[['vector.atributos']]
+  project.vector.atributos <- unlist(strsplit(project.vector.atributos,';'))
+  names(project.vector.atributos) <- project.covars.vector
+
+  fechas.ndvi.list <- conf.args[['fechas.ndvi']]
   fechas.ndvi.list <- unlist(strsplit(fechas.ndvi.list,';'))
   
   # ------------------------------------------------------- #
@@ -57,6 +79,7 @@ Datos <- function(){
   # Declarar directorios
   in.tb.data <- paste0(project.folder,'/datos/entrada/0_basededatos')
   in.geo.data <- paste0(project.folder,'/datos/entrada/1_covariables')
+  in.limite.data <- paste0(project.folder,'/datos/entrada/2_limite')
   out.tb.data <- paste0(project.folder,'/datos/salida/0_matriz')
   out.geo.data <- paste0(project.folder,'/datos/salida/1_covariables')
   dir.create(out.tb.data, recursive = T, mode = "0777", showWarnings = F)
@@ -68,42 +91,52 @@ Datos <- function(){
   # Matriz Datos
   matriz.datos.archivo <- paste0( out.tb.data,'/','MatrixDatos.csv')
   if (!file.exists(matriz.datos.archivo)){
+    # iniciar el monitoreo tiempo de procesamiento total
+    start_time <- Sys.time()
+
+    # Mensaje de estado
     cat(paste0('La matriz de datos no existe, se procede a generarla','\n','\n'))
+
     # Covariables
     covariables.archivo.stack <- paste0(out.geo.data,'/covariables.tif')
     if (!file.exists(covariables.archivo.stack)){
       cat(paste0('El archivo stack geoTIFF de las covariables no existe, se requiere generarlo para extraer la matriz de datos','\n','\n'))
       # Cargar area limite
-      limite_shp <- st_read(paste0(in.geo.data,'/vector/limite'))
+      limite_shp <- st_read(paste0(in.limite.data,'/', limite.carpeta))
       if (dim(limite_shp)[1] > 1){
         limite_shp$id <- 0
         limite_shp <- limite_shp %>% dplyr::group_by(id) %>% dplyr::summarize()
       }
 
       # Cargar DEM (referencia de la resolución espacial)
-      dem <- raster(paste0(in.geo.data,'/raster/dem/original/DEM_PT_2020.tif'))
+      DEM_rast_res <- raster(paste0(in.geo.data,'/raster/dem/original/DEM_PT_2020.tif'))
+      names(DEM_rast_res) <- 'dem'
 
-      # Procesar datos espaciales #
-      # Derivados DEM
-      if ('DEM' %in% project.covars.list){
-        out.dir <- paste0(in.geo.data,'/raster/dem/stack')
-        dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-        covariable.archivo <- paste0(out.dir,'/dem_cov.tif')
-        if (!file.exists(covariable.archivo)){
-          cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados no existe, se requiere generarlo','\n','\n'))
-          DEM_derivado <- stack(list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
-          DEM_rast_res <- stack(dem, DEM_derivado)
-          names(DEM_rast_res)[1] <- 'dem'
-          DEM_rast_res <- crop(DEM_rast_res,limite_shp)
-          writeRaster(DEM_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
-          saveRDS(names(DEM_rast_res),file=gsub('.tif','.rds',covariable.archivo))
-        } else{
-          cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados existe, se va agregar al covariable','\n','\n'))
-          DEM_rast_res <- stack(covariable.archivo)
-          nombres_DEM <- readRDS(gsub('.tif','.rds',covariable.archivo))
-          names(DEM_rast_res) <- nombres_DEM
-        }
-      }
+      # Crear stack de derivados del DEM
+      DEMderivados_rast_res <- stack(list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
+      #DEMderivados_rast_res <- crop(DEM_derivado,limite_shp)
+
+      ## Procesar datos espaciales #
+      ## Derivados DEM
+      #if ('DEM' %in% project.covars.list){
+      #  out.dir <- paste0(in.geo.data,'/raster/dem/stack')
+      #  dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
+      #  covariable.archivo <- paste0(out.dir,'/dem_cov.tif')
+      #  if (!file.exists(covariable.archivo)){
+      #    cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados no existe, se requiere generarlo','\n','\n'))
+      #    DEM_derivado <- stack(list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
+      #    DEM_rast_res <- stack(dem, DEM_derivado)
+      #    names(DEM_rast_res)[1] <- 'dem'
+      #    DEM_rast_res <- crop(DEM_rast_res,limite_shp)
+      #    writeRaster(DEM_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
+      #    saveRDS(names(DEM_rast_res),file=gsub('.tif','.rds',covariable.archivo))
+      #  } else{
+      #    cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados existe, se va agregar al covariable','\n','\n'))
+      #    DEM_rast_res <- stack(covariable.archivo)
+      #    nombres_DEM <- readRDS(gsub('.tif','.rds',covariable.archivo))
+      #    names(DEM_rast_res) <- nombres_DEM
+      #  }
+      #}
 
       # Vegetacion 
       if ('NDVI' %in% project.covars.list){
@@ -136,8 +169,7 @@ Datos <- function(){
           # Sys.setenv(RETICULATE_PYTHON = "x") donde x es la ruta donde esta miniconda ambiente r-reticulate por ejemplo "C:/Users/alejandro.coca/AppData/Local/r-miniconda/envs/r-reticulate"
           # despues de instalar reiniciar R, para qeu se configura el nuevo ambiente si no cambiar como
           # Sys.setenv(RETICULATE_PYTHON = "x") donde x es la ruta donde esta miniconda ambiente rgee por ejemplo "C:/Users/alejandro.coca/AppData/Local/r-miniconda/envs/rgee"
-        
-          
+
           # Initialize Earth Engine!
           ee_Initialize()
 
@@ -153,7 +185,6 @@ Datos <- function(){
           #### Criterios de busqueda ####
           shp <- limite_shp %>% sf_as_ee()
           
-          collection <- ee$ImageCollection("LANDSAT/LC08/C01/T1")
           start <- ee$Date(fechas.ndvi.list[1])
           finish <- ee$Date(fechas.ndvi.list[2])
 
@@ -191,9 +222,8 @@ Datos <- function(){
           imgloc <- ee_drive_to_local(task = task_img)
 
           NDVI_rast <- raster(imgloc)
-          NDVI_rast_res <- projectRaster(NDVI_rast,dem,method="bilinear")
-          NDVI_rast_res <- crop(NDVI_rast_res,limite_shp)
-          NDVI_rast_res <- mask(NDVI_rast_res,limite_shp)
+          NDVI_rast_res <- projectRaster(NDVI_rast,DEM_rast_res,method="bilinear")
+
           # Guardar archivo
           writeRaster(NDVI_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
         } else{
@@ -203,65 +233,54 @@ Datos <- function(){
         names(NDVI_rast_res) <- 'ndvi'
       }
 
-      if ('clima' %in% project.covars.list){
-        out.dir <- paste0(in.geo.data,'/raster/clima')
-        dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-        covariable.archivo <- paste0(out.dir,'/clima.tif')
-        if (!file.exists(covariable.archivo)){
-          cat(paste0('El archivo geoTIFF de la variable clima no existe, se requiere generarlo','\n','\n'))
-          # Lista de shapefiles
-          clima_files <- list.files(path = paste0(in.geo.data,'/vector/clima'), pattern = "\\.shp$", full.names=TRUE)
-          clima_list <- lapply(clima_files, readOGR)
+      if (length(project.covars.vector) > 0){
+        for (covar in project.covars.vector){
+          out.dir <- paste0(in.geo.data,'/raster/',covar)
+          dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
+          covariable.archivo <- paste0(out.dir,'/',covar,'.tif')
+          if (!file.exists(covariable.archivo)){
+            cat(paste0('El archivo geoTIFF de la variable ', covar, ' no existe, se requiere generarlo','\n','\n'))
+            # Lista de shapefiles
+            covar_files <- list.files(path = paste0(in.geo.data,'/vector/',covar), pattern = "\\.shp$", full.names=TRUE)
 
-          # Seleccionar y procesar variable objetivo
-          clima_list_target <- lapply(clima_list, "[", c('Denominaci'))
-          clima_combined <- do.call(what = rbind, args=clima_list_target)
-          clima <- raster::intersect(clima_combined, limite_shp)
-          clima@data[['Denominaci']] = gsub(",", "", clima@data[['Denominaci']])
-          clima <- aggregate(clima, 'Denominaci')
-          clima <- fill_holes(clima, units::set_units(1, km^2))
+            # Atributo
+            covar_atributo <- project.vector.atributos[[covar]]
 
-          ## Rasterizar capa
-          clima <- spTransform(clima, CRS=projection(dem))
-          clima$denom_char <- as.factor(clima$Denominaci)
-          clima_rast <- gRasterize(clima, dem, 'denom_char')
-          clima_rast_res <- resample(clima_rast, dem, method="ngb")
-          values(clima_rast_res) <- round(values(clima_rast_res),0)
+            if (length(covar_files) > 1){
+              covar_list <- lapply(covar_files, readOGR)
 
-          clima_rast_res <- crop(clima_rast_res,limite_shp)
-          clima_rast_res <- mask(clima_rast_res,limite_shp)
+              # Seleccionar y procesar variable objetivo
+              covar_list_target <- lapply(covar_list, "[", c(covar_atributo))
+              covar_combined <- do.call(what = rbind, args=covar_list_target)
+              covar_intersect <- raster::intersect(covar_combined, limite_shp)
+              covar_intersect@data[[covar_atributo]] = gsub(",", "", covar_intersect@data[[covar_atributo]])
+              covar_intersect <- aggregate(covar_intersect, covar_atributo)
+              covar_vector <- fill_holes(covar_intersect, units::set_units(1, km^2))
+            } else {
+              covar_vector <- readOGR(paste0(in.geo.data,'/vector/',covar))
+              covar_vector <- raster::intersect(covar_vector, limite_shp)
+            }
 
-          # Guardar archivo
-          writeRaster(clima_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
-        } else{
-          cat(paste0('El archivo geoTIFF de la variable clima existe, se va agregar al covariable','\n','\n'))
-          clima_rast_res <- raster(covariable.archivo)
+            ## Rasterizar capa
+            covar_vector <- spTransform(covar_vector, CRS=projection(DEM_rast_res))
+            covar_vector$grupos <- as.factor(covar_vector@data[[covar_atributo]])
+            covar_raster <- gRasterize(covar_vector, DEM_rast_res, 'grupos')
+            covar_raster_ngb <- resample(covar_raster, DEM_rast_res, method='ngb')
+            values(covar_raster_ngb) <- round(values(covar_raster_ngb),0)
+
+            names(covar_raster_ngb) <- covar
+            assign(paste0(covar, '_rast_res'), covar_raster_ngb)
+
+            # Guardar archivo
+            writeRaster(covar_raster_ngb, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
+          } else{
+            cat(paste0('El archivo geoTIFF de la variable ',  covar, ' existe, se va agregar al covariable','\n','\n'))
+            covar_raster_ngb <- raster(covariable.archivo)
+            names(covar_raster_ngb) <- covar
+            assign(paste0(covar, '_rast_res'), covar_raster_ngb)
+          }
+          #names(eval(paste0(covar, '_raster_res'))) <- covar
         }
-        names(clima_rast_res) <- 'clima'
-      }
-
-      if ('relieve' %in% project.covars.list){
-        out.dir <- paste0(in.geo.data,'/raster/relieve')
-        dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-        covariable.archivo <- paste0(out.dir,'/relieve.tif')
-        if (!file.exists(covariable.archivo)){
-          cat(paste0('El archivo geoTIFF de la variable relieve no existe, se requiere generarlo','\n','\n'))
-          relieve <- readOGR(paste0(in.geo.data,'/vector/geomorfologia'))
-          relieve <- spTransform (relieve, CRS=projection(dem))
-          relieve$TIPO_RELIE <- as.character(relieve$TIPO_RELIE)
-          relieve_rast <- gRasterize(relieve, dem, 'TIPO_RELIE')
-          relieve_rast_res <- resample(relieve_rast, dem,method='ngb')
-          values(relieve_rast_res) <- round(values(relieve_rast_res),0)
-          # Guardar archivo
-          relieve_rast_res <- crop(relieve_rast_res,limite_shp)
-          relieve_rast_res <- mask(relieve_rast_res,limite_shp)
-
-          writeRaster(relieve_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
-        } else {
-          cat(paste0('El archivo geoTIFF de la variable relieve existe, se va agregar al covariable','\n','\n'))
-          relieve_rast_res <- raster(covariable.archivo)
-        }
-          names(relieve_rast_res) <- 'tipo_relieve'
       }
 
       # Generar COV tif
@@ -271,10 +290,9 @@ Datos <- function(){
 
       # Crear stack
       covariables <- stack(list_covs)
+      covariables <- crop(covariables,limite_shp)
+      covariables <- mask(covariables,limite_shp)
       names(covariables) <- covariables.nombres
-
-      # Pasar valores columnas NAs como 0 (evita problema en prediccion)
-      #covariables$ClosedDepressions <- 0
 
       # Exportar GeoTIFF covariables
       writeRaster(covariables,covariables.archivo.stack, drivers = 'GeoTIFF', overwrite=TRUE)
@@ -287,78 +305,100 @@ Datos <- function(){
     }
 
     # Procesar por variable #
-    if ('pH' %in% project.vars.all){
-      out.dir = paste0(in.tb.data,'/derivados/interpolados')
-      dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-      interpolado.archivo <- paste0(out.dir,'/BD_',project.name,'_pH.csv')
-      if (!file.exists(interpolado.archivo)){
-        cat(paste0('El archivo tabular de la interpolación de la variable pH no existe, se requiere generarlo','\n','\n'))
-        # ------------------------------------------------------- #
-        # Carga y preparacion de los datos
-        # ------------------------------------------------------- #
-        data_obs <- read.csv(paste0(in.tb.data,'/derivados/verticalizado/BDO_',project.name,'_Vert.csv'), sep=',',, na='NA')
-        data_per <- read.csv(paste0(in.tb.data,'/derivados/verticalizado/BDP_',project.name,'_Vert.csv'), sep=',',, na='NA')
-        data <- rbind.fill(data_obs,data_per)
+    if (length(project.vars.continuas) > 0){
+      project.ajuste.continuas <- conf.args[['ajuste.continuas']]
+      project.ajuste.continuas <- unlist(strsplit(project.ajuste.continuas,';'))
+      prof1 <- strsplit(project.ajuste.continuas[1],'-')
+      prof2 <- strsplit(project.ajuste.continuas[2],'-')
 
-        names(data) <- c("profileId","HorID","HorNO","top","bottom","pH","depth","NOM","HCL","CLTEX")
+      varcon.todas <- list()
+      for (varcon in project.vars.continuas){
+        out.dir = paste0(in.tb.data,'/derivados/interpolados')
+        dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
+        interpolado.archivo <- paste0(out.dir,'/BD_',project.name,'_',varcon,'.csv')
+        if (!file.exists(interpolado.archivo)){
+          cat(paste0('El archivo tabular de la interpolación de la variable ', varcon, ' no existe, se requiere generarlo','\n','\n'))
+          # ------------------------------------------------------- #
+          # Carga y preparacion de los datos
+          # ------------------------------------------------------- #
+          data_obs <- read.csv(paste0(in.tb.data,'/derivados/verticalizado/BDO_',project.name,'_Vert.csv'), sep=',',, na='NA')
+          data_per <- read.csv(paste0(in.tb.data,'/derivados/verticalizado/BDP_',project.name,'_Vert.csv'), sep=',',, na='NA')
+          data <- rbind.fill(data_obs,data_per)
 
-        #preprocesamiento
-        data$pH = as.numeric(as.character(data$pH))
-        data <- data %>% filter_at(vars(top,bottom),all_vars(!is.na(.)))
-        data[which(data$pH > 11),'pH'] = data[which(data$pH > 11),'pH'] / 10
+          names(data)[1:5] <- c("profileId","HorID","HorNO","top","bottom","depth")
 
-        #crear dataset sitios
-        sites <- data.frame(profileId=unique(data$profileId))
+          #preprocesamiento
+          data[,varcon] = as.numeric(as.character(data[,varcon]))
+          data <- data %>% filter_at(vars(top,bottom),all_vars(!is.na(.)))
 
-        #--------------------------------------------------------
-        #OPCION 1: FUNCIONES DE SUAVIZADO DE AREA EQUIVALENTE
-        #--------------------------------------------------------
+          #agregar aqui posibles valores ilogicos que puedan afectar los analisis
+          if (varcon == 'pH'){
+            data[which(data[,varcon] > 11),varcon] = data[which(data[,varcon] > 11),varcon] / 10
+          }
 
-        ##Crear objeto SoilProfileCollection
-        dat_aqp <- data
-        names(dat_aqp)
-        depths(dat_aqp) <- profileId ~ top + bottom
-        site(dat_aqp) <- sites
+          #crear dataset sitios
+          sites <- data.frame(profileId=unique(data$profileId))
 
-        # Hallar el valor deseado con splines
-        {
-        try(pH.0_30 <- mpspline(dat_aqp, 'pH', d = t(c(0,30))))
-        try(pH.30_100 <- mpspline(dat_aqp, 'pH', d = t(c(30,100))))
-        dat_spline <- data.frame(profileId = dat_aqp@site$profileId,
-                                 pH.0_30_spline = pH.0_30$var.std[,1],
-                                 pH.30_100_spline = pH.30_100$var.std[,1])
-        sites <- plyr::join(sites,dat_spline,by="profileId")
+          #--------------------------------------------------------
+          #OPCION 1: FUNCIONES DE SUAVIZADO DE AREA EQUIVALENTE
+          #--------------------------------------------------------
+          ##Crear objeto SoilProfileCollection
+          dat_aqp <- data
+          names(dat_aqp)
+          depths(dat_aqp) <- profileId ~ top + bottom
+          site(dat_aqp) <- sites
+
+          p1_ini = as.numeric(prof1[[1]][1])
+          p1_fin = as.numeric(prof1[[1]][2])
+          p2_ini = as.numeric(prof1[[1]][1])
+          p2_fin = as.numeric(prof2[[1]][2])
+
+          # Hallar el valor deseado con splines
+          {
+          try(varcon.p1 <- mpspline(dat_aqp, varcon, d = t(c(p1_ini, p1_fin))))
+          try(varcon.p2 <- mpspline(dat_aqp, varcon, d = t(c(p2_ini, p2_fin))))
+          dat_spline <- data.frame(dat_aqp@site$profileId,
+                                   varcon.p1$var.std[,1],
+                                   varcon.p2$var.std[,1])
+          names(dat_spline) <- c('profileId',paste0(varcon, '.', project.ajuste.continuas[1],'_spline'),paste0(varcon, '.', project.ajuste.continuas[2],'_spline'))
+          int_m1 <- plyr::join(sites,dat_spline,by="profileId")
+          }
+
+          #-------------------------------------------------------------------------------
+          #OPCION 2: SUMA PONDERADA (ASUMIENDO EL ESPESOR DEL HORIZONTE COMO PONDERADOR)
+          #-------------------------------------------------------------------------------
+          # Intervalos
+          assign(paste0('int_m2_', as.character(p1_ini),'_', as.character(p1_fin)), Ponderado(data, varcon, p1_ini, p1_fin))
+          assign(paste0('int_m2_', as.character(p2_ini),'_', as.character(p2_fin)), Ponderado(data, varcon, p2_ini, p2_fin))
+
+          #-------------------------------
+          #RESULTADO FINAL
+          #-------------------------------
+          list_obj = objects(pattern="*int_m")
+          dfs <- lapply(list_obj, function(x) get(x))
+
+          datos_varcon <- join_all(dfs, "profileId")
+          varcon.todas[[varcon]] <- datos_varcon
+          write.table(datos_varcon, interpolado.archivo, row.names = F, sep=',')
+        } else {
+          cat(paste0('El archivo tabular de la interpolación de la variable ', varcon,' existe, se va adicionar a la matriz','\n','\n'))
+          datos_varcon <- read.csv(interpolado.archivo)
+          varcon.todas[[varcon]] <- datos_varcon
         }
-
-        #-------------------------------------------------------------------------------
-        #OPCION 2: SUMA PONDERADA (ASUMIENDO EL ESPESOR DEL HORIZONTE COMO PONDERADOR)
-        #-------------------------------------------------------------------------------
-
-        # Intervalos
-        wSum_0_30 <- PonderadopH(data,0,30)
-        wSum_30_100 <- PonderadopH(data,30,100)
-
-        #-------------------------------
-        #RESULTADO FINAL
-        #-------------------------------
-        dfs <- list(sites,wSum_0_30,wSum_30_100)
-        datos_ph <- join_all(dfs, "profileId")
-        write.table(datos_ph, interpolado.archivo, row.names = F, sep=',')
-      } else {
-        cat(paste0('El archivo tabular de la interpolación de la variable pH existe, se va adicionar a la matriz','\n','\n'))
-        datos_ph <- read.csv(interpolado.archivo)
       }
     }
 
+    var_con_df <- join_all(varcon.todas, by = 'profileId')
+
     # Unir base de datos
     ##Carga de base con variables a modelar
-    datos_modelos <- data.frame(read_excel(paste0(in.tb.data,'/originales/BD_OBSERVACIONES_MODELAMIENTO_PT_2020_09092020v1.xlsx'), sheet = 'Hoja1', na = "N/A"))
+    datos_modelos <- data.frame(read_excel(paste0(in.tb.data,'/originales/',filename), sheet = hoja, na = "N/A"))
 
-    if ('pH' %in% project.vars.all){
+    if (length(project.vars.continuas) > 0){
       ##renombrar columna
-      names(datos_ph)[which(names(datos_ph) == 'profileId')] = 'COD_PERFIL'
-      ##Union de valores de pH a base de variables taxon�micas y coordenadas
-      datos_final <- plyr::join(datos_modelos,datos_ph,by='COD_PERFIL')
+      names(var_con_df)[which(names(var_con_df) == 'profileId')] = columna
+      ##Union de valores de pH a base de variables taxonomicas y coordenadas
+      datos_final <- plyr::join(datos_modelos, var_con_df, by=columna, type = "inner")
     } else{
       datos_final <- datos_modelos
     }
@@ -375,14 +415,19 @@ Datos <- function(){
     datos_sp_cov <- st_transform(datos_sp, projection(dem))
 
     # Extraer valores metodo normal raster
-    start <- Sys.time()
-    #matriz_datos <- data.frame(raster::extract(covariables, out_cov))
     matriz_datos <- cbind(datos_final, raster::extract(covariables, datos_sp_cov))
-    print(Sys.time() - start)
+
+    # Eliminar observaciones cero varianza
+    index_cov = dim(datos_final)[2]+1
+    matriz_datos <- matriz_datos %>% filter_at(vars(index_cov), all_vars(!is.na(.)))
 
     # Exportar Matriz de Datos
     write.table(matriz_datos, paste0(out.tb.data,'/','MatrixDatos.csv'), row.names = F, sep=',')
+
+    #estimar tiempo de procesamiento total
+    print(Sys.time() - start_time)
   } else{
+    # Mensaje de estado
     cat(paste0('La matriz de datos existe, se puede usar para los otros componentes','\n','\n'))
   }
 }

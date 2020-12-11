@@ -1,14 +1,16 @@
 ################################################
-Configuracion del proyecto PT Cesar-Magdalena
+Informacion del proyecto
 ################################################
-Por: Alejandro Coca-Castro
-Bogota; Septiembre 2020
+Proyecto: PT Cesar-Magdalena
+Por: Equipo CIAF
+Ciudad, Pais: Bogota, Colombia
+Fecha: Septiembre 2020
 #######################
 
 #######################
 Rutas
 #######################
-path = F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena
+proyecto.dir = /Volumes/Alejo/Users/ac/Documents/proyecto_cesarmagdalena
 
 #######################
 Variables objetivo
@@ -17,10 +19,22 @@ variables.categoricas = FAMILIA_TE;GRANGRUPO
 variables.continuas = pH
 
 #######################
+Ajustes variables objetivo
+#######################
+categoricas.minobservaciones = 5
+continuas.profundidades = 0-30;30-10
+
+#######################
 Covariables
 #######################
 covariables = clima;relieve;NDVI;DEM
 NDVI.fechas = 2019-01-01;2020-08-30
+
+#######################
+Ajuste atributos covariables
+#######################
+clima = Denominaci
+relieve = TIPO_RELIE
 
 #######################
 Aprendizaje de Maquinas

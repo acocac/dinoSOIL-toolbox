@@ -6,6 +6,7 @@ proyecto_sibundoy/datos/entrada/1_covariables/color/*
 proyecto_sibundoy/exploratorio
 proyecto_sibundoy/exploratorio/*
 proyecto_cesarmagdalena/datos/entrada/1_covariables/*
+desarrollo/*
 *.csv
 *.rds
 *.RData

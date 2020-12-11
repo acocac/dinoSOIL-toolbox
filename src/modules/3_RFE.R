@@ -87,9 +87,7 @@ ExpRFE <- function(VarObj, BaseDatos){
 
   # Remover NAs - ##TODO eliminar variables con muchos NAs o eliminar registros
   data <- data[complete.cases(data), ]
-  
-  write.csv(table(data$target), 'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena/soporte/grangrupo.csv', row.names = FALSE)
-  
+
   if (is(data$target,'character')){
     # si la variable es categorica solo dejar clases con al menos de 5 observaciones
     # As a rule of thumb, a class to be modelled should have at least 5 observations

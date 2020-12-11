@@ -2,13 +2,13 @@
 # titulo        : Herramienta para explorar, procesar y analizar informacion de suelos
 #                 bajo el enfoque de Mapeo Digital de Suelos (MDS);
 # proposito     : Automatizar procesos relacionados con MDS dentro de la Subdireccion de Agrologia;
-# autor(es)     : Conceptualizado y liderado por Alejandro Coca-Castro, CIAF/IGAC (PhD en Geografia, experto en Geotecnologias); Equipo de trabajo Oficina CIAF/IGAC: Pedro Karin Serrato (Profesor, experto en Agrologia),
-#                 Victoria Camacho (Estadistica), Patricia Escudero (Estadistica), Andres Rosso (Candidato PhD en Ingenieria, experto en Machine Learning), Yesenia Vargas (MSc Geografia, experta en Proyectos);
+# autor(es)     : Conceptualizado y liderado por Alejandro Coca-Castro, PhD - CIAF/IGAC (Doctor en Geografia, experto en Geotecnologias); Equipo de trabajo Oficina CIAF/IGAC:  Victoria Camacho, Esp. (Ingeniera Geofísica, especialista en SIG),
+#                 Patricia Escudero, Profesional (Estadistica, experta en analisis de datos), Andres Felipe Lopez (Economista, experto en analisis de datos), Pedro Karin Serrato, MSc (Profesor, experto en Agrologia), Yesenia Vargas, MSc (Ingeniera Geóloga, experta en Geotecnologias);
 #                 Equipo de trabajo Subdireccion de Agrologia/IGAC: Juan Camilo Garcia, Ricardo Devia Cartagena, Joan Sebastian Gutierrez Diaz, Daniela Prieto
-#                 Supervisores: CIAF/IGAC, Carlos Franco y Diana Galindo - Subdireccion de Agrologia/IGAC, Janeth Gonzalez Nivia y Napoleon Ordo�z
-# actualizacion : v1 Bogota, Colombia - Septiembre 2020;
-# observaciones : Detalles de los pasos mencionados pueden consultarse en el manual;
-#                 Los analisis deben correrse de manera separada;
+#                 Supervisores: CIAF/IGAC, Carlos Franco y Diana Galindo - Subdireccion de Agrologia/IGAC, Janeth Gonzalez Nivia y Napoleon Ordonez
+# actualizacion : v1 Bogota, Colombia - Diciembre 2020;
+# observaciones : Detalles de los pasos de la herramienta pueden consultarse en el manual de usuario;
+#                 Los pasos deben correrse de manera separada;
 #                 Esta es una herramienta en estado de prueba de concepto, en caso de encontrar errores
 #                 favor reportar al correo acocac@gmail.com;
 ##############################################################################
@@ -21,16 +21,16 @@ rm(list = ls()); options(scipen = 999, warn = -1)
 # ------------------------------------------------------- #
 # Definir espacio y archivo de configuracion de trabajo
 # ------------------------------------------------------- #
-### Directorio de los codigos R  ### #copiar la ruta completa donde estan los codigos (carpeta src)
-r.dir = 'F:/IDI_MDS_Agrologia/script/soil-toolbox/src'
+### Directorio de los codigos R  (copiar la ruta completa donde estan los codigos o carpeta src)
+r.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuelos/desarrollos/dinoSOIL-toolbox/src'
 
-### Directorio del proyecto ### #copiar la ruta completa donde se aloja el proyecto (carpeta proyecto)
+### Directorio del proyecto (copiar la ruta completa donde se aloja el proyecto o carpeta proyecto)
 # Indicar la ruta al proyecto
-proyecto.dir = 'F:/IDI_MDS_Agrologia/script/soil-toolbox/proyecto_cesarmagdalena'
+proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/proyecto_cesarmagdalena'
 # Cargar el archivo de configuracion
 conf.file = paste0(proyecto.dir,'/config/conf.txt')
 # Cargar funciones de interaccion con el usuario
-source(paste0(r.dir,'/functions/0a_UserArgs.R'))
+# source(paste0(r.dir,'/functions/0a_ArgsUsuario.R'))
 
 
 ########################################################
@@ -41,7 +41,6 @@ source(paste0(r.dir,'/functions/0a_UserArgs.R'))
 source(paste0(r.dir,'/modules/1_Preprocesamiento.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 OBSERVACIONES pregunta 2 BD_OBSERVACIONES_MODELAMIENTO_PT_2020.xlsx, pregunta 3 ORIGINAL_old, pregunta 4 COD_PERFIL
 args_p1 <- prompt.user.part1()
 
 #### ejecutar la funcion del modulo ###
@@ -55,8 +54,11 @@ Preprocesamiento(args_p1[[1]],args_p1[[2]],args_p1[[3]],args_p1[[4]])
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/2_Datos.R'))
 
+#### consultar al usuario argumentos del modulo ###
+args_p2 <- prompt.user.part2()
+
 #### ejecutar la funcion del modulo ###
-Datos()
+Datos(args_p2[[1]], args_p2[[2]], args_p2[[3]], args_p2[[4]])
 
 
 ########################################################
@@ -67,7 +69,6 @@ Datos()
 source(paste0(r.dir,'/modules/3_RFE.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 Variable Objetivo
 args_p3 <- prompt.user.part3()
 
 #### ejecutar la funcion del modulo ###

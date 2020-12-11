@@ -1,15 +1,14 @@
+#############################################################################
+# titulo        : Datos de entrada (matriz) y covariables ambientales (GeoTIFF);
+# proposito     : Generar datos de entrada (matriz) y raster multibanda con las covariables ambientales (GeoTIFF);
+# autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
+# actualizacion : Creado SG en Bogotá, Colombia / Actualizado por ACC en Octubre 2020;;
+# entrada       : Base de datos verticalizada;
+# salida        : Datos de entrada y GeoTIFF con las covariables ambientales para su uso en la predicción;
+# observaciones : ninguna;
 ##############################################################################
-# title         : grid files (inputs) to extract fragstat and fractal metrics;
-# purpose       : create separated grids (unit of analysis) from detection grid for fragstat and 
-#                 fractal analyses;
-# producer      : prepared by A. Coca;
-# last update   : in London, UK June 2015 / Updated in September 2015;
-# inputs        : deforestation grid by year, fishnet (windows) shapefile;
-# outputs       : split detection grid using  in GeoTIFF format (FRAGSTAT/FRACTAL INPUT);
-# remarks 1     : detection grid must be in projected projection (i.e IGH or LAE);
-###############################################################################
 
-PonderadopH = function(data2, upDepth, lowDepth)
+Ponderado = function(data2, tarvar, upDepth, lowDepth)
 {
   # Nuevos rangos de prof inicial y final para cada horizonte
   data2$upper <- ifelse(data2$top <= upDepth, yes = upDepth, no = data2$top)
@@ -21,26 +20,26 @@ PonderadopH = function(data2, upDepth, lowDepth)
   data2$depth <- data2$lower - data2$upper
 
   # Descartar horizonte sin dato de pH
-  (no.inf.indx <- which(is.na(data2$pH)))
+  (no.inf.indx <- which(is.na(data2[,tarvar])))
   data2 <- data2[-no.inf.indx,]
 
   # Descartar horizontes que no caen en el rango deseado
   data2 <- data2[data2$depth!=0,]
 
   # Ponderacion de valores de pH por horizonte
-  data2$weighted <- (data2$depth*data2$pH)/(lowDepth-upDepth)
+  data2$weighted <- (data2$depth*data2[,tarvar])/(lowDepth-upDepth)
 
   # Suma ponderada de valores de pH por perfil
   wSum<- ddply(
     .data = data2,
-    .variables = c("profileId"),
+    .variables = "profileId",
     .fun = function(x){
       sum(x$weighted)
     }
   )
 
   # Resultado final
-  colnames(wSum)[2] <- paste0("pH.",upDepth,"_",lowDepth,"_Sum.Pond")
+  colnames(wSum)[2] <- paste0(tarvar,".",upDepth,"_",lowDepth,"_Sum.Pond")
   wSum$profileId <- as.character(wSum$profileId)
   return(wSum)
 }

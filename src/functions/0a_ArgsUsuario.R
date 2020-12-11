@@ -28,15 +28,15 @@ prompt.user.part1 <- function()#get arguments from user
   a <- readLines(n = 1)
   a <- gsub("\\\\", "/", a)
 
-  message(prompt="Indique el nombre del archivo que contiene la base de datos horizontal:>>> ")
+  message(prompt="Indique el nombre del archivo EXCEL que contiene la base de datos horizontal:>>> ")
   b <- readLines(n = 1)
   b <- gsub("\\\\", "/", b)
 
-  message(prompt="Indique el nombre de la pestana del archivo que contiene la base de datos:>>> ")
+  message(prompt="Indique el nombre de la pestana del archivo EXCEL que contiene la base de datos:>>> ")
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
-  message(prompt="Indique el nombre de la columna que tiene el ID de los perfiles:>>> ")
+  message(prompt="Indique el nombre de la columna que tiene el ID de los perfiles el archivo EXCEL que contiene la base de datos:>>> ")
   d <- readLines(n = 1)
   d <- gsub("\\\\", "/", d)
 
@@ -46,11 +46,19 @@ prompt.user.part1 <- function()#get arguments from user
 
 prompt.user.part2 <- function()#get arguments from user
 {
-  message(prompt="Indique el nombre del modelol:>>> ")
+  message(prompt="Indique el nombre del archivo EXCEL con las variables categoricas y coordenadas:>>> ")
   a <- readLines(n = 1)
   a <- gsub("\\\\", "/", a)
 
-  newlist = list(a)
+  message(prompt="Indique el nombre de la pestana del archivo EXCEL con las variables categoricas y coordenadas:>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el nombre de la columna que tiene el ID de los perfiles del archivo EXCEL las variables categoricas y coordenadas:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", d)
+
+  newlist = list(a, b, c)
   return(newlist)
 }
 
@@ -58,7 +66,7 @@ prompt.user.part3 <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0b_CargarConfig.R'))
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
@@ -81,7 +89,7 @@ prompt.user.part4a <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0b_CargarConfig.R'))
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
@@ -108,7 +116,7 @@ prompt.user.part4b <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0b_CargarConfig.R'))
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
@@ -143,7 +151,7 @@ prompt.user.part4c <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0b_CargarConfig.R'))
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
@@ -180,7 +188,7 @@ prompt.user.part4d <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0b_CargarConfig.R'))
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
@@ -217,7 +225,7 @@ prompt.user.part4e <- function()#get arguments from user
 {
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0b_CargarConfig.R'))
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()

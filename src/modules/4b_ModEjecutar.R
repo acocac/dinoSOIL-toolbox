@@ -5,7 +5,7 @@
 # actualizacion : Actualizado por ACC en Noviembre 2020;;
 # entrada       : Base de datos original;
 # salida        : Base de datos verticalizada;
-# observaciones : ninguna;
+# observaciones :glmnet ninguna;
 ##############################################################################
 
 ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
@@ -161,7 +161,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
       # Determinar modelos objetivo segun listado en el archivo conf.txt y modelos disponibles por categoria
       modelos.idx <- match(proyecto.modelos.categoricas, names(modelos.lista))
       if (anyNA(modelos.idx)){
-        stop('No se continua la ejecución los siguientes modelos del CONFIG: ', paste0(proyecto.modelos.categoricas[which(is.na(modelos.idx))],collapse=', '), ' NO corresponden a los listados en el archivo de configuraciones. Se recomienda verificar si el nombre es correcto.')    
+        stop('No se continua la ejecuciï¿½n los siguientes modelos del CONFIG: ', paste0(proyecto.modelos.categoricas[which(is.na(modelos.idx))],collapse=', '), ' NO corresponden a los listados en el archivo de configuraciones. Se recomienda verificar si el nombre es correcto.')    
       } else { #continue the script
         modelos.objetivo <- modelos.lista[modelos.idx]
       }

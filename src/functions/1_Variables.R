@@ -15,12 +15,11 @@ VariablesObjectivo = function()
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  project.folder <- conf.args[[1]]
-  project.name <- sapply(strsplit(project.folder, '_'), tail, 1)
-  project.vars.categoricas <- conf.args[[2]]
+  project.folder <- conf.args[['proyecto.carpeta']]
+  project.vars.categoricas <- conf.args[['vars.categoricas']]
   project.vars.categoricas = unlist(strsplit(project.vars.categoricas,';'))
-  project.vars.continuas <- conf.args[[3]]
-  project.vars.continuas = unlist(strsplit(project.vars.continuas,';'))
+  project.vars.continuas <- conf.args[['vars.continuas']]
+  project.vars.continuas <- unlist(strsplit(project.vars.continuas,';'))
 
   carpeta.entrada <- paste0(project.folder,'/datos/salida/0_matriz')
   datos.entrada <- read.csv(paste0(carpeta.entrada,'/MatrixDatos.csv'),sep=',')
@@ -28,7 +27,6 @@ VariablesObjectivo = function()
   project.vars.categoricas <- paste(project.vars.categoricas, collapse='|')
   project.vars.continuas <- paste(project.vars.continuas, collapse='|')
 
-  #columnas.matriz <- names(datos.entrada[which(grepl(project.vars.categoricas,colnames(datos.entrada)) |  startsWith(colnames(datos.entrada),project.vars.continuas))])
   columnas.matriz <- names(datos.entrada[which(grepl(project.vars.categoricas,colnames(datos.entrada)) |  grepl(project.vars.continuas,colnames(datos.entrada)))])
   
   return(columnas.matriz)
