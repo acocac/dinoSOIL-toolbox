@@ -8,7 +8,49 @@
 # observaciones : ninguna;
 ##############################################################################
 
+
+prompt.user.part4e <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el tipo de base de datos para modelar (AMBAS, PERFIL, OBSERVACION):>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", c)
+
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (UP, DOWN), caso contrario que prefiera desbalanceado o la variable es continua escriba ORIGINAL:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+
+  newlist = list(a, b, c, d, e)
+
+  return(newlist)
+}
+
+
 ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -19,7 +61,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
   source(paste0(r.dir,'/functions/5_Predict.R'))
 
   # ------------------------------------------------------- #
@@ -29,12 +71,10 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  proyecto.directorio <- conf.args[[1]]
-  modelos.proyecto <- conf.args[[2]]
-  modelos.proyecto <- sort(unlist(strsplit(modelos.proyecto,';')))
-  proyecto.metricas.categoricas <- conf.args[[8]]
+  proyecto.directorio <- conf.args[['proyecto.carpeta']]
+  proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
   proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
-  proyecto.metricas.continuas <- conf.args[[9]]
+  proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
   proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
   
   # ------------------------------------------------------- #
@@ -169,4 +209,6 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     ##### end output messages ####
   }
 
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
 }

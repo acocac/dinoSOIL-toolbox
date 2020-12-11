@@ -32,6 +32,9 @@ prompt.user.part3 <- function()#get arguments from user
 }
 
 ExpRFE <- function(VarObj, BaseDatos){
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   ##
   ## src1:
   ## https://github.com/m2-rshiny/ProjetTut/blob/426fcff7642ffdd8f84743c88cc732e2bd617ca7/Archives/MLShiny2/analysis-UGA.R
@@ -64,7 +67,7 @@ ExpRFE <- function(VarObj, BaseDatos){
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  proyecto.directorio <- conf.args[[1]]
+  proyecto.directorio <- conf.args[['proyecto.carpeta']]
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
@@ -224,7 +227,6 @@ ExpRFE <- function(VarObj, BaseDatos){
     exploratorio.variables.rfe <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.rfe)){
       cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE con el dataset BALANCEADO'),'\n','\n')
-      start <- Sys.time()
       no_cores <- detectCores() - 1
       cl <- makeCluster(no_cores, type = "SOCK")
       registerDoParallel(cl)
@@ -238,7 +240,6 @@ ExpRFE <- function(VarObj, BaseDatos){
       } else{
         subset = c(1:search_limit,search_regular[-1], dim(data[,-1])[2])
       }
-      print(subset)
       (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=subset, rfeControl=control2)) #sizes se refiere al detalle de la curva,
       stopCluster(cl = cl)
       png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
@@ -246,7 +247,6 @@ ExpRFE <- function(VarObj, BaseDatos){
       dev.off()
       predictors(rfmodel)[1:10]
       save(rfmodel, file=exploratorio.variables.rfe)
-      print(Sys.time() - start)
     } else {
       cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
     }
@@ -256,7 +256,6 @@ ExpRFE <- function(VarObj, BaseDatos){
     if (!file.exists(exploratorio.variables.boruta)){
       cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' con el dataset BALANCEADO usando el algoritmo Boruta'),'\n','\n')
       nCores <- detectCores() - 1
-      start <- Sys.time()
       formula <- as.formula('target ~ .')
       (bor <- Boruta(formula, data = data, doTrace = 0, num.threads = nCores, ntree = 30, maxRuns=500)) #se debe evaluar ntree (numero de arboles), maxRuns (cantidad de interacciones)
       save(bor, file=exploratorio.variables.boruta)
@@ -264,9 +263,11 @@ ExpRFE <- function(VarObj, BaseDatos){
       par(mar = c(18, 4, 1, 1))
       plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
       dev.off()
-      print(Sys.time() - start)
     } else {
       cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,'  con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
     }
   }
+
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
 }

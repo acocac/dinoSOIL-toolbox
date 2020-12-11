@@ -18,16 +18,17 @@ modelos.config.manual <- function(){
   
   modelos.dict = mapply(Add, modelos.lista, modelos.lista)
 
-  #opción defecto: todos con un mismo tamaño para busqueda de mejores hiperparametros
+  #opcion defecto: todos con un mismo tamano para busqueda de mejores hiperparametros
   tuneLenght_size <- rep(20, length(modelos.lista))
   tuneLenght = mapply(Add, modelos.lista, tuneLenght_size)
   
-  ##opción alternativa: tamaño para busqueda de mejores hiperparametros por modelo
+  ##opciï¿½n alternativa: tamaï¿½o para busqueda de mejores hiperparametros por modelo
   # tuneLenght <- c('J48'=5, 'C5.0'=5, 'multinom','ranger'=20, 'svmLinear'=5, 'xgbTree'=20, 'gbm_h2o'=3,
   #                'glmnet'=5,'mlp'=5, 'svmRadial'=20)
   
   conflist = list(modelos.dict, tuneLenght)
-  
+  names(conflist) = c('modelos.dict','tuneLenght')
+
   return (conflist)
   
 }
@@ -73,7 +74,9 @@ modelos.config.defecto <- function(){
   tuneLenght = mapply(Add, proyecto.modelos, tuneLenght_size)
   
   conflist = list(proyecto.modelos.continuas, proyecto.modelos.categoricas, tuneLenght)
-  
+
+  names(conflist) = c('modelos.continuas','modelos.categoricas','tuneLenght')
+
   return (conflist)
 }
 

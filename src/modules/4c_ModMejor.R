@@ -8,7 +8,49 @@
 # observaciones : ninguna;
 ##############################################################################
 
+
+prompt.user.part4c <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelaciÃ³n:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el tipo de base de datos para modelar (AMBAS, PERFIL, OBSERVACION):>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el numero limite de covariables a considerar segÃºn interpretaciÃ³n del RFE y Boruta:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", c)
+
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (UP, DOWN), caso contrario que prefiera desbalanceado o la variable es continua escriba ORIGINAL:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+
+  newlist = list(a, b, c, d, e)
+
+  return(newlist)
+}
+
+
 ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -20,8 +62,8 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
-  source(paste0(r.dir,'/functions/3b_modelsettings.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/4b_modelsettings.R'))
   
   # ------------------------------------------------------- #
   # Cargar archivo de configuracion y componentes
@@ -30,27 +72,27 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  proyecto.directorio <- conf.args[[1]]
+  proyecto.directorio <- conf.args[['proyecto.carpeta']]
   
   if (listmodelos == 'DEFECTO'){
     configuracion <- modelos.config.defecto()
-    proyecto.modelos.continuas <- configuracion[[1]]
-    proyecto.modelos.categoricas <- configuracion[[2]]
-    
-    proyecto.metricas.categoricas <- conf.args[[8]]
+    proyecto.modelos.continuas <- configuracion[['modelos.continuas']]
+    proyecto.modelos.categoricas <- configuracion[['modelos.categoricas']]
+
+    proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
     proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
-    proyecto.metricas.continuas <- conf.args[[9]]
+    proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
     proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
     
   } else{
-    proyecto.modelos.categoricas <- conf.args[[6]]
+    proyecto.modelos.categoricas <- conf.args[['modelos.categoricas']]
     proyecto.modelos.categoricas = unlist(strsplit(proyecto.modelos.categoricas,';'))
-    proyecto.modelos.continuas <- conf.args[[7]]
+    proyecto.modelos.continuas <- conf.args[['modelos.continuas']]
     proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
-    
-    proyecto.metricas.categoricas <- conf.args[[8]]
+
+    proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
     proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
-    proyecto.metricas.continuas <- conf.args[[9]]
+    proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
     proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
   }
 
@@ -88,7 +130,7 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   #identificar modelos entrenados
   modelos.procesados = strsplit(list.files(modelos.entrada, recursive = T, full.names = F),"*.rds")
   modelos.procesados = unique(sapply(modelos.procesados, "[", 1))
-  
+
   if (sort(proyecto.modelos) == sort(modelos.procesados)){
     cat(paste0('Los modelos listados en el archivo config.txt estan completos','\n','\n'))
     ##### processing ####
@@ -113,7 +155,7 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     write.csv(modelos.parametros,file = paste0(modelos.analisis.tabular,'/mejoresmodelos_parametros.csv'), row.names=F)
     
     ##### output messages ####
-    cat(paste('### RESULTADO 1 de 3: Los parametros y métricas de los mejores modelos fueron generados y almacenados como tablas en la ruta ', modelos.analisis.tabular,' ###'),'\n','\n')
+    cat(paste('### RESULTADO 1 de 3: Los parametros y mï¿½tricas de los mejores modelos fueron generados y almacenados como tablas en la ruta ', modelos.analisis.tabular,' ###'),'\n','\n')
     ##### end output messages ####
     models = objects(pattern='*m_')
 
@@ -149,10 +191,13 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   dev.off()
 
   ##### output messages ####
-  cat(paste('### RESULTADO 3 de 3: Los gráficos boxplots de los modelos creados fueron generados y almacenados como archivo PNG en la ruta', modelos.analisis.figuras,' ###'),'\n','\n')
+  cat(paste('### RESULTADO 3 de 3: Los grï¿½ficos boxplots de los modelos creados fueron generados y almacenados como archivo PNG en la ruta', modelos.analisis.figuras,' ###'),'\n','\n')
   ##### end output messages ####
 
   } else{
     cat('Los modelos listados en el archivo config.txt NO estan completos, se recomienda revisar el/los modelo(s) faltante corriendo el componente 4b Entrenamiento del modelo')
   }
+
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
 }

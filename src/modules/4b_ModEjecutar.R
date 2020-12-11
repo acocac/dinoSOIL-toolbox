@@ -46,6 +46,9 @@ prompt.user.part4b <- function()#get arguments from user
 
 
 ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -69,30 +72,30 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   
   if (listmodelos == 'DEFECTO'){
     configuracion <- modelos.config.defecto()
-    proyecto.modelos.continuas <- configuracion[[1]]
-    proyecto.modelos.categoricas <- configuracion[[2]]
-    tuneLenght <- configuracion[[3]]
+    proyecto.modelos.continuas <- configuracion[['modelos.continuas']]
+    proyecto.modelos.categoricas <- configuracion[['modelos.categoricas']]
+    tuneLenght <- configuracion[['tuneLenght']]
     
-    proyecto.metricas.categoricas <- conf.args[[8]]
+    proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
     proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
-    proyecto.metricas.continuas <- conf.args[[9]]
+    proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
     proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
     
   } else{
-    proyecto.modelos.categoricas <- conf.args[[6]]
+    proyecto.modelos.categoricas <- conf.args[['modelos.categoricas']]
     proyecto.modelos.categoricas = unlist(strsplit(proyecto.modelos.categoricas,';'))
-    proyecto.modelos.continuas <- conf.args[[7]]
+    proyecto.modelos.continuas <- conf.args[['modelos.continuas']]
     proyecto.modelos.continuas = unlist(strsplit(proyecto.modelos.continuas,';'))
 
-    proyecto.metricas.categoricas <- conf.args[[8]]
+    proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
     proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
-    proyecto.metricas.continuas <- conf.args[[9]]
+    proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
     proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
     
     # Modelos disponibles y configuraciones
     configuracion <- modelos.config.manual()
-    modelos.lista <- configuracion[[1]]
-    tuneLenght <- configuracion[[2]]
+    modelos.lista <- configuracion[['modelos.dict']]
+    tuneLenght <- configuracion[['tuneLenght']]
   }
   
   # ------------------------------------------------------- #
@@ -293,4 +296,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
       print('no esta')
     }
   }
+
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
 }

@@ -31,6 +31,9 @@ prompt.user.part2 <- function()#get arguments from user
 }
 
 Datos <- function(filename, hoja, columna, limite.carpeta){
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -91,8 +94,6 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
   # Matriz Datos
   matriz.datos.archivo <- paste0( out.tb.data,'/','MatrixDatos.csv')
   if (!file.exists(matriz.datos.archivo)){
-    # iniciar el monitoreo tiempo de procesamiento total
-    start_time <- Sys.time()
 
     # Mensaje de estado
     cat(paste0('La matriz de datos no existe, se procede a generarla','\n','\n'))
@@ -433,10 +434,11 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
     # Exportar Matriz de Datos
     write.table(matriz_datos, paste0(out.tb.data,'/','MatrixDatos.csv'), row.names = F, sep=',')
 
-    #estimar tiempo de procesamiento total
-    print(Sys.time() - start_time)
   } else{
     # Mensaje de estado
     cat(paste0('La matriz de datos existe, se puede usar para los otros componentes','\n','\n'))
   }
+
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
 }

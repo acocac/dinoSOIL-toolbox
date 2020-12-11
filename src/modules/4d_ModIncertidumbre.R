@@ -8,7 +8,49 @@
 # observaciones : ninguna;
 ##############################################################################
 
+
+prompt.user.part4d <- function()#get arguments from user
+{
+  # Funciones
+  r.dir <- gsub('\\\\', '/', r.dir)
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/1_Variables.R'))
+
+  variables.usuario <- VariablesObjectivo()
+  cat(paste0('Las siguientes columnas estan disponibles para su modelaciÃ³n:','\n'))
+  cat(paste0(variables.usuario, sep=" | "))
+  cat(paste0('\n','\n'))
+
+  message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
+  a <- readLines(n = 1)
+  a <- gsub("\\\\", "/", a)
+
+  message(prompt="Indique el tipo de base de datos para modelar (AMBAS, PERFIL, OBSERVACION):>>> ")
+  b <- readLines(n = 1)
+  b <- gsub("\\\\", "/", b)
+
+  message(prompt="Indique el numero limite de covariables a considerar segÃºn interpretaciÃ³n del RFE y Boruta:>>> ")
+  c <- readLines(n = 1)
+  c <- gsub("\\\\", "/", c)
+
+  message(prompt="Si la variable es categorica indique la estrategia usada para balancear los datos (UP, DOWN), caso contrario que prefiera desbalanceado o la variable es continua escriba ORIGINAL:>>> ")
+  d <- readLines(n = 1)
+  d <- gsub("\\\\", "/", d)
+
+  message(prompt="Indique si usar los algoritmos por DEFECTO o del archivo CONFIG:>>> ")
+  e <- readLines(n = 1)
+  e <- gsub("\\\\", "/", e)
+
+  newlist = list(a, b, c, d, e)
+
+  return(newlist)
+}
+
+
 ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -21,8 +63,8 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
-  source(paste0(r.dir,'/functions/0b_LoadConfig.R'))
-  source(paste0(r.dir,'/functions/3b_modelsettings.R'))
+  source(paste0(r.dir,'/functions/0_CargarConfig.R'))
+  source(paste0(r.dir,'/functions/4b_modelsettings.R'))
   source(paste0(r.dir,'/functions/5_Predict.R'))
 
   # ------------------------------------------------------- #
@@ -32,14 +74,12 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  proyecto.directorio <- conf.args[[1]]
-  modelos.proyecto <- conf.args[[2]]
-  modelos.proyecto <- sort(unlist(strsplit(modelos.proyecto,';')))
-  proyecto.metricas.categoricas <- conf.args[[8]]
+  proyecto.directorio <- conf.args[['proyecto.carpeta']]
+  proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
   proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
-  proyecto.metricas.continuas <- conf.args[[9]]
+  proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
   proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
-  
+
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
@@ -47,7 +87,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
   modelos.datos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   datos.entrada <- paste0(proyecto.directorio,'/datos/salida/1_covariables')
-  in.geo.data <- paste0(proyecto.directorio,'/datos/entrada/1_covariables')
+  in.limite.data <- paste0(proyecto.directorio,'/datos/entrada/2_limite')
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
   modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
   modelos.incertidumbre.figuras = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/figuras/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
@@ -91,7 +131,6 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     modelos.mejor <- modelos.resultado[modelos.resultado[,metrica] == max(modelos.resultado[,metrica]), 'modelos']
   }
   
-  print(modelos.mejor)
   ##### output messages ####
   cat(paste0('### RESULTADO 1 de 5: El mejor modelo es ',modelos.mejor,' y se comprueba si ya existe archivo GeoTIFF de incertidumbre ###','\n'))
   ##### end output messages ####
@@ -335,7 +374,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
         scale_x_discrete(labels=levels(pred)) +
         scale_y_discrete(labels=rev(levels(pred))) +
         geom_text(aes(x = Prediction, y = rev(Reference), label = Freq)) +
-        labs(x='Predicción', y='Observado') +
+        labs(x='Predicciï¿½n', y='Observado') +
         theme(legend.position = "none") +
         ggtitle(mytitle) +
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -346,7 +385,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     confusionMatrix.archivo.figura <- paste0(modelos.incertidumbre.figuras,'/',str_replace(VarObj,'[.]','-'),'_CM_',modelos.mejor,'.png') 
     if (!file.exists(confusionMatrix.archivo.figura)){
       ##### output messages ####
-      cat(paste0('### RESULTADO 1 de 5: La figura de la matriz de confusión de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', confusionMatrix.archivo.figura,' ###','\n'))
+      cat(paste0('### RESULTADO 1 de 5: La figura de la matriz de confusiï¿½n de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', confusionMatrix.archivo.figura,' ###','\n'))
       ##### end output messages ####
       
       cm <- confusionMatrix(factor(pred), factor(test.data$target), dnn = c("Prediction", "Reference"))
@@ -358,7 +397,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
       
     } else{
       ##### output messages ####
-      cat(paste0('### RESULTADO 1 de 5: La figura de la matriz de confusión de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', confusionMatrix.archivo.figura,' ###','\n'))
+      cat(paste0('### RESULTADO 1 de 5: La figura de la matriz de confusiï¿½n de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', confusionMatrix.archivo.figura,' ###','\n'))
       ##### end output messages ####
     }
     
@@ -369,9 +408,7 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
       ##### output messages ####
       cat(paste0('### RESULTADO 2 de 5: El archivo GeoTIFF de probabilidad usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', proba.archivo.geotiff,' ###','\n'))
       ##### end output messages ####
-      start <- Sys.time()
       PredictGeoTIFF(COV, modelo.ajuste, proba.archivo.geotiff, type, index, train.data)
-      print(Sys.time() - start)
     } else {
       cat(paste0('### RESULTADO 2 de 5: El archivo GeoTIFF de probabilidad usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', proba.archivo.geotiff,' ###','\n'))
     }
@@ -387,42 +424,14 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
 
       prediction_prob <- stack(proba.archivo.geotiff)
 
-      start <- Sys.time()
       no_cores <- detectCores() - 1
       beginCluster(no_cores)
       clusterR(prediction_prob, fun = calc, args = list(fun = entropy),
                             filename = entropia.archivo.geotiff, format = "GTiff",
                             overwrite = T, datatype='FLT4S', options='COMPRESS=YES')
       endCluster()
-      print(Sys.time() - start)
-
     } else {
       cat(paste0('### RESULTADO 3a de 5: El archivo GeoTIFF de entropia usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', entropia.archivo.geotiff,' ###','\n'))
-    }
-
-    confusion.archivo.geotiff <- gsub('_PROB_','_CONFUSION_',proba.archivo.geotiff)
-    if (!file.exists(confusion.archivo.geotiff)){
-      ##### output messages ####
-      cat(paste0('### RESULTADO 3b de 5: El archivo GeoTIFF del Ã?ndice de confusiÃ³n usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', confusion.archivo.geotiff,' ###','\n'))
-      ##### end output messages ####
-      # Function to compute the confusion index ----
-      confusion <- function (x) {
-          1 - diff(sort(x, decreasing = TRUE)[2:1])
-        }
-
-      start <- Sys.time()
-      prediction_prob <- stack(proba.archivo.geotiff)
-
-      no_cores <- detectCores() - 1
-      beginCluster(no_cores)
-      clusterR(prediction_prob, fun = calc, args = list(fun = confusion),
-                            filename = confusion.archivo.geotiff, format = "GTiff",
-                            overwrite = T, datatype='FLT4S', options='COMPRESS=YES')
-      endCluster()
-      print(Sys.time() - start)
-
-    } else {
-      cat(paste0('### RESULTADO 3b de 5: El archivo GeoTIFF del Ã?ndice de confusiÃ³n usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', confusion.archivo.geotiff,' ###','\n'))
     }
 
     proba.archivo.grafica <- paste0(modelos.incertidumbre.figuras,'/',gsub('.tif$','.png',basename(proba.archivo.geotiff)))
@@ -484,12 +493,8 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
 
       r <- raster(entropia.archivo.geotiff)
 
-      limite_shp <- st_read(paste0(in.geo.data,'/vector/limite'))
-      if (dim(limite_shp)[1] > 1){
-         limite_shp$id <- 0
-         limite_shp <- limite_shp %>% group_by(id) %>% summarize()
-      }
-      
+      limite_shp <- st_read(paste0(in.limite.data,'/aoi'))
+
       r_res <- crop(r,limite_shp)
       r_res <- mask(r_res,limite_shp)
 
@@ -517,97 +522,8 @@ ModIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
       cat(paste0('### RESULTADO 5a de 5: La figura de entropia de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', entropia.archivo.grafica,' ###','\n'))
       ##### end output messages ####
     }
-
-    confusion.archivo.grafica <- paste0(modelos.incertidumbre.figuras,'/',gsub('.tif$','.png',basename(confusion.archivo.geotiff)))
-    if (!file.exists(confusion.archivo.grafica)){
-      ##### output messages ####
-      cat(paste0('### RESULTADO 5b de 5: La figura del Ã?ndice de confusiÃ³n de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', confusion.archivo.grafica,' ###','\n'))
-      ##### end output messages ####
-
-      r <- raster(confusion.archivo.geotiff)
-      
-      p <- ggplot() +
-        annotation_map_tile(zoomin = -1) +
-        layer_spatial(r, aes(fill = stat(band1)), alpha = 0.7) +
-        scale_fill_viridis_c(name='Confusión',na.value = NA, direction=-1, option="inferno", alpha = 0.7, limits = c(0, 1)) +
-        annotation_scale(location = "tl") +
-        annotation_north_arrow(location = "br", which_north = "true")
-      
-      png(file = confusion.archivo.grafica, width = 700, height = 600, res=150)
-      print(p)
-      #print(plot(r, main = paste0('Incertidumbre (promedio) - ',VarObj), col=pal))
-      dev.off()
-      # 
-      # colr = inferno(100, direction=-1, begin = 0, end = 1)
-      # 
-      # dev.new(height=0.91*nrow(r)/50, width=1.09*ncol(r)/50)
-      # png(file = confusion.archivo.grafica, width = 1400, height = 900, res=150)
-      # plot(r, zlim=c(0, 1), col=colr, axes=FALSE, box=FALSE)
-      # dev.off()
-    } else{
-      ##### output messages ####
-      cat(paste0('### RESULTADO 5a de 5a: La figura del Ã?ndice de confusiÃ³n de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', confusion.archivo.grafica,' ###','\n'))
-      ##### end output messages ####
-    }
   }
-  
-  # LIME
-  #td.sort <- train.data[order(train.data$target),]
-  #td.sort <- td.sort[,predictors(rfmodel)[c(1:rfe_lim)]]
-  #explainer <- lime(td.sort, modelo.ajuste)
-  #print(names(td.sort))
-  #print(explainer)
-  #
-  ## Explaining selecting samples
-  #explanation_ini <- explain(td.sort[1:5,],
-  #                           explainer,
-  #                           n_permutations = 5000,
-  #                           dist_fun = "euclidean",
-  #                           n_features = 5,
-  #                           feature_select = "highest_weights")
 
-  #explanation_fin <- explain(td.sort[317:321,],
-  #                           explainer,
-  #                           n_permutations = 5000,
-  #                           dist_fun = "euclidean",
-  #                           n_features = 5,
-  #                           feature_select = "highest_weights")
-  #
-  ## Visualising the model explanations
-  #plot_features(explanation_ini)
-  #plot_features(explanation_fin)
-  #plot_explanations(explanation_ini)
-  #plot_explanations(explanation_fin)
-
-
-  #prediccion.archivo.geotiff <- paste0(datos.salida.geotiff,'/',str_replace(VarObj,'[.]','-'),'_PRED_',modelos.mejor,'.tif')
-  #if (!file.exists(prediccion.archivo.geotiff)){
-  #  ##### output messages ####
-  #  cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de predicciÃ³n usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
-  #  ##### end output messages ####
-  #  start <- Sys.time()
-  #  PredictGeoTIFF(COV, modelo.ajuste, prediccion.archivo.geotiff)
-  #  print(Sys.time() - start)
-  #} else{
-  #  ##### output messages ####
-  #  cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de predicciÃ³n usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
-  #  ##### end output messages ####
-  #}
-  #
-  #prediccion.archivo.figuras <- paste0(datos.salida.figuras,'/',str_replace(VarObj,'[.]','-'),'_PRED_',modelos.mejor,'.png')
-  #if (!file.exists(prediccion.archivo.figuras)){
-  #  ##### output messages ####
-  #  cat(paste0('### RESULTADO 3 de 3: La figura de predicciÃ³n de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.figuras,' ###','\n'))
-  #  ##### end output messages ####
-  #  pred <- raster(prediccion.archivo.geotiff)
-  #  plot(pred)
-  #  png(file = prediccion.archivo.figuras, width = 700, height = 600)
-  #  print(plot(pred, main = VarObj))
-  #  dev.off()
-  #} else{
-  #  ##### output messages ####
-  #  cat(paste0('### RESULTADO 3 de 3: La figura de predicciÃ³n de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo.figuras,' ###','\n'))
-  #  ##### end output messages ####
-  #}
-
+  #estimar tiempo de procesamiento total
+  print(Sys.time() - start_time)
 }

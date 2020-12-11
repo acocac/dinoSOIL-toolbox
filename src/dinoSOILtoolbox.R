@@ -30,7 +30,6 @@ proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/proyecto_cesarmagdalena'
 # Cargar el archivo de configuracion
 conf.file = paste0(proyecto.dir,'/config/conf.txt')
 # Cargar funciones de interaccion con el usuario
-# source(paste0(r.dir,'/functions/0a_ArgsUsuario.R'))
 
 
 ########################################################

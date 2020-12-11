@@ -57,7 +57,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   conf.args <- LoadConfig(conf.file)
 
   # Cargar componentes relacionados con este script
-  proyecto.directorio <- conf.args[[1]]
+  proyecto.directorio <- conf.args[['proyecto.carpeta']]
   project.name <- sapply(strsplit(proyecto.directorio, '_'), tail, 1)
 
   # ------------------------------------------------------- #
