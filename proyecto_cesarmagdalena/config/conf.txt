@@ -19,22 +19,22 @@ variables.categoricas = FAMILIA_TE;GRANGRUPO
 variables.continuas = pH
 
 #######################
-Ajustes variables objetivo
+Ajustes Variables Objetivo
 #######################
 categoricas.minobservaciones = 5
-continuas.profundidades = 0-30;30-10
+continuas.profundidades = 0-30;30-100
 
 #######################
 Covariables
 #######################
-covariables = clima;relieve;NDVI;DEM
-NDVI.fechas = 2019-01-01;2020-08-30
+covariables.vector = clima;relieve
+covariables.raster = NDVI;DEM
 
 #######################
-Ajuste atributos covariables
+Ajuste Covariables
 #######################
-clima = Denominaci
-relieve = TIPO_RELIE
+vector.atributos = Denominaci;TIPO_RELIE
+NDVI.fechas = 2019-01-01;2020-08-30
 
 #######################
 Aprendizaje de Maquinas
