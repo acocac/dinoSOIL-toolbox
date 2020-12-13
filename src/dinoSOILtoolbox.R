@@ -77,11 +77,11 @@ ExpRFE(args_p3[[1]], args_p3[[2]])
 ########################################################
 #####PARTE 4a - Modelacion: Exploracion datos         ##
 ########################################################
+#TODO FALTA CATEGORICO
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 Variable Objetivo
 args_p4a <- prompt.user.part4a()
 
 #### ejecutar la funcion del modulo ###
@@ -147,6 +147,12 @@ ModUso(args_p4e[[1]], args_p4e[[2]], args_p4e[[3]], args_p4e[[4]], args_p4e[[5]]
 ###########################################################
 
 ##TRABAJO FUTURO
+#RFE
+## https://github.com/m2-rshiny/ProjetTut/blob/426fcff7642ffdd8f84743c88cc732e2bd617ca7/Archives/MLShiny2/analysis-UGA.R
+## https://github.com/raiajeet/AmExpert-2018-Machine-Learning-Hackathon-/blob/9f9c6711cc5c012bbf5520ebb0c188c0d3847c67/code.R
+## https://github.com/Edimer/DataSource.ai/blob/226e358b5d106d075b396324956bd28e05d96e51/PreciosApartamentos/codeR/LightGBM2.R
+## https://github.com/Edimer/Zindi.africa/blob/2802ad05863fdf3b5d52f602d545bc39d8b3affe/Prediction_Flood/R/lgbmR1.R
+
 # Modelado
 #TODO mejorar https://github.com/gimelbrantlab/magic/blob/0a86af1d18bb7b13a556090fa0bbe0fd5d424770/src/scores_ml.R
 # https://github.com/CIAT-DAPA/sfs_project/blob/b679e418205054f0cce95cda19d0fb64f5c18eea/codes/01_2_SDrivers_process_input_data.R

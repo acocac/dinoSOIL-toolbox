@@ -2,7 +2,7 @@
 # titulo        : Exploracion de los datos de entrada;
 # proposito     : Explorar los datos de entrada, entrenamiento y evaluacion;
 # autor(es)     : Preparado por Andres Lopez (AL) y Patricia Escudero (PE), IGAC-CIAF; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado ACC en Bogota�, Colombia;
+# actualizacion : Creado ACC en Bogota, Colombia;
 # entrada       : Particicion Datos de Entrenamiento y Evaluacion;
 # salida        : Graficas indicando relacion datos con la variable objetivo;
 # observaciones : ninguna;
@@ -37,13 +37,17 @@ prompt.user.part4a <- function()#get arguments from user
 
 
 ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
+  # iniciar el monitoreo tiempo de procesamiento total
+  timeStart <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(ggplot2, tidyr, PerformanceAnalytics, stringr, caret,
-                                  pals, psych))
+                                  pals, psych, purrr, nortest, tseries, rstatix, PMCMR,
+                                  rcompanion, multcompView))
   
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
@@ -58,22 +62,27 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
 
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[['proyecto.carpeta']]
-  project.name <- sapply(strsplit(proyecto.directorio, '_'), tail, 1)
+  project.covars.vector <- conf.args[['covariables.vector']]
+  project.covars.vector <- unlist(strsplit(project.covars.vector,';'))
 
   # ------------------------------------------------------- #
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
+  metadatos.categoricas <- paste0(proyecto.directorio,'/datos/entrada/1_covariables/raster')
   exploratorio.variables <- paste0(proyecto.directorio,'/exploratorio/',BaseDatos,'/rds/',str_replace(VarObj,'[.]','-'))
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
   dir.create(modelos.entrada, recursive = T, mode = "0777", showWarnings = F)
   modelos.salida <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/1_exploratorio/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables')
-  dir.create(modelos.salida, recursive = T, mode = "0777", showWarnings = F)
+  carpeta.descriptiva = paste0(modelos.salida,'/1_descriptivo')
+  dir.create(carpeta.descriptiva, recursive = T, mode = "0777", showWarnings = F)
+  carpeta.graficos = paste0(modelos.salida,'/2_graficos')
+  dir.create(carpeta.graficos, recursive = T, mode = "0777", showWarnings = F)
+  carpeta.estadistico = paste0(modelos.salida,'/3_estadistico')
+  dir.create(carpeta.estadistico, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
-
-  start_time <- Sys.time()
 
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
@@ -93,116 +102,125 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   load(paste0(exploratorio.variables,'/rfe.rds'))
 
   # ------------------------------------------------------- #
-  # Definir variables globales
-  # ------------------------------------------------------- #
-  global_clima <- c('Cálido, húmedo','Cálido, muy seco','Cálido, seco','Frío, húmedo','Subnival, Pluvial','Templado, húmedo')
-  names(global_clima) <- c(1, 2, 3, 7, 13, 14)
-
-  global_relieve <- c('Terraza aluvial nivel 1','Colina','Glacis de acumulación','Loma',
-                         'Valle estrecho','Depresión','Vallecito','Plano de inundación de rio meóndrico activo',
-                      'Plano de inundación de rio meóndrico inactivo',
-                      'Fila y viga','Abanico aluvial antiguo','Abanico aluvial reciente','Abanico aluvial subreciente',
-                      'Cumbre','Cono de deyección')
-
-  names(global_relieve) <- c(1:9, 14, 15, 16, 17, 20, 21)
-
-  # ------------------------------------------------------- #
   # Graficar según tipo de variable
   # ------------------------------------------------------- #
   if (is(train.data[,'target'],'numeric')){
 
     # covariables
     covars = predictors(rfmodel)[1:rfe_lim]
-
     covars = gsub('_','-',covars)
-    
-    # directorios
-    carpeta.correlacion = paste0(modelos.salida,'/correlacion')
+    covars_categoricas = project.covars.vector[project.covars.vector %in% covars]
+    covars_continuas = covars[!covars %in% project.covars.vector]
+
+    # directorios correlaciones
+    carpeta.correlacion = paste0(carpeta.graficos,'/correlacion')
     dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
-    carpeta.dispersion.clima = paste0(modelos.salida,'/dispersion/clima')
-    dir.create(carpeta.dispersion.clima, recursive = T, mode = "0777", showWarnings = F)
-    carpeta.dispersion.relieve = paste0(modelos.salida,'/dispersion/relieve')
-    dir.create(carpeta.dispersion.relieve, recursive = T, mode = "0777", showWarnings = F)
-    carpeta.boxplot.clima = paste0(modelos.salida,'/boxplot')
-    dir.create(carpeta.boxplot.clima, recursive = T, mode = "0777", showWarnings = F)
 
-    # lista de graficos
-    lista.graficos.dispersion = c(sprintf('%s_dispersion_clima', covars), sprintf('%s_dispersion_relieve', covars))
-    lista.graficos = c('train_correlationmatrix','test_correlationmatrix', lista.graficos.dispersion, sprintf('clima_boxplot_%s', VarObj))
+    # descriptivo variable objetivo
+    desc_target <- describe(data[data$particion == 'train', 'target'])
+    desc_target$vars <- VarObj
+    write.csv(desc_target,paste0(carpeta.descriptiva,'/1_descriptivo_variableobjetivo.csv'),row.names = FALSE)
+
+    # descriptivo covariables continuas
+    desc_continuas <- describe(data[data$particion == 'train', covars_continuas])
+    desc_continuas$vars <- covars_continuas
+    write.csv(desc_continuas,paste0(carpeta.descriptiva,'/2_descriptivo_covariables-continuas.csv'),row.names = FALSE)
+
+    #crear directorios y cargar metadatados si hay covariables categoricas
+    if (length(covars_categoricas) > 0){
+      #crear directorios
+      carpeta.boxplot = paste0(carpeta.graficos,'/boxplot')
+      dir.create(carpeta.boxplot, recursive = T, mode = "0777", showWarnings = F)
+
+      metadata_categoricas = list()
+      for (i in covars_categoricas){
+        #directorios
+        carpeta.dispersion = paste0(carpeta.graficos,'/dispersion/',i)
+        dir.create(carpeta.dispersion, recursive = T, mode = "0777", showWarnings = F)
+        #metadatos
+        metadata_categoricas[[i]] <- read.csv(paste0(metadatos.categoricas,'/',i,'/',i,'.csv'))
+      }
+
+      # descriptivo covariables categoricas
+      DescCategoricas <- function(covar){
+        clases = factor(data[data$particion == 'train', covar])
+        global_metadatos <- metadata_categoricas[[covar]]
+        clases.tabla = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
+
+        freq <- table(data[data$particion == 'train', covar])
+        out_tb <- data.frame(covariable=covar, clases=clases.tabla, Frecuencia=freq)
+        return(out_tb)
+      }
+
+      desc_categoricas <- lapply(covars_categoricas, function(x){DescCategoricas(x)})
+      names(desc_categoricas) <- covars_categoricas
+
+      # Exportar tablas por separado
+      lapply(names(desc_categoricas), function(x) write.csv(desc_categoricas[[x]],
+        file =paste0(carpeta.descriptiva,'/3_descriptivo_covariable-categorica_',x,'.csv'), row.names=FALSE))
+
+      # lista de graficos dispersion
+      lista.graficos.dispersion = list()
+      for (covar_cat in covars_categoricas){
+        lista.temp <- sprintf(paste0('%s_',covar_cat,'_dispersion'), covars_continuas)
+        lista.graficos.dispersion[[covar_cat]] <- lista.temp
+      }
+      lista.graficos.dispersion <- lista.graficos.dispersion %>% flatten_chr()
+
+      # lista de graficos boxplots
+      lista.graficos.boxplots = sprintf('%s_boxplot', covars_categoricas)
+
+      lista.graficos = c('train_correlationmatrix','test_correlationmatrix', lista.graficos.dispersion, lista.graficos.boxplots)
+    } else{
+      lista.graficos = c('train_correlationmatrix','test_correlationmatrix')
+    }
+
     lista.graficos.procesados = gsub("\\.png$", "", basename(list.files(path= modelos.salida, pattern = "\\.png$", recursive = T)))
-
     lista.graficos.faltantes <- setdiff(lista.graficos,lista.graficos.procesados)
 
     if (length(lista.graficos.faltantes) > 0){
-      # Graficos matrix de correlación
       for (j in lista.graficos.faltantes){
-        if (j == 'train_correlationmatrix'){
-          covars = gsub('-','_',covars)
+        if (endsWith(j, 'correlationmatrix')){
+          particion <- sapply(strsplit(j, "_", fixed = TRUE), "[", 1)
           png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
-          chart.Correlation(data[data$particion == 'train', covars])
+          chart.Correlation(data[data$particion == particion, covars_continuas])
           par(xpd=TRUE)
           dev.off()
         }
-        else if (j == 'test_correlationmatrix'){
-          covars = gsub('-','_',covars)
-          png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
-          chart.Correlation(data[data$particion == 'test', covars])
-          par(xpd=TRUE)
-          dev.off()
-        }
-        else if (endsWith(j, 'dispersion_clima')){
-          ## Graficos comparaciones
-          clima.clases = factor(data[data$particion == 'train', 'clima'])
-          clima.clases.grafica = as.vector(global_clima[which(names(global_clima) %in% clima.clases)])
+        else if (endsWith(j, 'dispersion')){
+          tipo <- sapply(strsplit(j, "_", fixed = TRUE), "[", 2)
+          tarVar <- sapply(strsplit(j, "_", fixed = TRUE), "[", 1)
 
-          i = strsplit(j, "_")[[1]][1]
-          i = gsub('-','_',i)
+          clases = factor(data[data$particion == 'train', tipo])
+          global_metadatos <- metadata_categoricas[[tipo]]
+          clases.grafica = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
 
-          png(file = paste0(carpeta.dispersion.clima,'/',j,'.png'), width = 700, height = 400)
-          p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","clima"))) +
+          fn <- paste0(tarVar,'_',tipo,'_dispersion.png')
+          png(file = paste0(carpeta.graficos,'/dispersion/',tipo,'/',fn), width = 700, height = 400)
+          p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=tarVar, y='target', colour=sprintf("factor(%s)",tipo))) +
             geom_point(alpha = 0.4) +
-            scale_color_discrete(name='Clima',labels=clima.clases.grafica) +
-            xlab(i) +
+            scale_color_discrete(name=tipo,labels=clases.grafica) +
+            xlab(tarVar) +
             ylab(VarObj) +
             theme(legend.position='top') +
             guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
             theme_bw()
             print(p)
           dev.off()
+
         }
-        else if (endsWith(j, 'dispersion_relieve')){
-          ## Graficos comparaciones
-          relieve.clases = factor(data[data$particion == 'train', 'relieve'])
-          relieve.clases.grafica = as.vector(global_relieve[which(names(global_relieve) %in% relieve.clases)])
+        else if (endsWith(j, 'boxplot')){
+          tipo <- sapply(strsplit(j, "_", fixed = TRUE), "[", 1)
 
-          i = strsplit(j, "_")[[1]][1]
-          i = gsub('-','_',i)
+          clases = factor(data[data$particion == 'train', tipo])
+          global_metadatos <- metadata_categoricas[[tipo]]
+          clases.grafica = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
 
-          png(file = paste0(carpeta.dispersion.relieve,'/',j,'.png'), width = 700, height = 400)
-          p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=i, y='target', colour=sprintf("factor(%s)","relieve"))) +
-            geom_point(alpha = 0.4) +
-            scale_color_discrete(name='Relieve', labels=relieve.clases.grafica) +
-            xlab(i) +
-            ylab(VarObj) +
-            theme(legend.position='top') +
-            guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
-            theme_bw()
-            print(p)
-          dev.off()
-        }
-        else if (j == sprintf('clima_boxplot_%s', VarObj)){
-          ## Graficos comparaciones
-          clima.clases = factor(data[data$particion == 'train', 'clima'])
-          clima.clases.grafica = as.vector(global_clima[which(names(global_clima) %in% clima.clases)])
-
-          i = strsplit(j, "_")[[1]][1]
-          i = gsub('-','_',i)
-
-          png(file = paste0(carpeta.boxplot.clima,'/',j,'.png'), width = 700, height = 400)
-          p <- ggplot(data = data[data$particion == 'train', names(data)], aes_string(x=sprintf("factor(%s)",i), y='target', fill=sprintf("factor(%s)",i))) +
+          png(file = paste0(carpeta.graficos,'/boxplot/',tipo,'_boxplot.png'), width = 700, height = 400)
+          p <- ggplot(data = data[data$particion == 'train', names(data)], aes_string(x=sprintf("factor(%s)",tipo), y='target', fill=sprintf("factor(%s)",tipo))) +
             geom_boxplot() +
             ylab(VarObj) +
-            scale_fill_discrete(name='Clima', labels=clima.clases.grafica) +
+            scale_fill_discrete(name=tipo, labels=clases.grafica) +
             theme(axis.title.x=element_blank(),
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank())
@@ -213,18 +231,94 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
           dev.off()
         }
       }
-
-
       }
+
+    # Estadistico
+    target_dataset = data[data$particion == 'train',]
+
+    if (dim(target_dataset)[1] > 50){
+      ## Pruebas normalidad
+      # Test lillie
+      lillie <- lillie.test(x=target_dataset$target)
+      # Test Jarque-Bera
+      jarque <- jarque.bera.test(x=target_dataset$target)
+      # Crear dataframe
+      normalidad <- data.frame(prueba=c('Lilliefors','Jarque Bera Test'),pvalue=c(lillie$p.value,jarque$p.value))
+      # agregar significancia
+      normalidad <- normalidad %>% mutate(Significancia = case_when(
+                pvalue < 0.0001  ~ "**** <0,0001",
+                pvalue < 0.001  ~ "*** <0,001",
+                pvalue < 0.01   ~ "** <0,01",
+                pvalue < 0.05   ~ "*<0,05",
+                TRUE ~ "NS"
+              ))
+
+      ## Kruskal wallis
+      KWdata <- function(covar){
+        kw <- kruskal.test(target_dataset[,'target']~target_dataset[,covar])
+        out_tb <- data.frame(covariable=covar, chi.squared=kw$statistic, pvalue=kw$p.value)
+        return(out_tb)
+      }
+
+      KW.resultados <- lapply(covars, function(x){KWdata(x)})
+      KW.resultados <- do.call('rbind', KW.resultados)
+      # agregar significancia
+      KW.resultados <- KW.resultados %>% mutate(Significancia = case_when(
+                pvalue < 0.0001  ~ "**** <0,0001",
+                pvalue < 0.001  ~ "*** <0,001",
+                pvalue < 0.01   ~ "** <0,01",
+                pvalue < 0.05   ~ "*<0,05",
+                TRUE ~ "NS"
+              ))
+
+      ## Posthoc
+      covar.signif <- KW.resultados[which(KW.resultados['pvalue']<0.05),'covariable']
+      categoricas_posthoc = covar.signif[covar.signif %in% covars_categoricas]
+
+      postHOCdata <- function(covar){
+        clases = factor(data[data$particion == 'train', covar])
+        global_metadatos <- metadata_categoricas[[covar]]
+        clases = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
+
+        phoc <- posthoc.kruskal.nemenyi.test(target_dataset[,'target']~target_dataset[,covar],p.adjust.method='Bonferroni')
+
+        # Cambiar formarto y asignar nombres
+        PT <- phoc$p.value
+        PT1 <- data.frame(fullPTable(PT))
+        colnames(PT1) <- clases
+        rownames(PT1) <- clases
+
+        PT1_levels <- PT1 %>% mutate_at(vars(colnames(PT1)),  ~ case_when(. < 0.001 ~ "*** <0,001",
+                                                             . < 0.01   ~ "** <0,01",
+                                                             . < 0.05   ~ "* <0,05",
+                                                             TRUE ~ "NS"))
+        rownames(PT1_levels) <- clases
+
+        output <- list(PT1,PT1_levels)
+
+        return(output)
+      }
+
+      phoc.resultados <- lapply(categoricas_posthoc, function(x){postHOCdata(x)})
+      names(phoc.resultados) <- categoricas_posthoc
+
+      # Exportar resultados normalidad
+      write.csv(normalidad,paste0(carpeta.estadistico,'/1_normalidad.csv'),row.names=FALSE)
+      write.csv(KW.resultados,paste0(carpeta.estadistico,'/2_kruskal_grupos.csv'),row.names=FALSE)
+
+      # Export posthoc tabla y boxplot
+      lapply(names(phoc.resultados), function(x) write.csv(phoc.resultados[[x]][1],
+        file =paste0(carpeta.estadistico,'/3a_posthoc-valores_',x,'.csv'), row.names=TRUE))
+
+      lapply(names(phoc.resultados), function(x) write.csv(phoc.resultados[[x]][2],
+        file =paste0(carpeta.estadistico,'/3b_posthoc-significancia_',x,'.csv'), row.names=TRUE))
+    }
   }
   else if (is(train.data[,'target'],'factor')){
-      # As a rule of thumb, a class to be modelled should have at least 5 observations
-      # source: https://soilmapper.org/soilmapping-using-mla.html
     # covariables
     covars = predictors(rfmodel)[1:rfe_lim]
     covars = gsub('_','-',covars)
-    print(paste0(covars, collapse=', '))
-    
+
     # directorios
     carpeta.correlacion = paste0(modelos.salida,'/correlacion')
     dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
@@ -267,6 +361,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   }
 
   #estimar tiempo de procesamiento total
-  print(Sys.time() - start_time)
+  timeEnd = Sys.time()
+  print(round(difftime(timeEnd, timeStart, units='mins'),1))
 
 }

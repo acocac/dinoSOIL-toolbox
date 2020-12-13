@@ -35,6 +35,9 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   if (missing(filename))
     stop("Necesita especificar la base de datos para verticalizar.")
 
+  # iniciar el monitoreo tiempo de procesamiento total
+  start_time <- Sys.time()
+
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -229,4 +232,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
     perfiles <- length(unique(verticalizada$ID_PERFIL))
     cat(paste0('### RESULTADO: La base de datos de ',tipo,' del proyecto ',basename(project.name),' ya existe (se recomienda inspeccionarla) y contiene ',perfiles, ' perfiles'))
   }
+
+  #estimar tiempo de procesamiento total
+  print(round(Sys.time() - start_time),1)
 }

@@ -33,32 +33,19 @@ prompt.user.part3 <- function()#get arguments from user
 
 ExpRFE <- function(VarObj, BaseDatos){
   # iniciar el monitoreo tiempo de procesamiento total
-  start_time <- Sys.time()
-
-  ##
-  ## src1:
-  ## https://github.com/m2-rshiny/ProjetTut/blob/426fcff7642ffdd8f84743c88cc732e2bd617ca7/Archives/MLShiny2/analysis-UGA.R
-  ## https://github.com/raiajeet/AmExpert-2018-Machine-Learning-Hackathon-/blob/9f9c6711cc5c012bbf5520ebb0c188c0d3847c67/code.R
-  ## https://github.com/Edimer/DataSource.ai/blob/226e358b5d106d075b396324956bd28e05d96e51/PreciosApartamentos/codeR/LightGBM2.R
-  ## https://github.com/Edimer/Zindi.africa/blob/2802ad05863fdf3b5d52f602d545bc39d8b3affe/Prediction_Flood/R/lgbmR1.R
+  timeStart <- Sys.time()
 
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   ## Librerias
-  #pckg = c('compareGroups','caret','raster',
-  #         'doParallel','dplyr','labelled',
-  #          'ranger', 'tidyverse', 'reshape2',
-  #          'hrbrthemes', 'ggpubr', 'Boruta')
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(caret, doParallel, randomForest, Boruta, stringr, dplyr))
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
   source(paste0(r.dir,'/functions/0_CargarConfig.R'))
-  source(paste0(r.dir,'/functions/3a_Outliers.R'))
-  source(paste0(r.dir,'/functions/3b_Boxplot.R'))
-  source(paste0(r.dir,'/functions/3c_RFE.R'))
+  source(paste0(r.dir,'/functions/3_Outliers.R'))
 
   # ------------------------------------------------------- #
   # Cargar archivo de configuracion y componentes
@@ -97,8 +84,8 @@ ExpRFE <- function(VarObj, BaseDatos){
   covariables <- readRDS(paste0(datos.entrada,'/1_covariables/covariables.rds'))
 
   final_df <- data.frame(matriz[,c('COD_PERFIL','LATITUD','LONGITUD')], target=matriz[,VarObj], matriz[,which(names(matriz) %in% covariables)])
-  print(dim(final_df))
-  
+  print(paste0('El numero inicial de perfiles de la matriz de datos es de ', dim(final_df)[1]))
+
   # identificar y remote outliers
   gooddata = computeOutliers(matriz[,covariables], type = 'remove')
   good_df_q95 = final_df[gooddata,]
@@ -115,11 +102,16 @@ ExpRFE <- function(VarObj, BaseDatos){
   data <- data[complete.cases(data), ]
 
   if (is(data$target,'character')){
-    # si la variable es categorica solo dejar clases con al menos de 5 observaciones
-    # As a rule of thumb, a class to be modelled should have at least 5 observations
-    # source: https://soilmapper.org/soilmapping-using-mla.html
+    umbral.categoricas <- conf.args[['categoricas.minobservaciones']]
+    if (!exists(umbral.categoricas)){
+      # si la variable es categorica solo dejar clases con al menos del umbral de observaciones
+      # como regla general este umbral es de 5 observations
+      # fuente: https://soilmapper.org/soilmapping-using-mla.html
+      umbral.categoricas <- 5
+    }
+
     original <- unique(data$target)
-    data <- data[data$target %in%  names(table(data$target))[table(data$target) >= 5] , ]
+    data <- data[data$target %in%  names(table(data$target))[table(data$target) >= umbral.categoricas] , ]
     remove_all_ws<- function(string){
       return(gsub(" ", "_", str_squish(string)))
     }
@@ -127,15 +119,20 @@ ExpRFE <- function(VarObj, BaseDatos){
       mutate_if(is.character, remove_all_ws)
     data$target <- factor(data$target)
     final <- unique(data$target)
-    print(paste0(original[!(original %in% final)], collapse=', '))
-    METRIC <- 'Accuracy'
+    print('Los siguientes grupos fueron removidos por no cumplir el umbral de ',umbral.categoricas ,'observaciones: ', paste0(original[!(original %in% final)], collapse=', '),'\n','\n')
+
+    proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
+    proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
+    METRIC <- proyecto.metricas.categoricas[1]
   } else {
-    METRIC <- 'RMSE'
+    proyecto.metricas.continuas <- conf.args[['metricas.continuas']]
+    proyecto.metricas.continuas = unlist(strsplit(proyecto.metricas.continuas,';'))
+    METRIC <- proyecto.metricas.continuas[1]
   }
 
   data_model <-data.frame(target=data[,'target'], data[,which(names(data) %in% covariables)])
   data_info <-data[,c('COD_PERFIL','LATITUD','LONGITUD')]
-  print(dim(data_model))
+  print(paste0('El numero final de perfiles posterior a la limpieza de datos atipicos es de ', dim(data_model)[1]))
   
   ##Conjunto de datos para entrenamiento y para validacion
   set.seed(225)
@@ -144,16 +141,16 @@ ExpRFE <- function(VarObj, BaseDatos){
   test_data <- as.data.frame(data_model[-inTrain,])
   particion <- list(train=train_data,test=test_data)
   save(particion, file=paste0(modelos.particion.datos,'/particion.RData'))
-  write.csv(train_data, file=paste0(modelos.particion.datos,'/entrenamiento.csv'), row.names=FALSE)
-  write.csv(test_data, file=paste0(modelos.particion.datos,'/evaluacion.csv'), row.names=FALSE)
+  write.csv(train_data, file=paste0(modelos.particion.datos,'/entrenamiento.csv'), row.names=TRUE)
+  write.csv(test_data, file=paste0(modelos.particion.datos,'/evaluacion.csv'), row.names=TRUE)
   
   ##Exportar datos info coordenadas
   data_info[inTrain,'particion'] <- 'entrenamiento'
   data_info[-inTrain,'particion'] <- 'evaluacion'
   write.csv(data_info, file=paste0(modelos.particion.datos,'/coordenadas.csv'), row.names=FALSE)
-  print(dim(train_data))
-  print(dim(test_data))
-  
+  print(paste0('La particion de entrenamiento contiene ',dim(train_data)[1],' perfiles'))
+  print(paste0('La particion de evaluacion contiene ',dim(test_data)[1],' perfiles'),'\n','\n')
+
   #Definir muestras de entrenamiento
   data <- train_data
   ##Seleccion de variables --> RFE
@@ -176,15 +173,13 @@ ExpRFE <- function(VarObj, BaseDatos){
     seeds[[51]] <- sample.int(1000, 1)
     
     #procesamiento en paralelo
-    start <- Sys.time()
     no_cores <- detectCores() - 1
     cl <- makeCluster(no_cores, type = "SOCK")
     registerDoParallel(cl)
     control2 <- rfeControl(functions=rfFuncs, method="repeatedcv", number=5, repeats=5, seeds = seeds) #number=10, repeats=10 de acuerdo FAO sin embargo MGuevara usa 5 https://github.com/DSM-LAC/MEXICO/search?q=rfe
     (rfmodel <- rfe(x=data[,-1], y=data[,1], sizes=subset, rfeControl=control2)) #sizes se refiere al detalle de la curva,
     stopCluster(cl = cl)
-    print(Sys.time() - start)
-    
+
     #exportar imagen
     png(file = paste0(exploratorio.variables.figuras,'/',str_replace(file_name,'.rds','.png')), width = 700, height = 550)
     print(plot(rfmodel, type=c("g", "o"), cex=2,cex.names = 2, metric = METRIC))
@@ -200,7 +195,6 @@ ExpRFE <- function(VarObj, BaseDatos){
   if (!file.exists(exploratorio.variables.boruta)){
     cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta'),'\n','\n')
     nCores <- detectCores() - 1
-    start <- Sys.time()
     set.seed(123)
     formula <- as.formula('target ~ .')
     (bor <- Boruta(formula, data = data, doTrace = 0, num.threads = nCores, ntree = 30, maxRuns=500)) #se debe evaluar ntree (numero de arboles), maxRuns (cantidad de interacciones)
@@ -209,7 +203,6 @@ ExpRFE <- function(VarObj, BaseDatos){
     par(mar = c(18, 4, 1, 1))
     plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
     dev.off()
-    print(Sys.time() - start)
   } else {
     cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
   }
@@ -269,5 +262,6 @@ ExpRFE <- function(VarObj, BaseDatos){
   }
 
   #estimar tiempo de procesamiento total
-  print(Sys.time() - start_time)
+  timeEnd = Sys.time()
+  print(round(difftime(timeEnd, timeStart, units='mins'),1))
 }

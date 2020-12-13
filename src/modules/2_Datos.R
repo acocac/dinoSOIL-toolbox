@@ -32,7 +32,7 @@ prompt.user.part2 <- function()#get arguments from user
 
 Datos <- function(filename, hoja, columna, limite.carpeta){
   # iniciar el monitoreo tiempo de procesamiento total
-  start_time <- Sys.time()
+  timeStart <- Sys.time()
 
   # ------------------------------------------------------- #
   # Librerias y funciones
@@ -56,11 +56,8 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
   # Cargar componentes relacionados con este script
   project.folder <- conf.args[['proyecto.carpeta']]
   project.name <- sapply(strsplit(project.folder, '_'), tail, 1)
-  project.vars.categoricas <- conf.args[['vars.categoricas']]
-  project.vars.categoricas = unlist(strsplit(project.vars.categoricas,';'))
   project.vars.continuas <- conf.args[['vars.continuas']]
   project.vars.continuas <- unlist(strsplit(project.vars.continuas,';'))
-  project.vars.all <- c(project.vars.categoricas, project.vars.continuas)
 
   project.covars.vector <- conf.args[['covariables.vector']]
   project.covars.vector <- unlist(strsplit(project.covars.vector,';'))
@@ -119,28 +116,6 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
       if (length(DEMderivados_lista) > 0){
         DEMderivados_rast_res <- stack(DEMderivados_lista)
       }
-
-      ## Procesar datos espaciales #
-      ## Derivados DEM
-      #if ('DEM' %in% project.covars.list){
-      #  out.dir <- paste0(in.geo.data,'/raster/dem/stack')
-      #  dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-      #  covariable.archivo <- paste0(out.dir,'/dem_cov.tif')
-      #  if (!file.exists(covariable.archivo)){
-      #    cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados no existe, se requiere generarlo','\n','\n'))
-      #    DEM_derivado <- stack(list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE))
-      #    DEM_rast_res <- stack(dem, DEM_derivado)
-      #    names(DEM_rast_res)[1] <- 'dem'
-      #    DEM_rast_res <- crop(DEM_rast_res,limite_shp)
-      #    writeRaster(DEM_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
-      #    saveRDS(names(DEM_rast_res),file=gsub('.tif','.rds',covariable.archivo))
-      #  } else{
-      #    cat(paste0('El archivo stack geoTIFF de la variable DEM y derivados existe, se va agregar al covariable','\n','\n'))
-      #    DEM_rast_res <- stack(covariable.archivo)
-      #    nombres_DEM <- readRDS(gsub('.tif','.rds',covariable.archivo))
-      #    names(DEM_rast_res) <- nombres_DEM
-      #  }
-      #}
 
       # Vegetacion 
       if ('NDVI' %in% project.covars.list){
@@ -270,6 +245,11 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
               covar_vector <- readOGR(paste0(in.geo.data,'/vector/',covar))
               covar_vector <- raster::intersect(covar_vector, limite_shp)
             }
+
+            ## Extraer y exportar metadata
+            metada.archivo <- gsub('.tif','.csv',covariable.archivo)
+            metadata <- data.frame('ID'=seq_along(unique(covar_vector@data[[covar_atributo]])),'GRUPO'=unique(covar_vector@data[[covar_atributo]]))
+            write.csv(metadata, metada.archivo, row.names=FALSE)
 
             ## Rasterizar capa
             covar_vector <- spTransform(covar_vector, CRS=projection(DEM_rast_res))
@@ -429,7 +409,7 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
 
     # Eliminar observaciones cero varianza
     index_cov = dim(datos_final)[2]+1
-    matriz_datos <- matriz_datos %>% filter_at(vars(index_cov), all_vars(!is.na(.)))
+    matriz_datos <- matriz_datos %>% filter_at(vars(all_of(index_cov)), all_vars(!is.na(.)))
 
     # Exportar Matriz de Datos
     write.table(matriz_datos, paste0(out.tb.data,'/','MatrixDatos.csv'), row.names = F, sep=',')
@@ -440,5 +420,6 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
   }
 
   #estimar tiempo de procesamiento total
-  print(Sys.time() - start_time)
+  timeEnd = Sys.time()
+  print(round(difftime(timeEnd, timeStart, units='mins'),1))
 }
