@@ -38,6 +38,9 @@ Datos <- function(filename, hoja, columna){
   suppressMessages(pacman::p_load(readxl, tidyr, plyr, dplyr, raster, GSIF, aqp, sf, rgdal,
                                   smoothr, gdalUtilities, magrittr, stringr, caret))
 
+  # iniciar el monitoreo tiempo de procesamiento total
+  timeStart <- Sys.time()
+
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
   source(paste0(r.dir,'/functions/0_CargarConfig.R'))

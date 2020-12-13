@@ -35,15 +35,15 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   if (missing(filename))
     stop("Necesita especificar la base de datos para verticalizar.")
 
-  # iniciar el monitoreo tiempo de procesamiento total
-  timeStart <- Sys.time()
-
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(readxl, tidyr, dplyr))
+
+  # iniciar el monitoreo tiempo de procesamiento total
+  timeStart <- Sys.time()
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
