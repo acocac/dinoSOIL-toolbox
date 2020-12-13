@@ -77,7 +77,6 @@ ExpRFE(args_p3[[1]], args_p3[[2]])
 ########################################################
 #####PARTE 4a - Modelacion: Exploracion datos         ##
 ########################################################
-#TODO FALTA CATEGORICO
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
 

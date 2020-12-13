@@ -35,6 +35,20 @@ prompt.user.part4a <- function()#get arguments from user
   newlist = list(a, b, c)
 }
 
+DescCategoricas <- function(covar,data,metadata_categoricas){
+  if (covar != 'target'){
+    clases <- factor(data[data$particion == 'train', covar])
+    global_metadatos <- metadata_categoricas[[covar]]
+    clases.tabla <- as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
+  } else{
+    clases.tabla <- sort(unique(data[data$particion == 'train', covar]))
+  }
+
+  freqCat <- data.frame(table(data[data$particion == 'train', covar]))
+  out_tb <- data.frame(Clase=clases.tabla, Frecuencia=freqCat$Freq)
+  out_tb <- out_tb[order(out_tb$Frecuencia, decreasing = TRUE),]
+  return(out_tb)
+}
 
 ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # iniciar el monitoreo tiempo de procesamiento total
@@ -142,17 +156,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
       }
 
       # descriptivo covariables categoricas
-      DescCategoricas <- function(covar){
-        clases = factor(data[data$particion == 'train', covar])
-        global_metadatos <- metadata_categoricas[[covar]]
-        clases.tabla = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
-
-        freq <- table(data[data$particion == 'train', covar])
-        out_tb <- data.frame(covariable=covar, clases=clases.tabla, Frecuencia=freq)
-        return(out_tb)
-      }
-
-      desc_categoricas <- lapply(covars_categoricas, function(x){DescCategoricas(x)})
+      desc_categoricas <- lapply(covars_categoricas, function(x){DescCategoricas(x, data, metadata_categoricas)})
       names(desc_categoricas) <- covars_categoricas
 
       # Exportar tablas por separado
@@ -200,6 +204,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
           p <- ggplot(data=data[data$particion == 'train', names(data)], aes_string(x=tarVar, y='target', colour=sprintf("factor(%s)",tipo))) +
             geom_point(alpha = 0.4) +
             scale_color_discrete(name=tipo,labels=clases.grafica) +
+            ggtitle(paste0('Grafico de dispersion ',tarVar, ' (x) vs ', VarObj, ' (y) de acuerdo a los niveles de ', tipo))+
             xlab(tarVar) +
             ylab(VarObj) +
             theme(legend.position='top') +
@@ -221,12 +226,10 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
             geom_boxplot() +
             ylab(VarObj) +
             scale_fill_discrete(name=tipo, labels=clases.grafica) +
+            ggtitle(paste0('Boxplot ',tipo, ' (x) vs ', VarObj, ' (y)'))+
             theme(axis.title.x=element_blank(),
                   axis.text.x=element_blank(),
                   axis.ticks.x=element_blank())
-            theme(legend.position='top') +
-            guides(fill=guide_legend(nrow=2,byrow=TRUE)) +
-            theme_bw()
             print(p)
           dev.off()
         }
@@ -271,17 +274,182 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
                 TRUE ~ "NS"
               ))
 
+
+      # Exportar resultados normalidad y kruskal
+      write.csv(normalidad,paste0(carpeta.estadistico,'/1_normalidad.csv'),row.names=FALSE)
+      write.csv(KW.resultados,paste0(carpeta.estadistico,'/2_kruskal_grupos.csv'),row.names=FALSE)
+
       ## Posthoc
       covar.signif <- KW.resultados[which(KW.resultados['pvalue']<0.05),'covariable']
       categoricas_posthoc = covar.signif[covar.signif %in% covars_categoricas]
 
+      if (length(categoricas_posthoc) > 0){
+        postHOCdata <- function(covar){
+          clases = factor(data[data$particion == 'train', covar])
+          global_metadatos <- metadata_categoricas[[covar]]
+          clases = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
+
+          phoc <- posthoc.kruskal.nemenyi.test(target_dataset[,'target']~target_dataset[,covar],p.adjust.method='Bonferroni')
+
+          # Cambiar formarto y asignar nombres
+          PT <- phoc$p.value
+          PT1 <- data.frame(fullPTable(PT))
+          colnames(PT1) <- clases
+          rownames(PT1) <- clases
+
+          PT1_levels <- PT1 %>% mutate_at(vars(colnames(PT1)),  ~ case_when(. < 0.001 ~ "*** <0,001",
+                                                               . < 0.01   ~ "** <0,01",
+                                                               . < 0.05   ~ "* <0,05",
+                                                               TRUE ~ "NS"))
+          rownames(PT1_levels) <- clases
+
+          output <- list(PT1,PT1_levels)
+
+          return(output)
+        }
+
+        phoc.resultados <- lapply(categoricas_posthoc, function(x){postHOCdata(x)})
+        names(phoc.resultados) <- categoricas_posthoc
+
+        # Export posthoc tabla posthoc con valores y significancia
+        lapply(names(phoc.resultados), function(x) write.csv(phoc.resultados[[x]][1],
+          file =paste0(carpeta.estadistico,'/3a_posthoc-valores_',x,'.csv'), row.names=TRUE))
+
+        lapply(names(phoc.resultados), function(x) write.csv(phoc.resultados[[x]][2],
+          file =paste0(carpeta.estadistico,'/3b_posthoc-significancia_',x,'.csv'), row.names=TRUE))
+      }
+
+    }
+  }
+  else if (is(train.data[,'target'],'factor')){
+    # covariables
+    covars = predictors(rfmodel)[1:rfe_lim]
+    covars = gsub('_','-',covars)
+    covars_categoricas = project.covars.vector[project.covars.vector %in% covars]
+    covars_continuas = covars[!covars %in% project.covars.vector]
+
+    # descriptivo variable objetivo
+    metadata_categoricas <- list()
+    desc_target <- DescCategoricas('target', data, metadata_categoricas)
+    write.csv(desc_target,paste0(carpeta.descriptiva,'/1_descriptivo_variableobjetivo.csv'),row.names = FALSE)
+
+    # descriptivo covariables continuas
+    desc_continuas <- describe(data[data$particion == 'train', covars_continuas])
+    desc_continuas$vars <- covars_continuas
+    write.csv(desc_continuas,paste0(carpeta.descriptiva,'/2_descriptivo_covariables-continuas.csv'),row.names = FALSE)
+
+    if (length(covars_categoricas) > 0){
+
+      metadata_categoricas = list()
+      for (i in covars_categoricas){
+        metadata_categoricas[[i]] <- read.csv(paste0(metadatos.categoricas,'/',i,'/',i,'.csv'))
+      }
+
+      # descriptivo covariables categoricas
+      desc_categoricas <- lapply(covars_categoricas, function(x){DescCategoricas(x, data, metadata_categoricas)})
+      names(desc_categoricas) <- covars_categoricas
+
+      # Exportar tablas por separado
+      lapply(names(desc_categoricas), function(x) write.csv(desc_categoricas[[x]],
+        file =paste0(carpeta.descriptiva,'/3_descriptivo_covariable-categorica_',x,'.csv'), row.names=FALSE))
+    }
+
+    # directorios
+    carpeta.barras = paste0(carpeta.graficos,'/1_barras')
+    dir.create(carpeta.barras, recursive = T, mode = "0777", showWarnings = F)
+    carpeta.boxplot = paste0(carpeta.graficos,'/2_boxplot')
+    dir.create(carpeta.boxplot, recursive = T, mode = "0777", showWarnings = F)
+    carpeta.correlacion = paste0(carpeta.graficos,'/3_correlacion')
+    dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
+
+    # lista de graficos
+    # lista de graficos boxplots
+    if (length(covars_continuas) > 0){
+      lista.graficos.boxplots = sprintf('%s_boxplot', covars_continuas)
+      lista.graficos = c('barras', lista.graficos.boxplots, 'train_correlationmatrix','test_correlationmatrix')
+    } else{
+      lista.graficos = c('barras','train_correlationmatrix','test_correlationmatrix')
+    }
+
+    lista.graficos.procesados = gsub("\\.png$", "", basename(list.files(path= modelos.salida, pattern = "\\.png$", recursive = T)))
+
+    lista.graficos.faltantes <- setdiff(lista.graficos,lista.graficos.procesados)
+
+    if (length(lista.graficos.faltantes) > 0){
+      for (j in lista.graficos.faltantes){
+        if (endsWith(j, 'correlationmatrix')){
+          particion <- sapply(strsplit(j, "_", fixed = TRUE), "[", 1)
+          png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
+          chart.Correlation(data[data$particion == particion, covars_continuas])
+          par(xpd=TRUE)
+          dev.off()
+        } else if (endsWith(j, 'boxplot')){
+          covar_cont <- sapply(strsplit(j, "_", fixed = TRUE), "[", 1)
+          clases.grafica <- sort(unique(data[data$particion == 'train', 'target']))
+          png(file = paste0(carpeta.boxplot,'/',covar_cont,'_boxplot.png'), width = 700, height = 400)
+          p <- ggplot(data = data[data$particion == 'train', names(data)], aes_string(x='target', y=covar_cont, fill='target')) +
+            geom_boxplot() +
+            ylab(covar_cont) +
+            scale_fill_discrete(name=VarObj, labels=clases.grafica) +
+            ggtitle(paste0('Boxplot ',VarObj, ' (x) vs ', covar_cont, ' (y)'))+
+            theme(axis.title.x=element_blank(),
+                  axis.text.x=element_blank(),
+                  axis.ticks.x=element_blank())
+            print(p)
+          dev.off()
+        } else if (endsWith(j, 'barras')){
+          data_sorted <- within(data[data$particion == 'train', names(data)], target<- factor(target,
+                                         levels=names(sort(table(target),
+                                                           decreasing=TRUE))))
+
+          png(file = paste0(carpeta.barras,'/',VarObj,'_barras.png'), width = 700, height = 400)
+          p <- ggplot(data=data_sorted, aes(x=target)) +
+            geom_bar()+
+            ggtitle(paste0('Diagrama Barras ',VarObj))+
+            theme(axis.text.x = element_text(angle = 90,hjust = 1))+
+            labs(x="", y="Frecuencia")+
+            guides(fill=F)
+          print(p)
+          dev.off()
+        }
+      }
+    }
+
+    # Estadistico
+    target_dataset = data[data$particion == 'train',]
+
+    ## Kruskal wallis
+    KWdata <- function(covar){
+      kw <- kruskal.test(target_dataset[,'target']~target_dataset[,covar])
+      out_tb <- data.frame(covariable=covar, chi.squared=kw$statistic, pvalue=kw$p.value)
+      return(out_tb)
+    }
+
+    KW.resultados <- lapply(covars, function(x){KWdata(x)})
+    KW.resultados <- do.call('rbind', KW.resultados)
+    # agregar significancia
+    KW.resultados <- KW.resultados %>% mutate(Significancia = case_when(
+      pvalue < 0.0001  ~ "**** <0,0001",
+      pvalue < 0.001  ~ "*** <0,001",
+      pvalue < 0.01   ~ "** <0,01",
+      pvalue < 0.05   ~ "*<0,05",
+      TRUE ~ "NS"
+    ))
+
+    # Exportar resultados kruskal
+    write.csv(KW.resultados,paste0(carpeta.estadistico,'/1_kruskal_grupos.csv'),row.names=FALSE)
+
+    ## Posthoc
+    covar.signif <- KW.resultados[which(KW.resultados['pvalue']<0.05),'covariable']
+    categoricas_posthoc = covar.signif[covar.signif %in% covars_categoricas]
+    if (length(categoricas_posthoc) > 0){
       postHOCdata <- function(covar){
         clases = factor(data[data$particion == 'train', covar])
         global_metadatos <- metadata_categoricas[[covar]]
         clases = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
 
-        phoc <- posthoc.kruskal.nemenyi.test(target_dataset[,'target']~target_dataset[,covar],p.adjust.method='Bonferroni')
-
+        phoc <- pairwise.wilcox.test(target_dataset[,covar],target_dataset[,'target'],p.adjust.method ="BH",
+                       paired = FALSE)
         # Cambiar formarto y asignar nombres
         PT <- phoc$p.value
         PT1 <- data.frame(fullPTable(PT))
@@ -289,9 +457,9 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
         rownames(PT1) <- clases
 
         PT1_levels <- PT1 %>% mutate_at(vars(colnames(PT1)),  ~ case_when(. < 0.001 ~ "*** <0,001",
-                                                             . < 0.01   ~ "** <0,01",
-                                                             . < 0.05   ~ "* <0,05",
-                                                             TRUE ~ "NS"))
+                                                                          . < 0.01   ~ "** <0,01",
+                                                                          . < 0.05   ~ "* <0,05",
+                                                                          TRUE ~ "NS"))
         rownames(PT1_levels) <- clases
 
         output <- list(PT1,PT1_levels)
@@ -302,64 +470,37 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
       phoc.resultados <- lapply(categoricas_posthoc, function(x){postHOCdata(x)})
       names(phoc.resultados) <- categoricas_posthoc
 
-      # Exportar resultados normalidad
-      write.csv(normalidad,paste0(carpeta.estadistico,'/1_normalidad.csv'),row.names=FALSE)
-      write.csv(KW.resultados,paste0(carpeta.estadistico,'/2_kruskal_grupos.csv'),row.names=FALSE)
+      # Chi-cuadrado
+      ##Ho: no existe ninguna asociación entre dos variables categóricas(son independientes).
+      ##Ha: existe asociación entre dos variables categóricas (hay dependencia).
+      Chidata <- function(covar){
+        chi <- chisq.test(FAMILIATEXTURAL,tipo_relieve)
+        out_tb <- data.frame(covariable=covar, chi.squared=chi$statistic, pvalue=chi$p.value)
+        return(out_tb)
+      }
+      chi.resultados <- lapply(categoricas_posthoc, function(x){Chidata(x)})
+      chi.resultados <- do.call('rbind', chi.resultados)
+      # agregar significancia
+      chi.resultados <- chi.resultados %>% mutate(Significancia = case_when(
+        pvalue < 0.0001  ~ "**** <0,0001",
+        pvalue < 0.001  ~ "*** <0,001",
+        pvalue < 0.01   ~ "** <0,01",
+        pvalue < 0.05   ~ "*<0,05",
+        TRUE ~ "NS"
+      ))
 
       # Export posthoc tabla y boxplot
       lapply(names(phoc.resultados), function(x) write.csv(phoc.resultados[[x]][1],
-        file =paste0(carpeta.estadistico,'/3a_posthoc-valores_',x,'.csv'), row.names=TRUE))
+                                                           file =paste0(carpeta.estadistico,'/2a_posthoc-valores_',x,'.csv'), row.names=TRUE))
 
       lapply(names(phoc.resultados), function(x) write.csv(phoc.resultados[[x]][2],
-        file =paste0(carpeta.estadistico,'/3b_posthoc-significancia_',x,'.csv'), row.names=TRUE))
+                                                           file =paste0(carpeta.estadistico,'/2b_posthoc-significancia_',x,'.csv'), row.names=TRUE))
+
+      # Exportar resultados Chi-cuadrado
+      write.csv(chi.resultados,paste0(carpeta.estadistico,'/3_chi-cuadrado_c.csv'),row.names=FALSE)
     }
+
   }
-  else if (is(train.data[,'target'],'factor')){
-    # covariables
-    covars = predictors(rfmodel)[1:rfe_lim]
-    covars = gsub('_','-',covars)
-
-    # directorios
-    carpeta.correlacion = paste0(modelos.salida,'/correlacion')
-    dir.create(carpeta.correlacion, recursive = T, mode = "0777", showWarnings = F)
-
-    # lista de graficos
-    lista.graficos = c('train_correlationmatrix','test_correlationmatrix')
-    lista.graficos.procesados = gsub("\\.png$", "", basename(list.files(path= modelos.salida, pattern = "\\.png$", recursive = T)))
-    
-    lista.graficos.faltantes <- setdiff(lista.graficos,lista.graficos.procesados)
-    
-    if (length(lista.graficos.faltantes) > 0){
-      # Graficos matrix de correlación
-      for (j in lista.graficos.faltantes){
-        if (j == 'train_correlationmatrix'){
-          
-          covars = gsub('-','_',covars)
-          
-          n<-length(levels(as.factor(data[data$particion == 'train', 'target'])))
-          
-          cols <- pals::cols25(n)
-          
-          png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
-          chart.Correlation(data[data$particion == 'train', covars])
-          #pairs.panels(data[data$particion == 'train', covars],bg=cols[data[data$particion == 'train', 'target']],
-          #             pch=21,main="Covariables por Grupo",hist.col="blue")
-          
-          #chart.Correlation(data[data$particion == 'train', covars], bg=as.factor(data[data$particion == 'train', 'target']), pch=3)
-          #par(xpd=TRUE)
-          #legend(0, 1, as.vector(unique(data[data$particion == 'train', 'target'])), fill=seq(1:length(unique(data[data$particion == 'train', 'target']))))
-          dev.off()
-        }
-        else if (j == 'test_correlationmatrix'){
-          covars = gsub('-','_',covars)
-          png(file = paste0(carpeta.correlacion,'/',j,'.png'), width = 1000, height = 700)
-          chart.Correlation(data[data$particion == 'test', covars])
-          dev.off()
-        }
-      }
-    }
-  }
-
   #estimar tiempo de procesamiento total
   timeEnd = Sys.time()
   print(round(difftime(timeEnd, timeStart, units='mins'),1))

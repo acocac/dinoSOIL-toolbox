@@ -102,13 +102,8 @@ ExpRFE <- function(VarObj, BaseDatos){
   data <- data[complete.cases(data), ]
 
   if (is(data$target,'character')){
-    umbral.categoricas <- conf.args[['categoricas.minobservaciones']]
-    if (!exists(umbral.categoricas)){
-      # si la variable es categorica solo dejar clases con al menos del umbral de observaciones
-      # como regla general este umbral es de 5 observations
-      # fuente: https://soilmapper.org/soilmapping-using-mla.html
-      umbral.categoricas <- 5
-    }
+    umbral.categoricas <- conf.args[['ajuste.categoricas']]
+    umbral.categoricas <- unlist(strsplit(umbral.categoricas,';'))
 
     original <- unique(data$target)
     data <- data[data$target %in%  names(table(data$target))[table(data$target) >= umbral.categoricas] , ]
@@ -119,7 +114,8 @@ ExpRFE <- function(VarObj, BaseDatos){
       mutate_if(is.character, remove_all_ws)
     data$target <- factor(data$target)
     final <- unique(data$target)
-    print('Los siguientes grupos fueron removidos por no cumplir el umbral de ',umbral.categoricas ,'observaciones: ', paste0(original[!(original %in% final)], collapse=', '),'\n','\n')
+
+    print(paste0('Los siguientes grupos fueron removidos por no cumplir el umbral de ',umbral.categoricas ,' observaciones: ', paste0(original[!(original %in% final)], collapse=', ')))
 
     proyecto.metricas.categoricas <- conf.args[['metricas.categoricas']]
     proyecto.metricas.categoricas = unlist(strsplit(proyecto.metricas.categoricas,';'))
@@ -149,7 +145,7 @@ ExpRFE <- function(VarObj, BaseDatos){
   data_info[-inTrain,'particion'] <- 'evaluacion'
   write.csv(data_info, file=paste0(modelos.particion.datos,'/coordenadas.csv'), row.names=FALSE)
   print(paste0('La particion de entrenamiento contiene ',dim(train_data)[1],' perfiles'))
-  print(paste0('La particion de evaluacion contiene ',dim(test_data)[1],' perfiles'),'\n','\n')
+  print(paste0('La particion de evaluacion contiene ',dim(test_data)[1],' perfiles'))
 
   #Definir muestras de entrenamiento
   data <- train_data
