@@ -2,9 +2,9 @@
 # titulo        : Mejor modelo;
 # proposito     : Identificar mejor modelo de acuerdo a la metrica seleccionada;
 # autor(es)     : Preparado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado por ACC en Bogota, Colombia en Septiembre 2020;;
-# entrada       : Archivos de modelos en formato rds;
-# salida        : Tablas y graficas indicando metricas de cada modelo;
+# creacion      : Creado por ACC en Bogota, Colombia en Septiembre 2020; Actualizado por ACC en Diciembre 2020;
+# entrada       : Archivos de los modelos en formato rds;
+# salida        : Tablas y graficas para identificar el mejor modelo;
 # observaciones : ninguna;
 ##############################################################################
 
@@ -49,21 +49,19 @@ prompt.user.part4c <- function()#get arguments from user
 
 ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # iniciar el monitoreo tiempo de procesamiento total
-  start_time <- Sys.time()
+  timeStart <- Sys.time()
 
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
-  #pckg = c('data.table','PerformanceAnalytics','GGally',
-  #         'caret','nnet','plyr')
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(data.table, PerformanceAnalytics, caret, plyr, dplyr, purrr, stringr))
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
   source(paste0(r.dir,'/functions/0_CargarConfig.R'))
-  source(paste0(r.dir,'/functions/4b_modelsettings.R'))
+  source(paste0(r.dir,'/functions/4_ConfigModelos.R'))
   
   # ------------------------------------------------------- #
   # Cargar archivo de configuracion y componentes
@@ -71,9 +69,12 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # Cargar archivo configuracion
   conf.args <- LoadConfig(conf.file)
 
+  # Remover espacio en blanco de la variable
+  VarObj <- trimws(VarObj)
+
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[['proyecto.carpeta']]
-  
+
   if (listmodelos == 'DEFECTO'){
     configuracion <- modelos.config.defecto()
     proyecto.modelos.continuas <- configuracion[['modelos.continuas']]
@@ -100,7 +101,7 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # Directorios de trabajo
   # ------------------------------------------------------- #
   # Declarar directorios
-  datos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-'))
+  datos.entrada <- trimws(paste0(proyecto.directorio,'/modelos/',BaseDatos,'/0_particion/',str_replace(VarObj,'[.]','-')))
   modelos.entrada <- paste0(proyecto.directorio,'/modelos/',BaseDatos,'/2_modelos/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables','/',toupper(Muestreo), '/', listmodelos)
   modelos.analisis.tabular = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/3_analisis/tabular/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/',toupper(Muestreo), '/', listmodelos)
   dir.create(modelos.analisis.tabular, recursive = T, mode = "0777", showWarnings = F)
@@ -148,15 +149,15 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     #metricas
     wild <- paste0(modelo.ajuste$perfNames,collapse='|')
     
-    #pamatros
+    #parametros
     modelos.parametros <- modelos.parametros[,!grepl(wild, names(modelos.parametros), perl = TRUE)]
     
     #export models best combination parameters and features
     write.csv(modelos.parametros,file = paste0(modelos.analisis.tabular,'/mejoresmodelos_parametros.csv'), row.names=F)
     
-    ##### output messages ####
-    cat(paste('### RESULTADO 1 de 3: Los parametros y m�tricas de los mejores modelos fueron generados y almacenados como tablas en la ruta ', modelos.analisis.tabular,' ###'),'\n','\n')
-    ##### end output messages ####
+    ##### mensaje de salida ####
+    cat(paste('### RESULTADO 1 de 3: Los parametros y metricas de los mejores modelos fueron generados y almacenados como tablas en la ruta ', modelos.analisis.tabular,' ###'),'\n','\n')
+    ##### final del mensaje de salida ####
     models = objects(pattern='*m_')
 
     #create list for resampling
@@ -179,25 +180,25 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   #exportar metricas modelos
   write.csv(modelos.metricas,paste0(modelos.analisis.tabular,"/mejoresmodelos_metricas.csv",sep=""), row.names=F)
   
-  ##### output messages ####
+  ##### mensaje de salida ####
   cat(paste('### RESULTADO 2 de 3: Los valores para realizar boxplots de los modelos creados fueron generados y almacenados como archivo tabular en la ruta ', modelos.analisis.tabular,' ###'),'\n','\n')
-  ##### end output messages ####
+  ##### final del mensaje de salida ####
 
   scales <- list(tck=c(1,0), x=list(cex=1.5), y=list(cex=1.5, labels=rev(modelos.metricas$modelos)))
-  #scales <- list(x=list(relation="free"), y=list(relation="free"), tck=c(1,0), x=list(cex=2), y=list(cex=2))
-  
+
   png(file = paste0(modelos.analisis.figuras,'/boxplots_modelos.png'), width = 700, height = 600)
   print(bwplot(resamps, scales=scales, metric=proyecto.metricas, layout = c(2, 1), box.ratio = 1, auto.key = T))
   dev.off()
 
-  ##### output messages ####
-  cat(paste('### RESULTADO 3 de 3: Los gr�ficos boxplots de los modelos creados fueron generados y almacenados como archivo PNG en la ruta', modelos.analisis.figuras,' ###'),'\n','\n')
-  ##### end output messages ####
+  ##### mensaje de salida ####
+  cat(paste('### RESULTADO 3 de 3: Los graficos boxplots de los modelos creados fueron generados y almacenados como archivo PNG en la ruta', modelos.analisis.figuras,' ###'),'\n','\n')
+  ##### final del mensaje de salida ####
 
   } else{
     cat('Los modelos listados en el archivo config.txt NO estan completos, se recomienda revisar el/los modelo(s) faltante corriendo el componente 4b Entrenamiento del modelo')
   }
 
   #estimar tiempo de procesamiento total
-  print(Sys.time() - start_time)
+  timeEnd = Sys.time()
+  print(round(difftime(timeEnd, timeStart, units='mins'),2))
 }

@@ -1,10 +1,10 @@
 #############################################################################
-# titulo        : Exploracion de los datos de entrada;
+# titulo        : Exploracion (descriptivo, grafifcos y analisis estadisticos) de los datos de entrada;
 # proposito     : Explorar los datos de entrada, entrenamiento y evaluacion;
 # autor(es)     : Preparado por Andres Lopez (AL) y Patricia Escudero (PE), IGAC-CIAF; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado ACC en Bogota, Colombia;
+# creacion      : Creado ACC en Bogota, Colombia / Actualizado por ACC en Diciembre 2020;;
 # entrada       : Particicion Datos de Entrenamiento y Evaluacion;
-# salida        : Graficas indicando relacion datos con la variable objetivo;
+# salida        : Tablas y graficas separado en tres carpetas: descriptivo, graficos y estadistico;
 # observaciones : ninguna;
 ##############################################################################
 
@@ -73,6 +73,9 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Cargar archivo configuracion
   conf.args <- LoadConfig(conf.file)
+
+  # Remover espacio en blanco de la variable
+  VarObj <- trimws(VarObj)
 
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[['proyecto.carpeta']]
@@ -501,8 +504,8 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
     }
 
   }
+
   #estimar tiempo de procesamiento total
   timeEnd = Sys.time()
-  print(round(difftime(timeEnd, timeStart, units='mins'),1))
-
+  print(round(difftime(timeEnd, timeStart, units='mins'),2))
 }

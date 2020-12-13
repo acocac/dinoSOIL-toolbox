@@ -2,10 +2,10 @@
 # titulo        : Entrenamiento modelos;
 # proposito     : Entrenar varios modelos de Aprendizaje de Maquinas;
 # autor(es)     : Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Actualizado por ACC en Noviembre 2020;;
-# entrada       : Base de datos original;
-# salida        : Base de datos verticalizada;
-# observaciones :glmnet ninguna;
+# creacion      : Creado por ACC en Bogota, Colombia en Septiembre 2020; Actualizado por ACC en Diciembre 2020;
+# entrada       : Datos de entrenamiento;
+# salida        : Modelos entrenados;
+# observaciones : Los modelos usados viene por DEFECTO de la libreria caret o listados en el archivo config.txt;
 ##############################################################################
 
 
@@ -47,7 +47,7 @@ prompt.user.part4b <- function()#get arguments from user
 
 ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # iniciar el monitoreo tiempo de procesamiento total
-  start_time <- Sys.time()
+  timeStart <- Sys.time()
 
   # ------------------------------------------------------- #
   # Librerias y funciones
@@ -58,7 +58,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
   source(paste0(r.dir,'/functions/0_CargarConfig.R'))
-  source(paste0(r.dir,'/functions/4b_modelsettings.R'))
+  source(paste0(r.dir,'/functions/4_ConfigModelos.R'))
 
   # ------------------------------------------------------- #
   # Cargar archivo de configuracion y componentes
@@ -66,10 +66,12 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # Cargar archivo configuracion
   conf.args <- LoadConfig(conf.file)
 
+  # Remover espacio en blanco de la variable
+  VarObj <- trimws(VarObj)
+
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[[1]]
-  project.name <- sapply(strsplit(proyecto.directorio, '_'), tail, 1)
-  
+
   if (listmodelos == 'DEFECTO'){
     configuracion <- modelos.config.defecto()
     proyecto.modelos.continuas <- configuracion[['modelos.continuas']]
@@ -201,7 +203,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
       # Determinar modelos objetivo segun listado en el archivo conf.txt y modelos disponibles por categoria
       modelos.idx <- match(proyecto.modelos.categoricas, names(modelos.lista))
       if (anyNA(modelos.idx)){
-        stop('No se continua la ejecuci�n los siguientes modelos del CONFIG: ', paste0(proyecto.modelos.categoricas[which(is.na(modelos.idx))],collapse=', '), ' NO corresponden a los listados en el archivo de configuraciones. Se recomienda verificar si el nombre es correcto.')    
+        stop('No se continua la ejecucion los siguientes modelos del CONFIG: ', paste0(proyecto.modelos.categoricas[which(is.na(modelos.idx))],collapse=', '), ' NO corresponden a los listados en el archivo de configuraciones. Se recomienda verificar si el nombre es correcto.')
       } else { #continue the script
         modelos.objetivo <- modelos.lista[modelos.idx]
       }
@@ -212,10 +214,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     # ------------------------------------------------------- #
     # Crear formula
     fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
-    #fm <- as.formula(paste("Class~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
 
-
-        #for (sampling_type in c('original')){
     if (tolower(Muestreo) %in% c('up','down','original')){
         
       sampling_type <- tolower(Muestreo) 
@@ -298,5 +297,6 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   }
 
   #estimar tiempo de procesamiento total
-  print(Sys.time() - start_time)
+  timeEnd = Sys.time()
+  print(round(difftime(timeEnd, timeStart, units='mins'),2))
 }

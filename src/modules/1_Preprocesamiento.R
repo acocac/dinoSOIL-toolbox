@@ -2,7 +2,7 @@
 # titulo        : Verticalizacion bases de datos de suelo;
 # proposito     : Verticalizar bases de datos de suelo provistas en formato horizontal;
 # autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado SG en Bogota, Colombia / Actualizado por ACC en Septiembre 2020;;
+# creacion      : Creado SG en Bogota, Colombia / Actualizado por ACC en Septiembre 2020;;
 # entrada       : Base de datos original;
 # salida        : Base de datos verticalizada;
 # observaciones : ninguna;
@@ -36,7 +36,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
     stop("Necesita especificar la base de datos para verticalizar.")
 
   # iniciar el monitoreo tiempo de procesamiento total
-  start_time <- Sys.time()
+  timeStart <- Sys.time()
 
   # ------------------------------------------------------- #
   # Librerias y funciones
@@ -226,13 +226,14 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
     # ------------------------------------------------------- #
     # Mensajes de salida
     # ------------------------------------------------------- #
-    cat(paste0('### RESULTADO: La base de datos de ',tipo,' del proyecto ',basename(project.name),' fue procesada con exito y contiene ',dim(datos_HOR)[1], ' perfiles'))
+    cat(paste0('### RESULTADO: La base de datos de ',tipo,' del proyecto ',basename(project.name),' fue procesada con exito y contiene ',dim(datos_HOR)[1], ' perfiles','\n','\n'))
   } else {
     verticalizada <- read.csv(verticalizada.archivo, sep=',')
     perfiles <- length(unique(verticalizada$ID_PERFIL))
-    cat(paste0('### RESULTADO: La base de datos de ',tipo,' del proyecto ',basename(project.name),' ya existe (se recomienda inspeccionarla) y contiene ',perfiles, ' perfiles'))
+    cat(paste0('### RESULTADO: La base de datos de ',tipo,' del proyecto ',basename(project.name),' ya existe (se recomienda inspeccionarla) y contiene ',perfiles, ' perfiles','\n','\n'))
   }
 
   #estimar tiempo de procesamiento total
-  print(round(Sys.time() - start_time),1)
+  timeEnd = Sys.time()
+  print(round(difftime(timeEnd, timeStart, units='mins'),2))
 }

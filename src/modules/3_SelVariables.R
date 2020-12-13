@@ -1,10 +1,10 @@
 #############################################################################
-# titulo        : Predicion de Taxonomia;
-# proposito     : Modelar la taxonomia usando metodos de Aprendizaje de Maquinas;
+# titulo        : Seleccion de covariables para modelado;
+# proposito     : Usar metodos de seleccion de variables para identificar covariables optimas para el modelado segun la variable objetivo;
 # autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado SG en Bogota, Colombia / Actualizado por ACC en Septiembre 2020;;
-# entrada       : Base de datos original;
-# salida        : Base de datos verticalizada;
+# creacion      : Creado SG en Bogota, Colombia / Actualizado por ACC en Diciembre 2020;;
+# entrada       : Matriz de Datos de entrada;
+# salida        : Gráficos y modelos RFE y Boruta con las covariables optimas segun la variable objetivo;
 # observaciones : ninguna;
 ##############################################################################
 
@@ -31,7 +31,7 @@ prompt.user.part3 <- function()#get arguments from user
   return(newlist)
 }
 
-ExpRFE <- function(VarObj, BaseDatos){
+SelVariables <- function(VarObj, BaseDatos){
   # iniciar el monitoreo tiempo de procesamiento total
   timeStart <- Sys.time()
 
@@ -52,6 +52,9 @@ ExpRFE <- function(VarObj, BaseDatos){
   # ------------------------------------------------------- #
   # Cargar archivo configuracion
   conf.args <- LoadConfig(conf.file)
+
+  # Remover espacio en blanco de la variable
+  VarObj <- trimws(VarObj)
 
   # Cargar componentes relacionados con este script
   proyecto.directorio <- conf.args[['proyecto.carpeta']]
@@ -259,5 +262,5 @@ ExpRFE <- function(VarObj, BaseDatos){
 
   #estimar tiempo de procesamiento total
   timeEnd = Sys.time()
-  print(round(difftime(timeEnd, timeStart, units='mins'),1))
+  print(round(difftime(timeEnd, timeStart, units='mins'),2))
 }

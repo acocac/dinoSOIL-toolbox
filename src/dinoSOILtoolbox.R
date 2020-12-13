@@ -29,11 +29,10 @@ r.dir = '/Volumes/Alejo/Users/ac/Documents/Consultancy/IGAC/projects/3_mapeosuel
 proyecto.dir = '/Volumes/Alejo/Users/ac/Documents/proyecto_cesarmagdalena'
 # Cargar el archivo de configuracion
 conf.file = paste0(proyecto.dir,'/config/conf.txt')
-# Cargar funciones de interaccion con el usuario
 
 
 ########################################################
-####PARTE 1 - Preprocesamiento de la base de datos #####
+####PARTE 1 - Preprocesamiento (verticalización)   #####
 ########################################################
 
 #### cargar modulo ###
@@ -57,25 +56,25 @@ source(paste0(r.dir,'/modules/2_Datos.R'))
 args_p2 <- prompt.user.part2()
 
 #### ejecutar la funcion del modulo ###
-Datos(args_p2[[1]], args_p2[[2]], args_p2[[3]], args_p2[[4]])
+Datos(args_p2[[1]], args_p2[[2]], args_p2[[3]])
 
 
 ########################################################
-#####PARTE 3 - Seleccion variables                ######
+#####PARTE 3 - Seleccion variables (RFE y Boruta) ######
 ########################################################
 
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/3_RFE.R'))
+source(paste0(r.dir,'/modules/3_SelVariables.R'))
 
 #### consultar al usuario argumentos del modulo ###
 args_p3 <- prompt.user.part3()
 
 #### ejecutar la funcion del modulo ###
-ExpRFE(args_p3[[1]], args_p3[[2]])
+SelVariables(args_p3[[1]], args_p3[[2]])
 
 
 ########################################################
-#####PARTE 4a - Modelacion: Exploracion datos         ##
+#####PARTE 4a - Modelado: Exploracion de los datos    ##
 ########################################################
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4a_ModExploratorio.R'))
@@ -88,7 +87,7 @@ ModExploracion(args_p4a[[1]], args_p4a[[2]], args_p4a[[3]])
 
 
 ########################################################
-#####PARTE 4b - Modelacion: Ejecutar algoritmos     ####
+#####PARTE 4b - Modelado: Ejecucion de los modelos    ##
 ########################################################
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4b_ModEjecutar.R'))
@@ -101,36 +100,35 @@ ModEntrenamiento(args_p4b[[1]],args_p4b[[2]],args_p4b[[3]],args_p4b[[4]],args_p4
 
 
 ###########################################################
-#####PARTE 4c - Modelacion: Identificar mejor modelo    ###
+#####PARTE 4c - Modelado: Identificacion del mejor modelo #
 ###########################################################
 
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4c_ModMejor.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 C45
 args_p4c <- prompt.user.part4c()
 
 #### ejecutar la funcion del modulo ###
 ModMejorModelo(args_p4c[[1]],args_p4c[[2]],args_p4c[[3]], args_p4c[[4]], args_p4c[[5]])
 
 
-###########################################################
-#####PARTE 4d - Modelacion: Sensibilidad/Incertidumbre  ###
-###########################################################
+######################################################################
+#####PARTE 4d - Modelado: Evaluacion/Incertidumbre del mejor modelo ##
+######################################################################
+
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/4d_ModIncertidumbre.R'))
+source(paste0(r.dir,'/modules/4d_ModEvaluacion-Incertidumbre.R'))
 
 #### consultar al usuario argumentos del modulo ###
-#para el demo llenar pregunta 1 C45
 args_p4d <- prompt.user.part4d()
 
 #### ejecutar la funcion del modulo ###
-ModIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]], args_p4d[[4]], args_p4d[[5]])
+ModEvalIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]], args_p4d[[4]], args_p4d[[5]])
 
 
 ###########################################################
-#####PARTE 4e - Modelacion: Uso del modelo               ##
+#####PARTE 4e - Modelado: Uso del modelo (prediccion)    ##
 ###########################################################
 #### cargar modulo ###
 source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
@@ -146,7 +144,7 @@ ModUso(args_p4e[[1]], args_p4e[[2]], args_p4e[[3]], args_p4e[[4]], args_p4e[[5]]
 ###########################################################
 
 ##TRABAJO FUTURO
-#RFE
+#Seleccion de variables
 ## https://github.com/m2-rshiny/ProjetTut/blob/426fcff7642ffdd8f84743c88cc732e2bd617ca7/Archives/MLShiny2/analysis-UGA.R
 ## https://github.com/raiajeet/AmExpert-2018-Machine-Learning-Hackathon-/blob/9f9c6711cc5c012bbf5520ebb0c188c0d3847c67/code.R
 ## https://github.com/Edimer/DataSource.ai/blob/226e358b5d106d075b396324956bd28e05d96e51/PreciosApartamentos/codeR/LightGBM2.R
@@ -155,6 +153,9 @@ ModUso(args_p4e[[1]], args_p4e[[2]], args_p4e[[3]], args_p4e[[4]], args_p4e[[5]]
 # Modelado
 #TODO mejorar https://github.com/gimelbrantlab/magic/blob/0a86af1d18bb7b13a556090fa0bbe0fd5d424770/src/scores_ml.R
 # https://github.com/CIAT-DAPA/sfs_project/blob/b679e418205054f0cce95cda19d0fb64f5c18eea/codes/01_2_SDrivers_process_input_data.R
+
+# Variables de importancia
+##TODO explorar otros metodos ver: https://gefero.github.io/flacso_ml/clase_4/notebook/interpretable_ml_notebook.nb.html
 
 # Incertidumbre
 #TODO implementar incertidumbre metodo MGuevara Kriging https://github.com/marioguevara/utilityCodes/tree/e1fab9411f58138382734875c7be393e664fb055/chapter_5

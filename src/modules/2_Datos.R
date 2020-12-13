@@ -2,7 +2,7 @@
 # titulo        : Datos de entrada (matriz) y covariables ambientales (GeoTIFF);
 # proposito     : Generar datos de entrada (matriz) y raster multibanda con las covariables ambientales (GeoTIFF);
 # autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado SG en Bogotá, Colombia / Actualizado por ACC en Octubre 2020;;
+# creacion      : Creado SG en Bogotá, Colombia / Actualizado por ACC en Octubre 2020;;
 # entrada       : Base de datos verticalizada;
 # salida        : Datos de entrada y GeoTIFF con las covariables ambientales para su uso en la predicción;
 # observaciones : ninguna;
@@ -22,15 +22,11 @@ prompt.user.part2 <- function()#get arguments from user
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
-  message(prompt="Indique el nombre de la carpeta con el limite a usar dentro del directorio de entrada/2_limite:>>> ")
-  d <- readLines(n = 1)
-  d <- gsub("\\\\", "/", d)
-
-  newlist = list(a, b, c, d)
+  newlist = list(a, b, c)
   return(newlist)
 }
 
-Datos <- function(filename, hoja, columna, limite.carpeta){
+Datos <- function(filename, hoja, columna){
   # iniciar el monitoreo tiempo de procesamiento total
   timeStart <- Sys.time()
 
@@ -100,7 +96,7 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
     if (!file.exists(covariables.archivo.stack)){
       cat(paste0('El archivo stack geoTIFF de las covariables no existe, se requiere generarlo para extraer la matriz de datos','\n','\n'))
       # Cargar area limite
-      limite_shp <- st_read(paste0(in.limite.data,'/', limite.carpeta))
+      limite_shp <- st_read(in.limite.data)
       if (dim(limite_shp)[1] > 1){
         limite_shp$id <- 0
         limite_shp <- limite_shp %>% dplyr::group_by(id) %>% dplyr::summarize()
@@ -421,5 +417,5 @@ Datos <- function(filename, hoja, columna, limite.carpeta){
 
   #estimar tiempo de procesamiento total
   timeEnd = Sys.time()
-  print(round(difftime(timeEnd, timeStart, units='mins'),1))
+  print(round(difftime(timeEnd, timeStart, units='mins'),2))
 }

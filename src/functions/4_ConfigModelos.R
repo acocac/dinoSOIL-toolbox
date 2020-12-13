@@ -1,13 +1,12 @@
+#############################################################################
+# titulo        : Configuracion modelos y calculo de importancia de las covariables;
+# proposito     : Configurar modelos por DEFECTO o llamados por CONFIG;
+# autor(es)     : Preparado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
+# creacion      : Creado por ACC en Bogota, Colombia en Septiembre 2020; Actualizado por ACC en Diciembre 2020;
+# entrada       : N/A;
+# salida        : Funciones;
+# observaciones : Agregar a la funcion de importancia de las variables modelos que no tienen esa opcion en la libreria caret;
 ##############################################################################
-# title         : grid files (inputs) to extract fragstat and fractal metrics;
-# purpose       : create separated grids (unit of analysis) from detection grid for fragstat and
-#                 fractal analyses;
-# producer      : preparado por Jonas Anderegg, ETH Zürich in 2019; Adaptado por Alejandro Coca-Castro
-# last update   : in London, UK June 2015 / Updated in September 2015;
-# inputs        : deforestation grid by year, fishnet (windows) shapefile;
-# outputs       : split detection grid using  in GeoTIFF format (FRAGSTAT/FRACTAL INPUT);
-# remarks 1     : licencia GNU General Public segun autor original;
-###############################################################################
 
 dict <- new.env(hash = TRUE)
 Add <- function(key, val) dict[[key]] <- val
@@ -22,7 +21,7 @@ modelos.config.manual <- function(){
   tuneLenght_size <- rep(20, length(modelos.lista))
   tuneLenght = mapply(Add, modelos.lista, tuneLenght_size)
   
-  ##opci�n alternativa: tama�o para busqueda de mejores hiperparametros por modelo
+  ##opcion alternativa: tamano para busqueda de mejores hiperparametros por modelo
   # tuneLenght <- c('J48'=5, 'C5.0'=5, 'multinom','ranger'=20, 'svmLinear'=5, 'xgbTree'=20, 'gbm_h2o'=3,
   #                'glmnet'=5,'mlp'=5, 'svmRadial'=20)
   
@@ -33,9 +32,7 @@ modelos.config.manual <- function(){
   
 }
 
-# Modelos disponibles y configuraciones
 modelos.config.defecto <- function(){
-  
   ##list models
   regression.models <- map(getModelInfo(), "type") %>% 
     map_lgl(function(x) {
@@ -81,7 +78,6 @@ modelos.config.defecto <- function(){
 }
 
 modelos.variables.importancia <- function(modelo,nombre){
-  ##TODO explorar otros metodos ver: https://gefero.github.io/flacso_ml/clase_4/notebook/interpretable_ml_notebook.nb.html
   if (nombre == 'ranger'){
     
     finalModel <- modelo$finalModel
@@ -92,11 +88,10 @@ modelos.variables.importancia <- function(modelo,nombre){
     r <-data.frame(variable=variable,importance=imp)
 
     p <- ggplot(r, aes(x=reorder(variable,importance), y=importance,fill=importance))+ 
-      geom_bar(stat="identity", position="dodge")+ coord_flip()+
-      ylab("Importancia de la variable") +
-      xlab("Variables")+
+      geom_bar(stat="identity", position="dodge",fill = "darkgrey")+ coord_flip()+
+      ylab("Importancia") +
+      xlab("Covariable")+
       guides(fill=F) +
-      scale_fill_gradient(low="red", high="blue") +
       theme_bw() +
       theme(text=element_text(size=18))
     
