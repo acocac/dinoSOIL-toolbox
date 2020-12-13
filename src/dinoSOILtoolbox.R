@@ -32,7 +32,7 @@ conf.file = paste0(proyecto.dir,'/config/conf.txt')
 
 
 ########################################################
-####PARTE 1 - Preprocesamiento (verticalización)   #####
+####PARTE 1 - Preprocesamiento (verticalizacion)   #####
 ########################################################
 
 #### cargar modulo ###

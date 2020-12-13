@@ -114,7 +114,7 @@ ModMejorModelo <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  # Cargar particición
+  # Cargar particion
   load(paste0(datos.entrada,'/particion.RData'))
   train.data <- as.data.frame(particion['train'])
   names(train.data) <- sub("train.", "", names(train.data))

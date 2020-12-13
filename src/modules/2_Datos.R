@@ -4,7 +4,7 @@
 # autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
 # creacion      : Creado SG en Bogotá, Colombia / Actualizado por ACC en Octubre 2020;;
 # entrada       : Base de datos verticalizada;
-# salida        : Datos de entrada y GeoTIFF con las covariables ambientales para su uso en la predicción;
+# salida        : Datos de entrada y GeoTIFF con las covariables ambientales para su uso en la prediccion;
 # observaciones : ninguna;
 ##############################################################################
 
@@ -102,7 +102,7 @@ Datos <- function(filename, hoja, columna){
         limite_shp <- limite_shp %>% dplyr::group_by(id) %>% dplyr::summarize()
       }
 
-      # Cargar DEM (referencia de la resolución espacial)
+      # Cargar DEM (referencia de la resolucion espacial)
       DEM_rast_res <- raster(paste0(in.geo.data,'/raster/dem/original/dem.tif'))
       names(DEM_rast_res) <- 'dem'
       resolucion_dem = res(DEM_rast_res)[1]
@@ -303,7 +303,7 @@ Datos <- function(filename, hoja, columna){
         dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
         interpolado.archivo <- paste0(out.dir,'/BD_',project.name,'_',varcon,'.csv')
         if (!file.exists(interpolado.archivo)){
-          cat(paste0('El archivo tabular de la interpolación de la variable ', varcon, ' no existe, se requiere generarlo','\n','\n'))
+          cat(paste0('El archivo tabular de la interpolacion de la variable ', varcon, ' no existe, se requiere generarlo','\n','\n'))
           # ------------------------------------------------------- #
           # Carga y preparacion de los datos
           # ------------------------------------------------------- #
@@ -367,7 +367,7 @@ Datos <- function(filename, hoja, columna){
           varcon.todas[[varcon]] <- datos_varcon
           write.table(datos_varcon, interpolado.archivo, row.names = F, sep=',')
         } else {
-          cat(paste0('El archivo tabular de la interpolación de la variable ', varcon,' existe, se va adicionar a la matriz','\n','\n'))
+          cat(paste0('El archivo tabular de la interpolacion de la variable ', varcon,' existe, se va adicionar a la matriz','\n','\n'))
           datos_varcon <- read.csv(interpolado.archivo)
           varcon.todas[[varcon]] <- datos_varcon
         }

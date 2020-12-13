@@ -99,7 +99,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  # Cargar particición
+  # Cargar particicn
   print(modelos.datos.entrada)
   load(paste0(modelos.datos.entrada,'/particion.RData'))
   train.data <- as.data.frame(particion['train'])
@@ -136,7 +136,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   prediccion.archivo.geotiff <- paste0(datos.salida.geotiff,'/Prediccion_',modelos.mejor,'.tif')
   if (!file.exists(prediccion.archivo.geotiff)){
     ##### output messages ####
-    cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de predicción usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
+    cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de prediccion usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
     ##### end output messages ####
     if (is(train.data[,'target'],'numeric')){
       start <- Sys.time()
@@ -171,14 +171,14 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     }
   } else{
     ##### output messages ####
-    cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de predicción usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
+    cat(paste0('### RESULTADO 2 de 3: El archivo GeoTIFF de prediccion usando mejor modelo ',modelos.mejor,' existe y se encuentra en la ruta ', prediccion.archivo.geotiff,' ###','\n'))
     ##### end output messages ####
   }
 
   prediccion.archivo.figuras <- paste0(datos.salida.figuras,'/Prediccion_',modelos.mejor,'.png')
   if (!file.exists(prediccion.archivo.figuras)){
     ##### output messages ####
-    cat(paste0('### RESULTADO 3 de 3: La figura de predicción de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.figuras,' ###','\n'))
+    cat(paste0('### RESULTADO 3 de 3: La figura de prediccion de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' NO existe y se esta generando en la ruta ', prediccion.archivo.figuras,' ###','\n'))
     ##### end output messages ####
     pred <- raster(prediccion.archivo.geotiff)
 
@@ -213,7 +213,7 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     dev.off()
   } else{
     ##### output messages ####
-    cat(paste0('### RESULTADO 3 de 3: La figura de predicción de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', prediccion.archivo.figuras,' ###','\n'))
+    cat(paste0('### RESULTADO 3 de 3: La figura de prediccion de la variable ',str_replace(VarObj,'[.]','-'),' usando mejor modelo ',modelos.mejor,' SI existe y se encuentra en la ruta ', prediccion.archivo.figuras,' ###','\n'))
     ##### end output messages ####
   }
 

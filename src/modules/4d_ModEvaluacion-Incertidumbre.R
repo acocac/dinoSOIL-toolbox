@@ -108,7 +108,7 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  # Cargar partición
+  # Cargar particion
   load(paste0(modelos.datos.entrada,'/particion.RData'))
   train.data <- as.data.frame(particion['train'])
   names(train.data) <- sub("train.", "", names(train.data))
@@ -274,7 +274,7 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
     modelo.archivo = paste0(modelos.incertidumbre.modelo,'/modelo.rds')
     if (!file.exists(modelo.archivo) ){
       ##### mensaje de salida ####
-      cat(paste0('### RESULTADO 5 de ', pasos_total, ' : El modelo de regresión cuantilica NO existe y se esta generando y almacenando en la ruta ' , modelo.archivo, ' ###','\n'))
+      cat(paste0('### RESULTADO 5 de ', pasos_total, ' : El modelo de regresion cuantilica NO existe y se esta generando y almacenando en la ruta ' , modelo.archivo, ' ###','\n'))
       ##### final del mensaje de salida ####
       beginCluster(no_cores)
       if (modelos.mejor == 'RandomForest'){
@@ -286,24 +286,24 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
       endCluster()
     } else {
       ##### mensaje de salida ####
-      cat(paste0('### RESULTADO 5 de ', pasos_total, ' : El modelo de regresión cuantilica SI existe y se esta cargando desde la ruta ' , modelo.archivo, ' ###','\n'))
+      cat(paste0('### RESULTADO 5 de ', pasos_total, ' : El modelo de regresion cuantilica SI existe y se esta cargando desde la ruta ' , modelo.archivo, ' ###','\n'))
       ##### final del mensaje de salida ####
       get(load(modelo.archivo))
     }
 
-    # Crear predicciones de la incertidumbre (desviación estandar y error medio)
+    # Crear predicciones de la incertidumbre (desviacion estandar)
     incertidumbre.raster.unc <- paste0(modelos.incertidumbre.raster,'/IncertidumbreResiduales_',modelos.mejor,'.tif')
 
     if (!file.exists(incertidumbre.raster.unc) ){
      ##### mensaje de salida ####
-     cat(paste0('### RESULTADO 6 de ', pasos_total, ' : El archivo raster GEOTIFF de la incertidumbre calculada según la regresión cuantilica NO existe y se esta generando y almacenando en la ruta ' , incertidumbre.raster.unc, ' ###','\n'))
+     cat(paste0('### RESULTADO 6 de ', pasos_total, ' : El archivo raster GEOTIFF de la incertidumbre calculada según la regresion cuantilica NO existe y se esta generando y almacenando en la ruta ' , incertidumbre.raster.unc, ' ###','\n'))
      ##### final del mensaje de salida ####
      beginCluster(no_cores)
      clusterR(COV[[predictors(rfmodel)[1:rfe_lim]]], predict, args=list(model=modelo.ajuste,what=sd), filename = incertidumbre.raster.unc, options=c("COMPRESS=DEFLATE", "TFW=YES"), overwrite=TRUE)
      endCluster()
     } else{
      ##### mensaje de salida ####
-     cat(paste0('### RESULTADO 6 de ', pasos_total, ' : El archivo raster GEOTIFF de la incertidumbre calculada según la regresión cuantilica SI existe y se esta cargando de la ruta ' , incertidumbre.raster.unc, ' ###','\n'))
+     cat(paste0('### RESULTADO 6 de ', pasos_total, ' : El archivo raster GEOTIFF de la incertidumbre calculada según la regresion cuantilica SI existe y se esta cargando de la ruta ' , incertidumbre.raster.unc, ' ###','\n'))
      ##### final del mensaje de salida ####
     }
 
@@ -311,7 +311,7 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
 
     if (!file.exists(incertidumbre.raster.unc.mapa) ){
      ##### mensaje de salida ####
-     cat(paste0('### RESULTADO 7 de ', pasos_total, ' : El mapa PNG espacializado de la incertidumbre según la regresión cuantilica NO existe y se esta generando y almacenando en la ruta ' , incertidumbre.raster.unc.mapa, ' ###','\n'))
+     cat(paste0('### RESULTADO 7 de ', pasos_total, ' : El mapa PNG espacializado de la incertidumbre según la regresion cuantilica NO existe y se esta generando y almacenando en la ruta ' , incertidumbre.raster.unc.mapa, ' ###','\n'))
      ##### final del mensaje de salida ####
 
       r <- raster(incertidumbre.raster.unc)
@@ -325,11 +325,10 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
 
       png(file = incertidumbre.raster.unc.mapa, width = 700, height = 600)
       print(p)
-      #print(plot(r, main = paste0('Incertidumbre (desviación estandar) - ',VarObj), col=pal))
       dev.off()
     } else{
      ##### mensaje de salida ####
-     cat(paste0('### RESULTADO 7 de ', pasos_total, ' : El mapa PNG espacializado de la incertidumbre según la regresión cuantilica SI existe y esta almacenando en la ruta ' , incertidumbre.raster.unc.mapa, ' ###','\n'))
+     cat(paste0('### RESULTADO 7 de ', pasos_total, ' : El mapa PNG espacializado de la incertidumbre según la regresion cuantilica SI existe y esta almacenando en la ruta ' , incertidumbre.raster.unc.mapa, ' ###','\n'))
      ##### final del mensaje de salida ####
     }
 

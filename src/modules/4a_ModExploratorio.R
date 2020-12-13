@@ -104,7 +104,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # ------------------------------------------------------- #
   # Carga y preparacion de los datos
   # ------------------------------------------------------- #
-  # Cargar particición
+  # Cargar particion
   load(paste0(modelos.entrada,'/particion.RData'))
   train.data <- as.data.frame(particion['train'])
   names(train.data) <- sub('train.', "", names(train.data))
@@ -474,8 +474,8 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
       names(phoc.resultados) <- categoricas_posthoc
 
       # Chi-cuadrado
-      ##Ho: no existe ninguna asociación entre dos variables categóricas(son independientes).
-      ##Ha: existe asociación entre dos variables categóricas (hay dependencia).
+      ##Ho: no existe ninguna asociacion entre dos variables categóricas(son independientes).
+      ##Ha: existe asociacion entre dos variables categóricas (hay dependencia).
       Chidata <- function(covar){
         chi <- chisq.test(FAMILIATEXTURAL,tipo_relieve)
         out_tb <- data.frame(covariable=covar, chi.squared=chi$statistic, pvalue=chi$p.value)

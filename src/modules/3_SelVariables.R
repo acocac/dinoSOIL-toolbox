@@ -186,7 +186,7 @@ SelVariables <- function(VarObj, BaseDatos){
     save(rfmodel, file=exploratorio.variables.rfe)
     
   } else {
-    cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
+    cat(paste0('El archivo RDS y figura de la seleccion de variables con el método RFE de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
   }
 
   file_name <- 'boruta.rds'
@@ -203,7 +203,7 @@ SelVariables <- function(VarObj, BaseDatos){
     plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
     dev.off()
   } else {
-    cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
+    cat(paste0('El archivo RDS y figura de la seleccion de variables con el método Boruta de la variable objetivo ',VarObj,' ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
   }
 
   if (is(data$target,'factor')){
@@ -218,7 +218,7 @@ SelVariables <- function(VarObj, BaseDatos){
     file_name <- 'rfe_down.rds'
     exploratorio.variables.rfe <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.rfe)){
-      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE con el dataset BALANCEADO'),'\n','\n')
+      cat(paste0('Ejecutando la seleccion de variables de la variable objetivo ',VarObj,' usando el algoritmo RFE con el dataset BALANCEADO'),'\n','\n')
       no_cores <- detectCores() - 1
       cl <- makeCluster(no_cores, type = "SOCK")
       registerDoParallel(cl)
@@ -240,13 +240,13 @@ SelVariables <- function(VarObj, BaseDatos){
       predictors(rfmodel)[1:10]
       save(rfmodel, file=exploratorio.variables.rfe)
     } else {
-      cat(paste0('El archivo RDS y figura de la selección de variables con el método RFE de la variable objetivo ',VarObj,' con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
+      cat(paste0('El archivo RDS y figura de la seleccion de variables con el método RFE de la variable objetivo ',VarObj,' con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.rfe)),'\n'))
     }
 
     file_name <- 'boruta_down.rds'
     exploratorio.variables.boruta <- paste0(exploratorio.variables.rds,'/',file_name)
     if (!file.exists(exploratorio.variables.boruta)){
-      cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' con el dataset BALANCEADO usando el algoritmo Boruta'),'\n','\n')
+      cat(paste0('Ejecutando la seleccion de variables de la variable objetivo ',VarObj,' con el dataset BALANCEADO usando el algoritmo Boruta'),'\n','\n')
       nCores <- detectCores() - 1
       formula <- as.formula('target ~ .')
       (bor <- Boruta(formula, data = data, doTrace = 0, num.threads = nCores, ntree = 30, maxRuns=500)) #se debe evaluar ntree (numero de arboles), maxRuns (cantidad de interacciones)
@@ -256,7 +256,7 @@ SelVariables <- function(VarObj, BaseDatos){
       plot(bor, cex.axis=1.3, las=2, xlab="", cex=0.75)
       dev.off()
     } else {
-      cat(paste0('El archivo RDS y figura de la selección de variables con el método Boruta de la variable objetivo ',VarObj,'  con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
+      cat(paste0('El archivo RDS y figura de la seleccion de variables con el método Boruta de la variable objetivo ',VarObj,'  con el dataset BALANCEADO ya existe y se encuentra en la ruta ',dirname(dirname(exploratorio.variables.boruta)),'\n','\n'))
     }
   }
 
