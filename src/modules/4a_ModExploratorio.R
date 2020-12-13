@@ -444,12 +444,10 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
 
     ## Posthoc
     covar.signif <- KW.resultados[which(KW.resultados['pvalue']<0.05),'covariable']
-    categoricas_posthoc = covar.signif[covar.signif %in% covars_categoricas]
-    if (length(categoricas_posthoc) > 0){
+    continuas_posthoc = covar.signif[covar.signif %in% covars_continuas]
+    if (length(continuas_posthoc) > 0){
       postHOCdata <- function(covar){
-        clases = factor(data[data$particion == 'train', covar])
-        global_metadatos <- metadata_categoricas[[covar]]
-        clases = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
+        clases = levels(data[data$particion == 'train', 'target'])
 
         phoc <- pairwise.wilcox.test(target_dataset[,covar],target_dataset[,'target'],p.adjust.method ="BH",
                        paired = FALSE)
@@ -470,18 +468,18 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
         return(output)
       }
 
-      phoc.resultados <- lapply(categoricas_posthoc, function(x){postHOCdata(x)})
-      names(phoc.resultados) <- categoricas_posthoc
+      phoc.resultados <- lapply(continuas_posthoc, function(x){postHOCdata(x)})
+      names(phoc.resultados) <- continuas_posthoc
 
       # Chi-cuadrado
       ##Ho: no existe ninguna asociacion entre dos variables categóricas(son independientes).
       ##Ha: existe asociacion entre dos variables categóricas (hay dependencia).
       Chidata <- function(covar){
-        chi <- chisq.test(FAMILIATEXTURAL,tipo_relieve)
+        chi <- chisq.test(data[data$particion == 'train', 'target'],data[data$particion == 'train', covar])
         out_tb <- data.frame(covariable=covar, chi.squared=chi$statistic, pvalue=chi$p.value)
         return(out_tb)
       }
-      chi.resultados <- lapply(categoricas_posthoc, function(x){Chidata(x)})
+      chi.resultados <- lapply(covars_categoricas, function(x){Chidata(x)})
       chi.resultados <- do.call('rbind', chi.resultados)
       # agregar significancia
       chi.resultados <- chi.resultados %>% mutate(Significancia = case_when(
