@@ -29,7 +29,7 @@ prompt.user.part4b <- function()#get arguments from user
   b <- readLines(n = 1)
   b <- gsub("\\\\", "/", b)
 
-  message(prompt="Indique el numero limite de covariables a considerar según interpretacion del RFE y Boruta:>>> ")
+  message(prompt="Indique el numero limite de covariables a considerar segun interpretacion del RFE y Boruta:>>> ")
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
@@ -137,7 +137,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     # Modelos
     # ------------------------------------------------------- #
     # Crear formula
-    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
+    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables segun usuario
 
     #Random grid search
     fitControl <- trainControl(method = "cv", #verificar tecnicas repeatedcv
@@ -213,7 +213,7 @@ ModEntrenamiento <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
     # Modelos
     # ------------------------------------------------------- #
     # Crear formula
-    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables según usuario
+    fm <- as.formula(paste("target~", paste0(as.character(predictors(rfmodel)[c(1:rfe_lim)]),collapse = "+"))) #TODO dejar número variables segun usuario
 
     if (tolower(Muestreo) %in% c('up','down','original')){
         

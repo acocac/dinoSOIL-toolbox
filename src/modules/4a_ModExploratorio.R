@@ -119,7 +119,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   load(paste0(exploratorio.variables,'/rfe.rds'))
 
   # ------------------------------------------------------- #
-  # Graficar según tipo de variable
+  # Graficar segun tipo de variable
   # ------------------------------------------------------- #
   if (is(train.data[,'target'],'numeric')){
 

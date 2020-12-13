@@ -165,7 +165,7 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
     # Arreglar las profundidad inicial
     datos_vertical[, 'PROFUNDIDADINICIAL'] <- sapply(datos_vertical[, 'PROFUNDIDADINICIAL'], as.numeric)
 
-    # Corregir valores de profundidad final con valores iguales a X, reemplazando por 10 (según FAO) - El valor X es común en las bases de datos
+    # Corregir valores de profundidad final con valores iguales a X, reemplazando por 10 (segun FAO) - El valor X es comun en las bases de datos
     datos_vertical[which(datos_vertical$PROFUNDIDADFINAL %in% c('X','Sin dato','N/A')),'PROFUNDIDADFINAL'] <- datos_vertical[which(datos_vertical$PROFUNDIDADFINAL %in% c('X','Sin dato','N/A')),'PROFUNDIDADINICIAL'] + 10
 
     # Arreglar las profundidad inicial
