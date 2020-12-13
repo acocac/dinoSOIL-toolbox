@@ -17,7 +17,7 @@ prompt.user.part4e <- function()#get arguments from user
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
-  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0('Las siguientes columnas estan disponibles para su modelacion:','\n'))
   cat(paste0(variables.usuario, sep=" | "))
   cat(paste0('\n','\n'))
 
@@ -29,7 +29,7 @@ prompt.user.part4e <- function()#get arguments from user
   b <- readLines(n = 1)
   b <- gsub("\\\\", "/", b)
 
-  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  message(prompt="Indique el numero limite de covariables a considerar según interpretacion del RFE y Boruta:>>> ")
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
@@ -48,15 +48,15 @@ prompt.user.part4e <- function()#get arguments from user
 
 
 ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
-  # iniciar el monitoreo tiempo de procesamiento total
-  timeStart <- Sys.time()
-
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(caret, raster, sf, stringr, doParallel, ggspatial, pals, gridExtra, viridis, purrr))
+
+  # iniciar el monitoreo tiempo de procesamiento total
+  timeStart <- Sys.time()
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)

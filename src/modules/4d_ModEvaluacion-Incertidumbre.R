@@ -17,7 +17,7 @@ prompt.user.part4d <- function()#get arguments from user
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
-  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0('Las siguientes columnas estan disponibles para su modelacion:','\n'))
   cat(paste0(variables.usuario, sep=" | "))
   cat(paste0('\n','\n'))
 
@@ -29,7 +29,7 @@ prompt.user.part4d <- function()#get arguments from user
   b <- readLines(n = 1)
   b <- gsub("\\\\", "/", b)
 
-  message(prompt="Indique el numero limite de covariables a considerar según interpretación del RFE y Boruta:>>> ")
+  message(prompt="Indique el numero limite de covariables a considerar según interpretacion del RFE y Boruta:>>> ")
   c <- readLines(n = 1)
   c <- gsub("\\\\", "/", c)
 
@@ -48,9 +48,6 @@ prompt.user.part4d <- function()#get arguments from user
 
 
 ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
-  # iniciar el monitoreo tiempo de procesamiento total
-  timeStart <- Sys.time()
-
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
@@ -60,6 +57,9 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
                                   Metrics, lime, quantregForest, hydroGOF,
                                   RColorBrewer, rasterVis, classInt, ggspatial, viridis,
                                   sf, plyr, dplyr, MLmetrics, scales, purrr, grid))
+
+  # iniciar el monitoreo tiempo de procesamiento total
+  timeStart <- Sys.time()
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
@@ -419,7 +419,7 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
       
       cm <- confusionMatrix(factor(pred), factor(test.data$target), dnn = c("Prediction", "Reference"))
       p <- ggplotConfusionMatrix(cm)
-      
+
       png(file = confusionMatrix.archivo.figura, width = 1000, height = 1000, res=150)
       print(p)
       dev.off()

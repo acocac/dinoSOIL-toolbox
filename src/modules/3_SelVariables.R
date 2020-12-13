@@ -16,7 +16,7 @@ prompt.user.part3 <- function()#get arguments from user
   source(paste0(r.dir,'/functions/1_Variables.R'))
 
   variables.usuario <- VariablesObjectivo()
-  cat(paste0('Las siguientes columnas estan disponibles para su modelación:','\n'))
+  cat(paste0('Las siguientes columnas estan disponibles para su modelacion:','\n'))
   cat(paste0(variables.usuario, sep=" | "))
   cat(paste0('\n','\n'))
   message(prompt="Indique el nombre de la variable objetivo de acuerdo al listado superior:>>> ")
@@ -32,15 +32,15 @@ prompt.user.part3 <- function()#get arguments from user
 }
 
 SelVariables <- function(VarObj, BaseDatos){
-  # iniciar el monitoreo tiempo de procesamiento total
-  timeStart <- Sys.time()
-
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
   ## Librerias
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(caret, doParallel, randomForest, Boruta, stringr, dplyr))
+
+  # iniciar el monitoreo tiempo de procesamiento total
+  timeStart <- Sys.time()
 
   # Funciones
   r.dir <- gsub('\\\\', '/', r.dir)
@@ -192,7 +192,7 @@ SelVariables <- function(VarObj, BaseDatos){
   file_name <- 'boruta.rds'
   exploratorio.variables.boruta <- paste0(exploratorio.variables.rds,'/',file_name)
   if (!file.exists(exploratorio.variables.boruta)){
-    cat(paste0('Ejecutando la selección de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta'),'\n','\n')
+    cat(paste0('Ejecutando la seleccion de variables de la variable objetivo ',VarObj,' usando el algoritmo Boruta'),'\n','\n')
     nCores <- detectCores() - 1
     set.seed(123)
     formula <- as.formula('target ~ .')
