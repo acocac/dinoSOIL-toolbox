@@ -27,9 +27,6 @@ prompt.user.part2 <- function()#get arguments from user
 }
 
 Datos <- function(filename, hoja, columna){
-  # iniciar el monitoreo tiempo de procesamiento total
-  timeStart <- Sys.time()
-
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
