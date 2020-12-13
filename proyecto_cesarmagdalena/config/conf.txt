@@ -22,13 +22,13 @@ variables.continuas = pH
 Ajustes Variables Objetivo
 #######################
 categoricas.minobservaciones = 5
-continuas.profundidades = 0-30;30-100
+continuas.profundidades = 0-30;30-10
 
 #######################
 Covariables
 #######################
 covariables.vector = clima;relieve
-covariables.raster = NDVI;DEM
+covariables.raster = dem;dem_derivados;ndvi
 
 #######################
 Ajuste Covariables

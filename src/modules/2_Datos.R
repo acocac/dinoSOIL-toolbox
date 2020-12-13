@@ -102,19 +102,33 @@ Datos <- function(filename, hoja, columna){
         limite_shp <- limite_shp %>% dplyr::group_by(id) %>% dplyr::summarize()
       }
 
-      # Cargar DEM (referencia de la resolucion espacial)
-      DEM_rast_res <- raster(paste0(in.geo.data,'/raster/dem/original/dem.tif'))
-      names(DEM_rast_res) <- 'dem'
-      resolucion_dem = res(DEM_rast_res)[1]
+      if ('dem' %in% project.covars.list){
+        # Cargar DEM (referencia de la resolucion espacial)
+        filename_dem <- list.files(path=paste0(in.geo.data,'/raster/dem/original'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
+        if (basename(filename_dem) != 'dem.tif'){
+          stop(paste0('Asegurese que el nombre del archivo dem es dem.tif o que la ruta ', dirname(filename_dem),' NO esta vacia'))
+        } else{
+          DEM_rast_res <- raster(filename_dem)
+          names(DEM_rast_res) <- 'dem'
+          resolucion_dem = res(DEM_rast_res)[1]
+        }
+      } else{
+        filename_dem <- paste0(in.geo.data,'/raster/dem/original/dem.tif')
+        stop(paste0('Asegurese que declare la covariable dem en el config.txt y que su archivo dem.tif este en la ruta ', dirname(filename_dem)))
+      }
 
-      # Crear stack de derivados del DEM
-      DEMderivados_lista <- list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
-      if (length(DEMderivados_lista) > 0){
-        DEMderivados_rast_res <- stack(DEMderivados_lista)
+      if ('dem_derivados' %in% project.covars.list){
+        # Crear stack de derivados del DEM
+        DEMderivados_lista <- list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
+        if (length(DEMderivados_lista) > 0){
+          DEMderivados_rast_res <- stack(DEMderivados_lista)
+        } else{
+          stop(paste0('Asegurese que la ruta ', paste0(in.geo.data,'/raster/dem/derivados'),' contiene al menos un archivo derivado del dem'))
+        }
       }
 
       # Vegetacion 
-      if ('NDVI' %in% project.covars.list){
+      if ('ndvi' %in% project.covars.list){
         out.dir <- paste0(in.geo.data,'/raster/ndvi')
         dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
         covariable.archivo <- paste0(out.dir,'/ndvi',fechas.ndvi.list[1],'_',fechas.ndvi.list[2],'.tif')
@@ -224,48 +238,51 @@ Datos <- function(filename, hoja, columna){
             # Lista de shapefiles
             covar_files <- list.files(path = paste0(in.geo.data,'/vector/',covar), pattern = "\\.shp$", full.names=TRUE)
 
-            # Atributo
-            covar_atributo <- project.vector.atributos[[covar]]
+            if (length(covar_files) > 0){
+              # Atributo
+              covar_atributo <- project.vector.atributos[[covar]]
 
-            if (length(covar_files) > 1){
-              covar_list <- lapply(covar_files, readOGR)
+              if (length(covar_files) > 1){
+                covar_list <- lapply(covar_files, readOGR)
 
-              # Seleccionar y procesar variable objetivo
-              covar_list_target <- lapply(covar_list, "[", c(covar_atributo))
-              covar_combined <- do.call(what = rbind, args=covar_list_target)
-              covar_intersect <- raster::intersect(covar_combined, limite_shp)
-              covar_intersect@data[[covar_atributo]] = gsub(",", "", covar_intersect@data[[covar_atributo]])
-              covar_intersect <- aggregate(covar_intersect, covar_atributo)
-              covar_vector <- fill_holes(covar_intersect, units::set_units(1, km^2))
-            } else {
-              covar_vector <- readOGR(paste0(in.geo.data,'/vector/',covar))
-              covar_vector <- raster::intersect(covar_vector, limite_shp)
+                # Seleccionar y procesar variable objetivo
+                covar_list_target <- lapply(covar_list, "[", c(covar_atributo))
+                covar_combined <- do.call(what = rbind, args=covar_list_target)
+                covar_intersect <- raster::intersect(covar_combined, limite_shp)
+                covar_intersect@data[[covar_atributo]] = gsub(",", "", covar_intersect@data[[covar_atributo]])
+                covar_intersect <- aggregate(covar_intersect, covar_atributo)
+                covar_vector <- fill_holes(covar_intersect, units::set_units(1, km^2))
+              } else {
+                covar_vector <- readOGR(paste0(in.geo.data,'/vector/',covar))
+                covar_vector <- raster::intersect(covar_vector, limite_shp)
+              }
+
+              ## Extraer y exportar metadata
+              metada.archivo <- gsub('.tif','.csv',covariable.archivo)
+              metadata <- data.frame('ID'=seq_along(unique(covar_vector@data[[covar_atributo]])),'GRUPO'=unique(covar_vector@data[[covar_atributo]]))
+              write.csv(metadata, metada.archivo, row.names=FALSE)
+
+              ## Rasterizar capa
+              covar_vector <- spTransform(covar_vector, CRS=projection(DEM_rast_res))
+              covar_vector$grupos <- as.factor(covar_vector@data[[covar_atributo]])
+              covar_raster <- gRasterize(covar_vector, DEM_rast_res, 'grupos')
+              covar_raster_ngb <- resample(covar_raster, DEM_rast_res, method='ngb')
+              values(covar_raster_ngb) <- round(values(covar_raster_ngb),0)
+
+              names(covar_raster_ngb) <- covar
+              assign(paste0(covar, '_rast_res'), covar_raster_ngb)
+
+              # Guardar archivo
+              writeRaster(covar_raster_ngb, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
+            } else{
+              stop(paste0('Asegurese que la ruta ', paste0(in.geo.data,'/vector/',covar),' contiene al menos un archivo vector (shapefile) para ser rasterizado'))
             }
-
-            ## Extraer y exportar metadata
-            metada.archivo <- gsub('.tif','.csv',covariable.archivo)
-            metadata <- data.frame('ID'=seq_along(unique(covar_vector@data[[covar_atributo]])),'GRUPO'=unique(covar_vector@data[[covar_atributo]]))
-            write.csv(metadata, metada.archivo, row.names=FALSE)
-
-            ## Rasterizar capa
-            covar_vector <- spTransform(covar_vector, CRS=projection(DEM_rast_res))
-            covar_vector$grupos <- as.factor(covar_vector@data[[covar_atributo]])
-            covar_raster <- gRasterize(covar_vector, DEM_rast_res, 'grupos')
-            covar_raster_ngb <- resample(covar_raster, DEM_rast_res, method='ngb')
-            values(covar_raster_ngb) <- round(values(covar_raster_ngb),0)
-
-            names(covar_raster_ngb) <- covar
-            assign(paste0(covar, '_rast_res'), covar_raster_ngb)
-
-            # Guardar archivo
-            writeRaster(covar_raster_ngb, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
           } else{
             cat(paste0('El archivo geoTIFF de la variable ',  covar, ' existe, se va agregar al covariable','\n','\n'))
             covar_raster_ngb <- raster(covariable.archivo)
             names(covar_raster_ngb) <- covar
             assign(paste0(covar, '_rast_res'), covar_raster_ngb)
           }
-          #names(eval(paste0(covar, '_raster_res'))) <- covar
         }
       }
 
