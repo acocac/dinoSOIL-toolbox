@@ -292,7 +292,10 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
           global_metadatos <- metadata_categoricas[[covar]]
           clases = as.vector(global_metadatos[global_metadatos$ID %in% clases, 'GRUPO'])
 
-          phoc <- posthoc.kruskal.nemenyi.test(target_dataset[,'target']~target_dataset[,covar],p.adjust.method='Bonferroni')
+          phoc <- pairwise.wilcox.test(target_dataset[,covar],target_dataset[,'target'],p.adjust.method ="BH",
+                       paired = FALSE)
+
+          ##phoc <- posthoc.kruskal.nemenyi.test(target_dataset[,'target']~target_dataset[,covar],p.adjust.method='Bonferroni')
 
           # Cambiar formarto y asignar nombres
           PT <- phoc$p.value
