@@ -155,7 +155,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
         carpeta.dispersion = paste0(carpeta.graficos,'/dispersion/',i)
         dir.create(carpeta.dispersion, recursive = T, mode = "0777", showWarnings = F)
         #metadatos
-        metadata_categoricas[[i]] <- read.csv(paste0(metadatos.categoricas,'/',i,'/',i,'.csv'))
+        metadata_categoricas[[i]] <- read.csv(paste0(metadatos.categoricas,'/',i,'/',i,'.csv'), encoding="UTF-8")
       }
 
       # descriptivo covariables categoricas
@@ -348,7 +348,7 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
 
       metadata_categoricas = list()
       for (i in covars_categoricas){
-        metadata_categoricas[[i]] <- read.csv(paste0(metadatos.categoricas,'/',i,'/',i,'.csv'))
+        metadata_categoricas[[i]] <- read.csv(paste0(metadatos.categoricas,'/',i,'/',i,'.csv'), encoding="UTF-8")
       }
 
       # descriptivo covariables categoricas
