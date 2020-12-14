@@ -1,11 +1,5 @@
 #data
-proyecto_sibundoy/datos/salida
-proyecto_sibundoy/datos/salida/*
-proyecto_sibundoy/modelos
-proyecto_sibundoy/datos/entrada/1_covariables/color/*
-proyecto_sibundoy/exploratorio
-proyecto_sibundoy/exploratorio/*
-proyecto_cesarmagdalena/datos/entrada/1_covariables/*
+proyecto_cesarmagdalena/datos/*
 desarrollo/*
 *.csv
 *.rds
