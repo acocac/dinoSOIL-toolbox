@@ -99,8 +99,6 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
   dir.create(modelos.incertidumbre.figuras, recursive = T, mode = "0777", showWarnings = F)
   modelos.incertidumbre.raster = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/3_geotiff/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
   dir.create(modelos.incertidumbre.raster, recursive = T, mode = "0777", showWarnings = F)
-  modelos.incertidumbre.modelo = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/4_modelo/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
-  dir.create(modelos.incertidumbre.modelo, recursive = T, mode = "0777", showWarnings = F)
 
   # Definir directorio de trabajo
   setwd(paste0(proyecto.directorio))
@@ -129,6 +127,9 @@ ModEvalIncertidumbre <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodel
   modelos.resultado <- read.csv(file = paste0(modelos.analisis.tabular,'/mejoresmodelos_metricas.csv'))
 
   if (is(train.data[,'target'],'numeric')){
+    modelos.incertidumbre.modelo = paste0(proyecto.directorio,'/modelos/',BaseDatos,'/4_incertidumbre/4_modelo/',str_replace(VarObj,'[.]','-'),'/',rfe_lim,'_covariables/', Muestreo, '/', listmodelos)
+    dir.create(modelos.incertidumbre.modelo, recursive = T, mode = "0777", showWarnings = F)
+
     metrica <- paste0(proyecto.metricas.continuas[1],'.Median')
     modelos.mejor <- modelos.resultado[modelos.resultado[,metrica] == min(modelos.resultado[,metrica]), 'modelos']
   } else if (is(train.data[,'target'],'factor')){

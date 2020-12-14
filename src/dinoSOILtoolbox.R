@@ -131,7 +131,7 @@ ModEvalIncertidumbre(args_p4d[[1]],args_p4d[[2]],args_p4d[[3]], args_p4d[[4]], a
 #####PARTE 4e - Modelado: Uso del modelo (prediccion)    ##
 ###########################################################
 #### cargar modulo ###
-source(paste0(r.dir,'/modules/4e_ModUso.R')) ## TODO revisar predicion
+source(paste0(r.dir,'/modules/4e_ModUso.R'))
 
 #### consultar al usuario argumentos del modulo ###
 args_p4e <- prompt.user.part4e()

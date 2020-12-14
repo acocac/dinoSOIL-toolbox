@@ -1,13 +1,12 @@
+#############################################################################
+# titulo        : Datos del archivo config.txt;
+# proposito     : Cargar los datos del archivo config.txt;
+# autor(es)     : Preparado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
+# creacion      : Creado por ACC en Bogota, Colombia en Septiembre 2020; Actualizado por ACC en Diciembre 2020;
+# entrada       : config.txt;
+# salida        : listado de variables para su uso en la herramienta;
+# observaciones : ninguna;
 ##############################################################################
-# title         : grid files (inputs) to extract fragstat and fractal metrics;
-# purpose       : create separated grids (unit of analysis) from detection grid for fragstat and 
-#                 fractal analyses;
-# producer      : prepared by A. Coca;
-# last update   : in London, UK June 2015 / Updated in September 2015;
-# inputs        : deforestation grid by year, fishnet (windows) shapefile;
-# outputs       : split detection grid using  in GeoTIFF format (FRAGSTAT/FRACTAL INPUT);
-# remarks 1     : detection grid must be in projected projection (i.e IGH or LAE);
-###############################################################################
 
 LoadConfig = function(x){ 
   conf.list <- lapply(strsplit(readLines(x, warn=FALSE)," "), as.character)

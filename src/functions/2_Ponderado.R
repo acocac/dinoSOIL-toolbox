@@ -1,10 +1,10 @@
 #############################################################################
-# titulo        : Datos de entrada (matriz) y covariables ambientales (GeoTIFF);
-# proposito     : Generar datos de entrada (matriz) y raster multibanda con las covariables ambientales (GeoTIFF);
-# autor(es)     : Preparado por Sebastian Gutierrez (SG), IGAC-Agrologia; Adaptado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
-# actualizacion : Creado SG en Bogotá, Colombia / Actualizado por ACC en Octubre 2020;;
-# entrada       : Base de datos verticalizada;
-# salida        : Datos de entrada y GeoTIFF con las covariables ambientales para su uso en la predicción;
+# titulo        : Ponderado por pesos;
+# proposito     : Generar valores ponderados por peso;
+# autor(es)     : Preparado por Alejandro Coca-Castro (ACC), IGAC-CIAF;
+# creacion      : Creado por ACC en Bogota, Colombia en Septiembre 2020; Actualizado por ACC en Diciembre 2020;
+# entrada       : Base de datos verticalizada de la variable objetivo continua;
+# salida        : Interpolación de profundidades de la variable continua;
 # observaciones : ninguna;
 ##############################################################################
 
