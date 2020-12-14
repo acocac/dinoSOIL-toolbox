@@ -52,6 +52,8 @@ ModUso <- function(VarObj, BaseDatos, rfe_lim, Muestreo, listmodelos){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
+  if (!require('pacman')) install.packages('pacman');
+
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(caret, raster, sf, stringr, doParallel, ggspatial, pals, gridExtra, viridis, purrr))
 

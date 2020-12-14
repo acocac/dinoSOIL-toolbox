@@ -39,6 +39,8 @@ Preprocesamiento <- function(tipo, filename, hoja, columna){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
+  if (!require('pacman')) install.packages('pacman');
+
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(readxl, tidyr, dplyr))
 

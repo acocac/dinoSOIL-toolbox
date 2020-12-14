@@ -35,7 +35,9 @@ SelVariables <- function(VarObj, BaseDatos){
   # ------------------------------------------------------- #
   # Librerias y funciones
   # ------------------------------------------------------- #
-  ## Librerias
+  # Librerias
+  if (!require('pacman')) install.packages('pacman');
+
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(caret, doParallel, randomForest, Boruta, stringr, dplyr))
 

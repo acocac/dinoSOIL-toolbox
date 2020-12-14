@@ -55,6 +55,8 @@ ModExploracion <- function(VarObj, BaseDatos, rfe_lim){
   # Librerias y funciones
   # ------------------------------------------------------- #
   # Librerias
+  if (!require('pacman')) install.packages('pacman');
+
   suppressMessages(library(pacman))
   suppressMessages(pacman::p_load(ggplot2, tidyr, PerformanceAnalytics, stringr, caret,
                                   pals, psych, purrr, nortest, tseries, rstatix, PMCMR,
