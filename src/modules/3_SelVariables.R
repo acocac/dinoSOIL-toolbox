@@ -39,7 +39,7 @@ SelVariables <- function(VarObj, BaseDatos){
   if (!require('pacman')) install.packages('pacman');
 
   suppressMessages(library(pacman))
-  suppressMessages(pacman::p_load(caret, doParallel, randomForest, Boruta, stringr, dplyr))
+  suppressMessages(pacman::p_load(caret, doParallel, snow, randomForest, Boruta, stringr, dplyr, e1071))
 
   # iniciar el monitoreo tiempo de procesamiento total
   timeStart <- Sys.time()

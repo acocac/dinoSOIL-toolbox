@@ -34,7 +34,7 @@ Datos <- function(filename, hoja, columna){
   if (!require('pacman')) install.packages('pacman');
 
   suppressMessages(library(pacman))
-  suppressMessages(pacman::p_load(readxl, tidyr, plyr, dplyr, raster, GSIF, aqp, sf, rgdal,
+  suppressMessages(pacman::p_load(readxl, tidyr, plyr, dplyr, raster, GSIF, aqp, sf, rgeos, rgdal,
                                   smoothr, gdalUtilities, magrittr, stringr, caret))
 
   # iniciar el monitoreo tiempo de procesamiento total
