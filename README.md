@@ -1,6 +1,6 @@
-# soil-toolbox: Una herramienta para optimizar procesos de MDS de la Subdirección de Agrología
+# dinoSoil-toolbox: Una herramienta para optimizar procesos de MDS de la Subdirección de Agrología
 
-Herramienta (ver `src/SoilAnalysisTool.R`) basada en tecnología de la información para ejecutar y optimizar procesos para le mapeo digital de suelos (MDS).
+Herramienta (ver `src/dinoSOILtoolbox.R`) basada en tecnología de la información para ejecutar y optimizar procesos para le mapeo digital de suelos (MDS).
 
 Si usted usa esta herramienta por favor citar:
 
