@@ -40,7 +40,7 @@ Esquema de las funcionalidades de la herramienta:
 <img src="doc/flowchart_tool.png" width="900" />
 </p>
 
-Esquema de las funcionalidades de la herramienta:
+Esquema de los principales aspectos en la preparación de los datos de entrada:
 <p align="center">
 <img src="doc/datapreparation.png" width="900" />
 </p>
