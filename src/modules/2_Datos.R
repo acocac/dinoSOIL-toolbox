@@ -225,7 +225,8 @@ Datos <- function(filename, hoja, columna){
           writeRaster(NDVI_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
         } else{
           cat(paste0('El archivo geoTIFF de la variable NDVI existe, se va agregar al covariable','\n','\n'))
-          NDVI_rast_res <- raster(covariable.archivo)
+          NDVI_rast <- raster(covariable.archivo)
+          NDVI_rast_res <- projectRaster(NDVI_rast,DEM_rast_res,method="bilinear")
         }
         names(NDVI_rast_res) <- 'ndvi'
       }

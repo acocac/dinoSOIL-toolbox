@@ -12,7 +12,7 @@
 #                 Esta es una herramienta en estado de prueba de concepto, en caso de encontrar errores
 #                 favor reportar al correo acocac@gmail.com;
 ##############################################################################
-
+###TODO permitir ndvi sin fechas, verificar valores de pH . y coma , permitir otras capas incluidas en raster
 # ------------------------------------------------------- #
 # Limpiar espacio de trabajo y configurar opciones
 # ------------------------------------------------------- #
