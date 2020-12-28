@@ -16,6 +16,8 @@ Alternativamente se puede descargar de la dirección:
 ```bash
 https://github.com/acocac/dinoSOIL-toolbox/blob/master/proyecto_cesarmagdalena.zip
 ```
+## Librerias
+El desarrollo fue programado en R versión 4.0.2. El administrado de librerias `pacman` es usado para configurar las librerias necesarias por modulo.
 
 ## Documentación
 Un manual paso a paso se deja en repositorio (ver `ManualUsuario_V01.pdf`) disponible para la version 0.1. 
@@ -30,6 +32,7 @@ Contribuciones pueden hacerse mediante peticiones en la pestaña Pull del reposi
 - Ejemplos de implementaciones sugeridas basados en otros desarrollos se dejan al final del código principal (ver `src/dinoSOILtoolbox.R`).
 - Generar una interfaz gráfica de la herramienta
 - Documentar la herramienta en el idioma inglés
+- Crear docker para facilitar uso de la versión
 
 ## Resumen del funcionamiento de la herramienta
 Esquema de las funcionalidades de la herramienta:
