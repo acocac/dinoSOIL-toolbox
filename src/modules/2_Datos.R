@@ -87,7 +87,7 @@ Datos <- function(filename, hoja, columna){
   setwd(paste0(project.folder))
 
   # Matriz Datos
-  matriz.datos.archivo <- paste0( out.tb.data,'/','MatrixDatos.csv')
+  matriz.datos.archivo <- paste0(out.tb.data,'/','MatrixDatos.csv')
   if (!file.exists(matriz.datos.archivo)){
 
     # Mensaje de estado
@@ -104,28 +104,32 @@ Datos <- function(filename, hoja, columna){
         limite_shp <- limite_shp %>% dplyr::group_by(id) %>% dplyr::summarize()
       }
 
+      # DEM
       if ('dem' %in% project.covars.list){
         # Cargar DEM (referencia de la resolucion espacial)
-        filename_dem <- list.files(path=paste0(in.geo.data,'/raster/dem/original'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
+        filename_dem <- list.files(path=paste0(in.geo.data,'/raster/dem'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
         if (basename(filename_dem) != 'dem.tif'){
           stop(paste0('Asegurese que el nombre del archivo dem es dem.tif o que la ruta ', dirname(filename_dem),' NO esta vacia'))
         } else{
+          cat(paste0('El archivo geoTIFF de la covariable DEM existe, se va agregar al stack de covariables','\n','\n'))
           DEM_rast_res <- raster(filename_dem)
           names(DEM_rast_res) <- 'dem'
           resolucion_dem = res(DEM_rast_res)[1]
         }
       } else{
-        filename_dem <- paste0(in.geo.data,'/raster/dem/original/dem.tif')
+        filename_dem <- paste0(in.geo.data,'/raster/dem/dem.tif')
         stop(paste0('Asegurese que declare la covariable dem en el config.txt y que su archivo dem.tif este en la ruta ', dirname(filename_dem)))
       }
 
+      # Derivados del DEM
       if ('dem_derivados' %in% project.covars.list){
         # Crear stack de derivados del DEM
-        DEMderivados_lista <- list.files(path=paste0(in.geo.data,'/raster/dem/derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
+        DEMderivados_lista <- list.files(path=paste0(in.geo.data,'/raster/dem_derivados'), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
         if (length(DEMderivados_lista) > 0){
+          cat(paste0('Los archivos geoTIFF de la covariables derivados del DEM existen, se van agregar al stack de covariables','\n','\n'))
           DEMderivados_rast_res <- stack(DEMderivados_lista)
         } else{
-          stop(paste0('Asegurese que la ruta ', paste0(in.geo.data,'/raster/dem/derivados'),' contiene al menos un archivo derivado del dem'))
+          stop(paste0('Asegurese que la ruta ', paste0(in.geo.data,'/raster/dem/derivados'),' contiene al menos un archivo derivado del DEM'))
         }
       }
 
@@ -133,9 +137,9 @@ Datos <- function(filename, hoja, columna){
       if ('ndvi' %in% project.covars.list){
         out.dir <- paste0(in.geo.data,'/raster/ndvi')
         dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
-        covariable.archivo <- paste0(out.dir,'/ndvi',fechas.ndvi.list[1],'_',fechas.ndvi.list[2],'.tif')
+        covariable.archivo <- paste0(out.dir,'/ndvi.tif')
         if (!file.exists(covariable.archivo)){
-          cat(paste0('El archivo geoTIFF de la variable NDVI no existe, se requiere generarlo','\n','\n'))
+          cat(paste0('El archivo geoTIFF de la covariable NDVI no existe, se requiere generarlo para luego agregar al stack de covariables','\n','\n'))
 
           # # Load libraries
           pckg <- c('reticulate', 'remotes', 'mapview',
@@ -224,20 +228,20 @@ Datos <- function(filename, hoja, columna){
           # Guardar archivo
           writeRaster(NDVI_rast_res, filename = covariable.archivo, drivers = 'GeoTIFF', overwrite=TRUE)
         } else{
-          cat(paste0('El archivo geoTIFF de la variable NDVI existe, se va agregar al covariable','\n','\n'))
+          cat(paste0('El archivo geoTIFF de la covariable NDVI existe, se va agregar al stack de covariables','\n','\n'))
           NDVI_rast <- raster(covariable.archivo)
           NDVI_rast_res <- projectRaster(NDVI_rast,DEM_rast_res,method="bilinear")
         }
         names(NDVI_rast_res) <- 'ndvi'
       }
 
-      if (length(project.covars.vector) > 0){
+      if (project.covars.list %in% project.covars.vector){
         for (covar in project.covars.vector){
           out.dir <- paste0(in.geo.data,'/raster/',covar)
           dir.create(out.dir, recursive = T, mode = "0777", showWarnings = F)
           covariable.archivo <- paste0(out.dir,'/',covar,'.tif')
           if (!file.exists(covariable.archivo)){
-            cat(paste0('El archivo geoTIFF de la variable ', covar, ' no existe, se requiere generarlo','\n','\n'))
+            cat(paste0('El archivo geoTIFF de la covariable ', covar, ' no existe, se requiere generarlo para luego agregar al stack de covariables','\n','\n'))
             # Lista de shapefiles
             covar_files <- list.files(path = paste0(in.geo.data,'/vector/',covar), pattern = "\\.shp$", full.names=TRUE)
 
@@ -281,11 +285,26 @@ Datos <- function(filename, hoja, columna){
               stop(paste0('Asegurese que la ruta ', paste0(in.geo.data,'/vector/',covar),' contiene al menos un archivo vector (shapefile) para ser rasterizado'))
             }
           } else{
-            cat(paste0('El archivo geoTIFF de la variable ',  covar, ' existe, se va agregar al covariable','\n','\n'))
+            cat(paste0('El archivo geoTIFF de la covariable ',  covar, ' existe, se va agregar al stack de covariables','\n','\n'))
             covar_raster_ngb <- raster(covariable.archivo)
             names(covar_raster_ngb) <- covar
             assign(paste0(covar, '_rast_res'), covar_raster_ngb)
           }
+        }
+      }
+
+      #cargar otras covariables en formato raster diferentes al dem, NDVI
+      otras_covars <- project.covars.list[which(!project.covars.list %in% c(project.covars.vector, 'ndvi', 'dem', 'dem_derivados'))]
+      for (o in otras_covars){
+        filename_otra_tmp <- list.files(path=paste0(in.geo.data,'/raster/',o), pattern='tif', all.files=FALSE, full.names=TRUE,recursive=TRUE)
+        if (length(filename_otra_tmp) > 0){
+          cat(paste0('El archivo geoTIFF de la covariable ', o, ' existe, se va agregar al stack de covariables','\n','\n'))
+          var.name <- paste0(o,'_rast_res')
+          rastmp <- raster(filename_otra_tmp)
+          names(rastmp) <- o
+          assign(var.name, rastmp)
+        } else{
+          stop(paste0('Asegurese que la ruta ', paste0(in.geo.data,'/vector/',o),' contiene el archivo geoTIFF. Caso contrario que no cuente con este archivo remuevalo del listado en el archivo config.txt del proyecto ubicado en la ruta ',conf.file,'\n','\n'))
         }
       }
 
@@ -387,7 +406,7 @@ Datos <- function(filename, hoja, columna){
           varcon.todas[[varcon]] <- datos_varcon
           write.table(datos_varcon, interpolado.archivo, row.names = F, sep=',')
         } else {
-          cat(paste0('El archivo tabular de la interpolacion de la variable ', varcon,' existe, se va adicionar a la matriz','\n','\n'))
+          cat(paste0('El archivo tabular de la interpolacion de la variable ', varcon,' existe, se va adicionar a la matriz de datos','\n','\n'))
           datos_varcon <- read.csv(interpolado.archivo)
           varcon.todas[[varcon]] <- datos_varcon
         }
@@ -413,7 +432,7 @@ Datos <- function(filename, hoja, columna){
     columnas_factores <- c('EPIPEDON', 'ENDOPEDON', 'ORDEN', 'SUBORDEN', 'SUBGRUPO', 'GRANGRUPO', 'FAMILIA_TE')
     datos_final <- datos_final %<>% mutate_at(columnas_factores, funs(factor(.)))
 
-    dem <- raster(paste0(in.geo.data,'/raster/dem/original/dem.tif'))
+    dem <- raster(paste0(in.geo.data,'/raster/dem/dem.tif'))
 
     datos_sp <-st_as_sf(datos_final, coords=c("LONGITUD","LATITUD"))
     proyeccion <- CRS("+proj=longlat +datum=WGS84")
