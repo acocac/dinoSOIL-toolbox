@@ -32,4 +32,12 @@ Contribuciones pueden hacerse mediante peticiones en la pestaña Pull del reposi
 - Documentar la herramienta en el idioma inglés
 
 ## Resumen del funcionamiento de la herramienta
+Esquema de las funcionalidades de la herramienta:
+<p align="center">
+<img src="doc/flowchart_tool.png" width="500" />
+</p>
 
+Esquema de las funcionalidades de la herramienta:
+<p align="center">
+<img src="doc/datapreparation.png" width="500" />
+</p>
