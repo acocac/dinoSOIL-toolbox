@@ -34,10 +34,10 @@ Contribuciones pueden hacerse mediante peticiones en la pestaña Pull del reposi
 ## Resumen del funcionamiento de la herramienta
 Esquema de las funcionalidades de la herramienta:
 <p align="center">
-<img src="doc/flowchart_tool.png" width="500" />
+<img src="doc/flowchart_tool.png" width="900" />
 </p>
 
 Esquema de las funcionalidades de la herramienta:
 <p align="center">
-<img src="doc/datapreparation.png" width="500" />
+<img src="doc/datapreparation.png" width="900" />
 </p>
