@@ -3,6 +3,7 @@
 Herramienta (ver `src/dinoSOILtoolbox.R`) basada en tecnología de la información para ejecutar y optimizar procesos para le mapeo digital de suelos (MDS).
 
 Si usted usa esta herramienta por favor citar:
+[![DOI](https://zenodo.org/badge/294735247.svg)](https://zenodo.org/badge/latestdoi/294735247)
 
 Se incluye un archivo ZIP con un proyecto ejemplo (ver `proyecto_cesarmagdalena.zip`) dentro del repositorio para ejecutar y probar las funciones de la herramienta.
 
