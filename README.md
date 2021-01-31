@@ -1,4 +1,4 @@
-# dinoSoil-toolbox: A tool for optimizing Digital Soil Mapping at the Subdirectorate of Agrology in Colombia
+# dinoSoil-toolbox: A tool for optimization of procedures in Digital Soil Mapping from legacy soil data curated by IGAC
 
 The toolbox (`src/dinoSOILtoolbox.R`) incoporates multiple information technologies incl. Machine learning for Digital Soil Mapping (DSM).
 
