@@ -1,47 +1,44 @@
-# dinoSoil-toolbox: Una herramienta para optimizar procesos de MDS de la Subdirección de Agrología
+# dinoSoil-toolbox: A tool for optimising Digital Soil Mapping at the Subdirectorate of Agrology in Colombia
 
-Herramienta (ver `src/dinoSOILtoolbox.R`) basada en tecnología de la información para ejecutar y optimizar procesos para le mapeo digital de suelos (MDS).
+The toolbox (`src/dinoSOILtoolbox.R`) incoporates multiple information technologies incl. machine learning for Digital Soil Mapping (MDS).
 
-Si usted usa esta herramienta por favor citar:
+If you use this code, please cite it as follows:
 [![DOI](https://zenodo.org/badge/294735247.svg)](https://zenodo.org/badge/latestdoi/294735247)
 
-Se incluye un archivo ZIP con un proyecto ejemplo (ver `proyecto_cesarmagdalena.zip`) dentro del repositorio para ejecutar y probar las funciones de la herramienta.
-
-Este archivo se puede descargar mediante el archivo bash (`descarga.sh`)
+Download a sample project in ZIP format via.
 
 ```bash
-bash descarga.sh
+bash download.sh
 ```
 
-Alternativamente se puede descargar de la dirección:
+Alternatively, it can be downloading from:
 ```bash
 https://github.com/acocac/dinoSOIL-toolbox/blob/master/proyecto_cesarmagdalena.zip
 ```
-## Librerias
-El desarrollo fue programado en R versión 4.0.2. El administrado de librerias `pacman` es usado para configurar las librerias necesarias por modulo.
+## Libraries
+The tool uses R version 4.0.2. The `pacman` library is used to import/install required libraries.
 
-## Documentación
-Un manual paso a paso se deja en repositorio (ver `ManualUsuario_V01.pdf`) disponible para la version 0.1. 
+## Documentatipn
+A user manual related to version 0.1 (in Spanish) is provided (see `ManualUsuario_V01.pdf`). 
 
-## Agradecimientos
-El equipo de la Oficina CIAF agradece a la Subdirección de Agrología del Instituto Geográfico Agustín Codazzi (IGAC)  por su constante apoyo y validación de la herramienta. Igualmente, los desarrollos construidos son basados en ejercicios previos de la Subdirección distribuidos mediante la cooperación del proyecto I+D+i entre la Subdirección de Agrología y Oficina CIAF.
+## Acknowledgements
+The authors thanks the Sub-Directorate of Agrology of The Geographic Institute Agustín Codazzi (IGAC), for their support and technical feedback in the development of this work.
 
-## Contribuciones
-Contribuciones pueden hacerse mediante peticiones en la pestaña Pull del repositorio en GitHub. 
+## Contributions
+Contributions via pull requests are welcome. Please make sure that changes pass the unit tests. Any bugs and problems can be reported on the repo's issues page.
 
-## Trabajo futuro
-- Ejemplos de implementaciones sugeridas basados en otros desarrollos se dejan al final del código principal (ver `src/dinoSOILtoolbox.R`).
-- Generar una interfaz gráfica de la herramienta
-- Documentar la herramienta en el idioma inglés
-- Crear docker para facilitar uso de la versión
+## Future work
+- Incorporate improvements as those added as TODO at the end of the main script (ver `src/dinoSOILtoolbox.R`);
+- Generate a more user-friendly interface for non-experts;
+- Allow reproducibility of the code via Binder.
 
-## Resumen del funcionamiento de la herramienta
-Esquema de las funcionalidades de la herramienta:
+## Key feature of the toolbox
+Scheme of the main steps and outputs:
 <p align="center">
 <img src="doc/flowchart_tool.png" width="900" />
 </p>
 
-Esquema de los principales aspectos en la preparación de los datos de entrada:
+Scheme of the data selection and integration component:
 <p align="center">
 <img src="doc/datapreparation.png" width="900" />
 </p>
