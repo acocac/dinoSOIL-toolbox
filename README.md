@@ -18,7 +18,7 @@ https://github.com/acocac/dinoSOIL-toolbox/blob/master/proyecto_cesarmagdalena.z
 ## Libraries
 The tool uses R version 4.0.2. The `pacman` library is used to import/install required libraries.
 
-## Documentatipn
+## Documentation
 A user manual related to version 0.1 (in Spanish) is provided (see `ManualUsuario_V01.pdf`). 
 
 ## Acknowledgements
